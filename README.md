@@ -1,97 +1,207 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# AidKit 🏥
 
-# Getting Started
+Мобильное приложение для управления домашними аптечками, построенное на React Native с использованием архитектуры Feature-Sliced Design (FSD).
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## 📱 О приложении
 
-## Step 1: Start Metro
+AidKit - это удобное приложение для организации и отслеживания лекарств в домашних аптечках. Позволяет создавать аптечки, добавлять лекарства, отслеживать запасы и сроки годности.
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+### ✨ Основные возможности
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- **Управление аптечками** - создание, редактирование и удаление аптечек
+- **Управление лекарствами** - добавление лекарств с подробной информацией
+- **Отслеживание запасов** - контроль количества и сроков годности
+- **История использования** - ведение журнала приема лекарств
+- **Темная/светлая тема** - переключение между темами
+- **Офлайн работа** - все данные хранятся локально в SQLite
+
+## 🏗️ Архитектура
+
+Проект построен с использованием **Feature-Sliced Design (FSD)**:
+
+```
+src/
+├── app/           # Инициализация приложения, провайдеры, роутинг
+├── pages/         # Страницы приложения (Home, Kit, More, Splash)
+├── widgets/       # Крупные UI блоки
+├── features/      # Бизнес-логика приложения
+│   ├── home/      # Главный экран с аптечками
+│   ├── kit-list/  # Управление списком аптечек
+│   ├── kit-form/  # Форма создания/редактирования аптечек
+│   ├── quick-create/ # Быстрое создание
+│   └── medicine/  # Управление лекарствами
+├── entities/      # Бизнес-сущности
+│   ├── kit/       # Аптечки
+│   └── medicine/  # Лекарства
+└── shared/        # Переиспользуемые модули
+    ├── ui/        # UI компоненты
+    ├── lib/       # Утилиты
+    ├── hooks/     # Кастомные хуки
+    └── config/    # Конфигурация
+```
+
+## 🗄️ База данных
+
+Используется **SQLite** с следующими таблицами:
+
+### Аптечки (`medicine_kits`)
+- `id`, `name`, `description`, `color`, `parent_id`
+- Поддержка иерархии через `parent_id`
+
+### Лекарства (`medicines`)
+- `id`, `name`, `description`, `manufacturer`, `dosage`
+- `form`, `prescription_required`, `kit_id`
+
+### Запасы (`medicine_stock`)
+- `id`, `medicine_id`, `quantity`, `unit`
+- `expiry_date`, `batch_number`, `purchase_date`, `purchase_price`
+
+### Использование (`medicine_usage`)
+- `id`, `medicine_id`, `quantity_used`, `usage_date`, `notes`
+
+### Справочники
+- `medicine_forms` - формы выпуска (таблетки, капли и т.д.)
+- `measurement_units` - единицы измерения (шт, мл, г и т.д.)
+
+## 🚀 Быстрый старт
+
+### Установка зависимостей
 
 ```sh
-# Using npm
-npm start
+# Используя Yarn (рекомендуется)
+yarn install
 
-# OR using Yarn
+# Или используя npm
+npm install
+```
+
+### Запуск Metro
+
+```sh
+# Используя Yarn
 yarn start
+
+# Или используя npm
+npm start
 ```
 
-## Step 2: Build and run your app
+### Запуск приложения
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
+#### Android
 
 ```sh
-# Using npm
-npm run android
-
-# OR using Yarn
 yarn android
+# или
+npm run android
 ```
 
-### iOS
+#### iOS
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+Сначала установите CocoaPods зависимости:
 
 ```sh
-bundle install
+cd ios && pod install && cd ..
 ```
 
-Then, and every time you update your native dependencies, run:
+Затем запустите:
 
 ```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
 yarn ios
+# или
+npm run ios
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## 🛠️ Технологии
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+- **React Native** - мобильная разработка
+- **TypeScript** - типизация
+- **React Navigation** - навигация
+- **SQLite** - локальная база данных
+- **React Native Bottom Sheet** - модальные окна
+- **React Native Safe Area Context** - безопасные зоны
+- **Feature-Sliced Design** - архитектура
 
-## Step 3: Modify your app
+## 📦 Основные зависимости
 
-Now that you have successfully run the app, let's make changes!
+```json
+{
+  "@react-navigation/native": "^6.x",
+  "@react-navigation/bottom-tabs": "^6.x",
+  "@react-navigation/native-stack": "^6.x",
+  "@gorhom/bottom-sheet": "^4.x",
+  "react-native-sqlite-storage": "^6.x",
+  "react-native-safe-area-context": "^4.x"
+}
+```
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+## 🎨 UI Компоненты
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+### Переиспользуемые компоненты
+- **Button** - кнопки
+- **TextInput** - поля ввода с анимацией лейблов
+- **List** - списки с BottomSheet
+- **KitCard** - карточки аптечек
+- **FormItemWrapper** - обертка для элементов форм
+- **BottomSheet** - модальные окна
+- **FAB** - плавающая кнопка действий
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+### Стилизация
+- Использование темы с поддержкой светлой/темной темы
+- Кастомные хуки для стилей (`useListStyles`, `useTextInputStyles` и т.д.)
+- Консистентные отступы, размеры шрифтов и радиусы
 
-## Congratulations! :tada:
+## 🔧 Разработка
 
-You've successfully run and modified your React Native App. :partying_face:
+### Структура компонентов
 
-### Now what?
+Каждый UI компонент имеет следующую структуру:
+```
+ComponentName/
+├── ComponentName.tsx     # Основной компонент
+├── useComponentStyles.ts # Хуки для стилей
+└── index.ts             # Экспорты
+```
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+### Работа с базой данных
 
-# Troubleshooting
+```typescript
+import { databaseService } from '@/shared/lib/database'
+import { medicineService } from '@/entities/medicine'
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+// Создание аптечки
+const kit = await databaseService.createKit(kitData)
 
-# Learn More
+// Создание лекарства
+const medicine = await medicineService.createMedicine(medicineData)
 
-To learn more about React Native, take a look at the following resources:
+// Использование лекарства
+await medicineService.useMedicine(medicineId, quantity)
+```
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+## 📱 Экраны
+
+1. **Splash** - экран загрузки
+2. **Home** - главный экран со списком аптечек
+3. **Kit** - создание/редактирование аптечек
+4. **More** - дополнительные настройки и тема
+
+## 🎯 Планы развития
+
+- [ ] Уведомления о сроке годности
+- [ ] Сканирование штрих-кодов лекарств
+- [ ] Экспорт/импорт данных
+- [ ] Статистика использования
+- [ ] Резервное копирование в облако
+- [ ] Множественные аптечки с иерархией
+
+## 📄 Лицензия
+
+MIT License
+
+## 🤝 Вклад в проект
+
+Приветствуются любые предложения и улучшения! Создавайте issues и pull requests.
+
+---
+
+**AidKit** - сделайте управление домашней аптечкой простым и удобным! 🏥✨
