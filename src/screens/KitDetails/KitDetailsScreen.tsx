@@ -44,9 +44,9 @@ export const KitDetailsScreen = () => {
   // Функция для умной навигации назад
   const handleSmartBackPress = useCallback(() => {
     // Если есть breadcrumbs и мы не в корневой категории
-    if (content.breadcrumbs.length > 1 && content.kit?.parentId) {
+    if (content.breadcrumbs.length > 1 && content.kit?.parent_id) {
       // Переходим к родительской категории
-      navigation.navigate('KitDetails', { kitId: content.kit.parentId })
+      navigation.navigate('KitDetails', { kitId: content.kit.parent_id })
       return true
     }
 
@@ -83,7 +83,7 @@ export const KitDetailsScreen = () => {
 
       // Загружаем подкатегории
       const allKits = await kitApi.getKits()
-      const subKits = allKits.filter(kit => kit.parentId === kitId)
+      const subKits = allKits.filter(kit => kit.parent_id === kitId)
 
       // Загружаем лекарства в этой категории
       const medicinesData = await medicineService.getMedicinesByKitId(kitId)
@@ -115,8 +115,8 @@ export const KitDetailsScreen = () => {
     while (currentKit) {
       breadcrumbs.unshift({ id: currentKit.id, name: currentKit.name })
 
-      if (currentKit.parentId) {
-        const parentKit = await kitApi.getKitById(currentKit.parentId)
+      if (currentKit.parent_id) {
+        const parentKit = await kitApi.getKitById(currentKit.parent_id)
         if (parentKit) {
           currentKit = parentKit
         } else {
@@ -198,6 +198,15 @@ export const KitDetailsScreen = () => {
   useEffect(() => {
     loadKitContent()
   }, [kitId, loadKitContent])
+
+  // Обновляем данные при возврате с экрана редактирования
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadKitContent()
+    })
+
+    return unsubscribe
+  }, [navigation, loadKitContent])
 
   if (loading) {
     return (

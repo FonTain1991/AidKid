@@ -45,7 +45,7 @@ export const MedicineMenuSheet = forwardRef<MedicineMenuSheetRef, MedicineMenuSh
   return (
     <BottomSheet
       ref={bottomSheetRef}
-      // snapPoints={['30%']}
+      snapPoints={[]}
       enableDynamicSizing
     >
       <BottomSheetView>

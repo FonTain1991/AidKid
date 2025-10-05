@@ -5,7 +5,7 @@ import { TextInput } from '@/shared/ui/TextInput'
 import { useState, useEffect } from 'react'
 import { Alert, ScrollView, StyleSheet } from 'react-native'
 import { KitFormData, KitFormProps } from '../model'
-import { List, ParentKitList } from '@/shared/ui'
+import { ColorPicker, ParentKitList } from '@/shared/ui'
 
 export const KitForm = ({ initialData, onSubmit }: KitFormProps) => {
   const [formData, setFormData] = useState<KitFormData>(initialData || {
@@ -30,7 +30,6 @@ export const KitForm = ({ initialData, onSubmit }: KitFormProps) => {
 
     try {
       await onSubmit(formData)
-      Alert.alert('Успех', 'Набор успешно сохранен')
     } catch (error) {
       console.error('Ошибка при сохранении:', error)
       Alert.alert('Ошибка', 'Не удалось сохранить набор')
@@ -74,11 +73,10 @@ export const KitForm = ({ initialData, onSubmit }: KitFormProps) => {
       </FormItemWrapper>
 
       <FormItemWrapper>
-        <List
+        <ColorPicker
           fieldName='Цвет'
-          options={colorOptions}
           value={formData.color}
-          onChange={(value: string) => setFormData({ ...formData, color: value })}
+          onColorSelect={color => setFormData({ ...formData, color })}
         />
       </FormItemWrapper>
 
@@ -88,6 +86,7 @@ export const KitForm = ({ initialData, onSubmit }: KitFormProps) => {
           onPress={handleSubmit}
         />
       </FormItemWrapper>
+
     </ScrollView>
   )
 }

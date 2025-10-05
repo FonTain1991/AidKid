@@ -45,7 +45,7 @@ class KitApi {
       name: formData.name,
       description: formData.description || undefined,
       color: formData.color,
-      parentId: formData.parent || undefined,
+      parent_id: formData.parent || undefined,
     }
 
     return await this.createKit(createData)
@@ -56,7 +56,7 @@ class KitApi {
       name: formData.name,
       description: formData.description || undefined,
       color: formData.color,
-      parentId: formData.parent || undefined, // parentId добавлен в UpdateKitData
+      parent_id: formData.parent || undefined,
     }
 
     await this.updateKit(id, updateData)
@@ -68,7 +68,7 @@ class KitApi {
       id: kit.id,
       name: kit.name,
       description: kit.description || '',
-      parent: kit.parentId || '',
+      parent: kit.parent_id || '',
       color: kit.color,
     }
   }

@@ -45,7 +45,7 @@ export const KitMenuSheet = forwardRef<KitMenuSheetRef, KitMenuSheetProps>(({ on
   return (
     <BottomSheet
       ref={bottomSheetRef}
-      // snapPoints={['30%']}
+      snapPoints={[]}
       enableDynamicSizing
     >
       <BottomSheetView>

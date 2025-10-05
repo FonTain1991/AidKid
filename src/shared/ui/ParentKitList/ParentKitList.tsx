@@ -41,9 +41,9 @@ export const ParentKitList: React.FC<ParentKitListProps> = ({
   // Проверяем, является ли kit потомком excludeKitId
   const isDescendant = (kit: MedicineKit, excludeId: string, allKits: MedicineKit[]): boolean => {
     let current = kit
-    while (current.parentId) {
-      if (current.parentId === excludeId) return true
-      current = allKits.find(k => k.id === current.parentId)!
+    while (current.parent_id) {
+      if (current.parent_id === excludeId) return true
+      current = allKits.find(k => k.id === current.parent_id)!
       if (!current) break
     }
     return false

@@ -1,11 +1,9 @@
-import { View, Text, TouchableOpacity } from 'react-native'
 import { BottomSheet, BottomSheetRef } from '@/shared/ui'
-import { TabIcon } from '@/shared/ui/TabIcon'
-import { useTheme } from '@/app/providers/theme'
-import { QuickCreateOption } from '../model'
-import { forwardRef, useImperativeHandle, useRef } from 'react'
-import { useQuickCreateStyles } from './useQuickCreateStyles'
 import { BottomSheetView } from '@gorhom/bottom-sheet'
+import { forwardRef, useImperativeHandle, useRef } from 'react'
+import { Text, TouchableOpacity, View } from 'react-native'
+import { QuickCreateOption } from '../model'
+import { useQuickCreateStyles } from './useQuickCreateStyles'
 
 interface QuickCreateSheetProps {
   options: QuickCreateOption[]
@@ -18,7 +16,6 @@ export interface QuickCreateSheetRef {
 }
 
 export const QuickCreateSheet = forwardRef<QuickCreateSheetRef, QuickCreateSheetProps>(({ options, onOptionPress }, ref) => {
-  const { colors } = useTheme()
   const styles = useQuickCreateStyles()
   const bottomSheetRef = useRef<BottomSheetRef>(null)
 
@@ -30,7 +27,8 @@ export const QuickCreateSheet = forwardRef<QuickCreateSheetRef, QuickCreateSheet
   return (
     <BottomSheet
       ref={bottomSheetRef}
-      enableDynamicSizing={true}
+      enableDynamicSizing
+      snapPoints={[]}
     >
       <BottomSheetView>
         <View style={styles.container}>

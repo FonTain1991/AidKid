@@ -14,7 +14,7 @@ export const useQuickCreateStyles = () => {
       paddingVertical: SPACING.md,
       paddingHorizontal: SPACING.md,
       backgroundColor: colors.bottomBarBackground,
-      paddingBottom: bottom + SPACING.md
+      paddingBottom: bottom + SPACING.sm
     },
     title: {
       fontSize: FONT_SIZE.xl,

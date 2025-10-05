@@ -187,7 +187,7 @@ class DatabaseService {
       newKit.name,
       newKit.description || null,
       newKit.color,
-      newKit.parentId || null,
+      newKit.parent_id || null,
       newKit.createdAt.toISOString(),
       newKit.updatedAt.toISOString()
     ])
@@ -212,7 +212,7 @@ class DatabaseService {
         name: row.name,
         description: row.description,
         color: row.color,
-        parentId: row.parent_id,
+        parent_id: row.parent_id,
         createdAt: new Date(row.created_at),
         updatedAt: new Date(row.updated_at)
       }
@@ -241,7 +241,7 @@ class DatabaseService {
       name: row.name,
       description: row.description,
       color: row.color,
-      parentId: row.parent_id,
+      parent_id: row.parent_id,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at)
     }
@@ -254,7 +254,7 @@ class DatabaseService {
       throw new Error('Database not initialized')
     }
 
-    const allowedFields = ['name', 'description', 'color']
+    const allowedFields = ['name', 'description', 'color', 'parent_id']
     const filteredUpdates = Object.entries(updates)
       .filter(([key]) => key !== 'id' && key !== 'createdAt' && allowedFields.includes(key))
 

@@ -8,7 +8,7 @@ import { useTheme } from '@/app/providers/theme'
 import { kitApi } from '@/entities/kit/api'
 import { useKitListState } from '@/features/kit-list'
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, View } from 'react-native'
+import { ActivityIndicator, Alert, View } from 'react-native'
 
 interface RouteParams {
   kitId?: string
@@ -26,6 +26,7 @@ export const KitScreen = () => {
 
   useScreenProperties({
     navigationOptions: {
+      headerTitle: 'Аптечка',
       headerShown: true,
       headerTransparent: false,
       headerLeft: () => <BackButton />
@@ -79,8 +80,7 @@ export const KitScreen = () => {
 
       // Обновить список аптечек перед возвратом
       await refreshKits()
-
-      navigation.goBack()
+      Alert.alert('Успех', 'Набор успешно сохранен', [{ text: 'OK', onPress: () => navigation.goBack() }])
     } catch (error) {
       console.error('Error saving kit:', error)
       throw error // Перебрасываем ошибку, чтобы KitForm мог показать Alert
@@ -92,7 +92,7 @@ export const KitScreen = () => {
     return (
       <SafeAreaView style={{ backgroundColor: colors.background, flex: 1 }}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size='large' color={colors.primary} />
         </View>
       </SafeAreaView>
     )
