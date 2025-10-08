@@ -2,6 +2,10 @@ import { SplashScreen } from '@/screens'
 import { KitDetailsScreen } from '@/screens/KitDetails'
 import { KitScreen } from '@/screens/kit'
 import { MedicineScreen } from '@/screens/Medicine'
+import { NotificationSettingsScreen } from '@/screens/NotificationSettings'
+import { QuickIntakeScreen } from '@/screens/QuickIntake'
+import { AddReminderScreen } from '@/screens/AddReminder'
+import { RemindersScreen } from '@/screens/Reminders'
 import { useDatabase } from '@/shared/lib'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { useTheme } from '../providers/theme'
@@ -64,6 +68,38 @@ export function AppNavigator() {
       // options={{
       //   title: 'Лекарство'
       // }}
+      />
+      <Stack.Screen
+        name='NotificationSettings'
+        component={NotificationSettingsScreen}
+        options={{
+          title: 'Настройки уведомлений',
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name='QuickIntake'
+        component={QuickIntakeScreen}
+        options={{
+          title: 'Быстрый прием',
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name='AddReminder'
+        component={AddReminderScreen}
+        options={{
+          title: 'Добавить напоминание',
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name='Reminders'
+        component={RemindersScreen}
+        options={{
+          title: 'Напоминания',
+          headerShown: true,
+        }}
       />
     </Stack.Navigator>
   )

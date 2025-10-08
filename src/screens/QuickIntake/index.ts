@@ -1,0 +1,1 @@
+export { QuickIntakeScreen } from './QuickIntakeScreen'

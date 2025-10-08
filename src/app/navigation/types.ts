@@ -14,4 +14,8 @@ export type RootStackParamList = {
     mode: 'create' | 'edit';
     kitId?: string;
   }
+  NotificationSettings: undefined
+  QuickIntake: undefined
+  AddReminder: undefined
+  Reminders: undefined
 }

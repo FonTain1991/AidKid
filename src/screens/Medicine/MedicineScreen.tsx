@@ -8,6 +8,7 @@ import { useNavigationBarColor, useRoute, useScreenProperties } from '@/shared/h
 import { BackButton } from '@/shared/ui'
 import { useTheme } from '@/app/providers/theme'
 import { medicineService } from '@/entities/medicine'
+import { scheduleMedicineExpiryNotifications, cancelMedicineNotifications } from '@/shared/lib'
 
 interface RouteParams {
   medicineId?: string
@@ -60,6 +61,7 @@ export const MedicineScreen = () => {
               unit: stock?.unit || '',
               expiryDate: stock?.expiryDate?.toISOString()
             }
+            console.log('Loading medicine data:', { medicine, stock, formData })
             setInitialData(formData)
           }
         } catch (error) {
@@ -74,6 +76,7 @@ export const MedicineScreen = () => {
 
   const handleSubmit = async (data: MedicineFormData) => {
     try {
+      console.log('Saving medicine data:', data)
       if (!data.kitId) {
         throw new Error('Аптечка обязательна')
       }
@@ -92,17 +95,28 @@ export const MedicineScreen = () => {
 
         // Создаем запись о запасе, если указано количество
         if (data.quantity > 0) {
-          await medicineService.createMedicineStock({
+          const stock = await medicineService.createMedicineStock({
             medicineId: medicine.id,
             quantity: data.quantity,
             unit: data.unit,
             expiryDate: data.expiryDate ? new Date(data.expiryDate) : undefined
           })
+
+          // Планируем множественные уведомления о сроке годности
+          if (stock.expiryDate) {
+            await scheduleMedicineExpiryNotifications(medicine, stock)
+          }
         }
       } else {
         // Обновляем существующее лекарство
         if (!data.id) {
           throw new Error('ID is required for update')
+        }
+
+        // Получаем существующий stock для отмены уведомлений
+        const existingStockForCancel = await medicineService.getMedicineStock(data.id)
+        if (existingStockForCancel) {
+          await cancelMedicineNotifications(data.id, existingStockForCancel.id)
         }
 
         await medicineService.updateMedicine(data.id, {
@@ -116,20 +130,36 @@ export const MedicineScreen = () => {
 
         // Обновляем запасы
         const existingStock = await medicineService.getMedicineStock(data.id)
+        console.log('Existing stock:', existingStock)
+        console.log('Updating stock with:', { quantity: data.quantity, unit: data.unit, expiryDate: data.expiryDate })
+
+        let updatedStock
+
         if (existingStock) {
           await medicineService.updateMedicineStock(existingStock.id, {
             quantity: data.quantity,
             unit: data.unit,
             expiryDate: data.expiryDate ? new Date(data.expiryDate) : undefined
           })
-        } else if (data.quantity > 0) {
-          // Создаем новый запас, если его не было
-          await medicineService.createMedicineStock({
+          console.log('Stock updated successfully')
+          updatedStock = await medicineService.getMedicineStock(data.id)
+        } else if (data.quantity > 0 || data.expiryDate) {
+          // Создаем новый запас, если есть количество ИЛИ дата
+          updatedStock = await medicineService.createMedicineStock({
             medicineId: data.id,
             quantity: data.quantity,
             unit: data.unit,
             expiryDate: data.expiryDate ? new Date(data.expiryDate) : undefined
           })
+          console.log('New stock created successfully')
+        }
+
+        // Планируем новые уведомления, если есть срок годности
+        if (updatedStock && updatedStock.expiryDate) {
+          const medicine = await medicineService.getMedicineById(data.id)
+          if (medicine) {
+            await scheduleMedicineExpiryNotifications(medicine, updatedStock)
+          }
         }
       }
 

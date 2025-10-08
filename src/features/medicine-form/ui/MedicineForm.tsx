@@ -8,6 +8,7 @@ import { Alert, StyleSheet, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useMedicineForm, useMedicineFormOptions } from '../model'
 import { MedicineFormProps } from '../model/types'
+// уведомления удалены
 
 export const MedicineForm: React.FC<MedicineFormProps> = ({
   initialData,
@@ -40,7 +41,12 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
     try {
       setLoading(true)
       setError(null)
+      // Стабильный id уведомления: medicine:{medicineId}
+      const notificationId = formData.id ? `medicine:${formData.id}` : undefined
+
+      // Если редактирование и дата изменена — отменяем прежнее уведомление
       await onSubmit(formData)
+
       Alert.alert('Успех', 'Лекарство успешно сохранено')
     } catch (err) {
       console.error('Ошибка при сохранении лекарства:', err)
@@ -144,7 +150,10 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
         <DatePicker
           fieldName='Срок годности'
           value={formData.expiryDate ? new Date(formData.expiryDate) : undefined}
-          onChange={(date: Date) => updateField('expiryDate', date.toISOString())}
+          onChange={(date: Date) => {
+            console.log('DatePicker onChange:', date, date.toISOString())
+            updateField('expiryDate', date.toISOString())
+          }}
           placeholder='Выберите срок годности'
           mode='date'
           minimumDate={new Date()}
@@ -158,6 +167,8 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
           disabled={loading}
         />
       </FormItemWrapper>
+
+      {/* Кнопки тестовых уведомлений удалены */}
     </KeyboardAwareScrollView>
   )
 }

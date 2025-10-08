@@ -21,11 +21,13 @@ export const useMedicineForm = (kitId?: string, initialData?: MedicineFormData) 
   // Обновляем форму при изменении initialData
   useEffect(() => {
     if (initialData) {
+      console.log('Setting form data from initialData:', initialData)
       setFormData(initialData)
     }
   }, [initialData])
 
   const updateField = (field: keyof MedicineFormData, value: any) => {
+    console.log('updateField:', field, value)
     setFormData(prev => ({
       ...prev,
       [field]: value

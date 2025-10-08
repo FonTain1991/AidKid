@@ -85,11 +85,22 @@ export const KitDetailsScreen = () => {
       const allKits = await kitApi.getKits()
       const subKits = allKits.filter(kit => kit.parent_id === kitId)
 
-      // Загружаем лекарства в этой категории
+      // Загружаем лекарства и остатки, считаем количество и сроки
       const medicinesData = await medicineService.getMedicinesByKitId(kitId)
-      const medicines: MedicineWithStock[] = medicinesData.map(medicine => ({
-        ...medicine,
-        totalQuantity: 0 // Calculate actual quantity from stock
+      const medicines: MedicineWithStock[] = await Promise.all(medicinesData.map(async medicine => {
+        const stock = await medicineService.getMedicineStock(medicine.id)
+        const totalQuantity = stock?.quantity ?? 0
+        const expiryMs = stock?.expiryDate ? stock.expiryDate.getTime() - Date.now() : undefined
+        const daysUntilExpiry = expiryMs != null ? Math.ceil(expiryMs / (1000 * 60 * 60 * 24)) : undefined
+        const isExpiringSoon = daysUntilExpiry != null ? daysUntilExpiry <= 7 : false
+
+        return {
+          ...medicine,
+          stock,
+          totalQuantity,
+          isExpiringSoon,
+          daysUntilExpiry,
+        }
       }))
 
       // Строим breadcrumbs
@@ -253,7 +264,7 @@ export const KitDetailsScreen = () => {
   ]
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: SPACING.md }}>
       {/* Breadcrumbs */}
       <Breadcrumbs
         items={content.breadcrumbs}

@@ -13,13 +13,15 @@ interface MedicineCardProps {
 
 export const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, onPress, onMenuPress }) => {
   const { colors } = useTheme()
-
+  console.log(medicine)
   const formatQuantity = (quantity: number, unit: string) => {
     return `${quantity} ${unit}`
   }
 
   const formatExpiryDate = (date?: Date) => {
-    if (!date) return null
+    if (!date) {
+      return null
+    }
     return date.toLocaleDateString('ru-RU', {
       day: '2-digit',
       month: '2-digit',
@@ -62,6 +64,18 @@ export const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, onPress, o
             </Text>
           )}
 
+          {/* Срок годности отдельной строкой, если есть */}
+          {medicine.stock?.expiryDate && (
+            <Text style={{
+              fontFamily: FONT_FAMILY.regular,
+              fontSize: FONT_SIZE.xs,
+              color: medicine.isExpiringSoon ? colors.error : colors.muted,
+              marginBottom: SPACING.xs,
+            }}>
+              до {formatExpiryDate(medicine.stock.expiryDate)}
+            </Text>
+          )}
+
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: SPACING.xs }}>
             <Text style={{
               fontFamily: FONT_FAMILY.medium,
@@ -71,16 +85,6 @@ export const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, onPress, o
             }}>
               {formatQuantity(medicine.totalQuantity, medicine.stock?.unit || 'шт')}
             </Text>
-
-            {medicine.stock?.expiryDate && (
-              <Text style={{
-                fontFamily: FONT_FAMILY.regular,
-                fontSize: FONT_SIZE.xs,
-                color: medicine.isExpiringSoon ? colors.error : colors.muted,
-              }}>
-                до {formatExpiryDate(medicine.stock.expiryDate)}
-              </Text>
-            )}
           </View>
         </View>
 
@@ -91,7 +95,7 @@ export const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, onPress, o
                 padding: SPACING.sm,
                 marginBottom: SPACING.xs,
               }}
-              onPress={(e) => {
+              onPress={e => {
                 e.stopPropagation()
                 onMenuPress()
               }}

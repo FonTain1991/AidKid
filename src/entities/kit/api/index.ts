@@ -1,7 +1,7 @@
 import { databaseService } from './database'
 import { MedicineKit, CreateKitData, UpdateKitData } from '../model/types'
 import { KitFormData } from '@/features/kit-form/model/types'
-import { generateId } from '@/shared/lib'
+import { generateId, notificationService } from '@/shared/lib'
 
 class KitApi {
   async getKits(): Promise<MedicineKit[]> {
@@ -24,6 +24,10 @@ class KitApi {
     }
 
     await databaseService.createKit(newKit)
+
+    // Создаем канал уведомлений для аптечки
+    await notificationService.createKitChannel(newKit)
+
     return newKit
   }
 
@@ -33,6 +37,9 @@ class KitApi {
 
   async deleteKit(id: string): Promise<void> {
     await databaseService.deleteKit(id)
+
+    // Удаляем канал уведомлений аптечки
+    await notificationService.deleteKitChannel(id)
   }
 
   async clearDatabase(): Promise<void> {

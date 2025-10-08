@@ -337,7 +337,6 @@ class DatabaseService {
       newMedicine.updatedAt.toISOString()
     ])
 
-    console.log('SQLite - Medicine created successfully:', newMedicine.id)
     return newMedicine
   }
 
@@ -532,15 +531,22 @@ class DatabaseService {
       throw new Error('Database not initialized')
     }
 
-    const allowedFields = ['quantity', 'unit', 'expiry_date']
+    console.log('updateMedicineStock called with:', { id, updates })
+    const allowedFields = ['quantity', 'unit', 'expiryDate']
     const filteredUpdates = Object.entries(updates)
       .filter(([key]) => key !== 'id' && key !== 'createdAt' && key !== 'updatedAt' && allowedFields.includes(key))
+
+    console.log('filteredUpdates:', filteredUpdates)
 
     if (filteredUpdates.length === 0) {
       return
     }
 
-    const setClause = filteredUpdates.map(([key]) => `${key} = ?`).join(', ')
+    const setClause = filteredUpdates.map(([key]) => {
+      // Маппинг camelCase полей в snake_case для базы данных
+      const dbField = key === 'expiryDate' ? 'expiry_date' : key
+      return `${dbField} = ?`
+    }).join(', ')
     const values = filteredUpdates.map(([_, value]) => {
       if (value instanceof Date) {
         return value.toISOString()
