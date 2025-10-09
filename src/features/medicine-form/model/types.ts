@@ -8,6 +8,8 @@ export interface MedicineFormData {
   dosage: string
   form: string
   kitId?: string
+  photoPath?: string
+  barcode?: string
   // Для запасов
   quantity: number
   unit: string

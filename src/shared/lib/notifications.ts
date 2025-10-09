@@ -32,6 +32,7 @@ class NotificationService {
       description: 'Общие уведомления о лекарствах',
       importance: AndroidImportance.HIGH,
       sound: 'default',
+      lightColor: '#42A669',
     })
   }
 
@@ -54,6 +55,7 @@ class NotificationService {
       importance: AndroidImportance.HIGH,
       sound: 'default',
       vibration: true,
+      lightColor: '#42A669',
     })
 
     return channelId
@@ -126,6 +128,8 @@ class NotificationService {
       android: {
         channelId: this.defaultChannelId,
         importance: AndroidImportance.HIGH,
+        smallIcon: 'ic_notification',
+        color: '#42A669',
         pressAction: {
           id: 'default',
         },
@@ -187,6 +191,8 @@ class NotificationService {
           android: {
             channelId,
             importance: critical ? AndroidImportance.HIGH : AndroidImportance.DEFAULT,
+            smallIcon: 'ic_notification',
+            color: '#42A669',
             pressAction: {
               id: 'default',
             },

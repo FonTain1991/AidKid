@@ -8,6 +8,8 @@ export interface Medicine {
   form: string
   prescriptionRequired: boolean
   kitId: string
+  photoPath?: string
+  barcode?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -28,6 +30,7 @@ export interface MedicineStock {
 export interface MedicineUsage {
   id: string
   medicineId: string
+  familyMemberId?: string
   quantityUsed: number
   usageDate: Date
   notes?: string
@@ -56,6 +59,8 @@ export interface CreateMedicineData {
   form: string
   prescriptionRequired: boolean
   kitId: string
+  photoPath?: string
+  barcode?: string
 }
 
 export interface UpdateMedicineData {
@@ -65,6 +70,8 @@ export interface UpdateMedicineData {
   dosage?: string
   form?: string
   prescriptionRequired?: boolean
+  photoPath?: string
+  barcode?: string
 }
 
 export interface CreateMedicineStockData {
@@ -82,6 +89,7 @@ export interface UpdateMedicineStockData {
 
 export interface CreateMedicineUsageData {
   medicineId: string
+  familyMemberId?: string
   quantityUsed: number
   usageDate: Date
   notes?: string
@@ -103,6 +111,8 @@ export interface MedicineFormData {
   dosage: string
   form: string
   kitId: string
+  photoPath?: string
+  barcode?: string
   // Для запасов
   quantity: number
   unit: string

@@ -1,4 +1,4 @@
-import { Pressable, TextInput as RNTextInput, TextInputProps as RNTextInputProps, Text, View } from 'react-native'
+import { Pressable, TextInput as RNTextInput, TextInputProps as RNTextInputProps, StyleProp, Text, View, ViewStyle } from 'react-native'
 import { useRef, useState } from 'react'
 import Animated, { useSharedValue, withTiming, useAnimatedStyle, interpolate } from 'react-native-reanimated'
 import { useTextInputStyles } from './useTextInputStyles'
@@ -8,9 +8,10 @@ import { FONT_SIZE } from '@/shared/config/constants/font'
 interface TextInputProps extends RNTextInputProps {
   label?: string
   error?: string
+  styleContainer?: StyleProp<ViewStyle>
 }
 
-export const TextInput = ({ label, error, style, value, onFocus, onBlur, ...props }: TextInputProps) => {
+export const TextInput = ({ label, error, style, value, onFocus, onBlur, styleContainer, ...props }: TextInputProps) => {
   const [isFocused, setIsFocused] = useState(false)
   const animatedValue = useSharedValue(0)
   const { styles } = useTextInputStyles(error, isFocused, value)
@@ -47,7 +48,7 @@ export const TextInput = ({ label, error, style, value, onFocus, onBlur, ...prop
   })
 
   return (
-    <View>
+    <View style={styleContainer}>
       <Pressable style={styles.inputContainer} onPress={setFocus}>
         {label && (
           <Animated.Text style={[styles.label, animatedLabelStyle]} >

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native'
 import { SafeAreaView } from '@/shared/ui/SafeAreaView'
 import { useTheme } from '@/app/providers/theme'
 import { SPACING } from '@/shared/config'
 import { FONT_SIZE } from '@/shared/config/constants/font'
 import { databaseService } from '@/shared/lib/database'
+import { getMedicinePhotoUri } from '@/shared/lib'
 import { Medicine, MedicineStock } from '@/entities/medicine/model/types'
 import { MedicineKit } from '@/entities/kit/model/types'
 
@@ -63,12 +64,8 @@ export function QuickIntakeScreen() {
       console.log('✅ Data loaded successfully')
     } catch (error) {
       console.error('❌ Failed to load data:', error)
-      console.error('Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      })
-      Alert.alert('Ошибка', `Не удалось загрузить данные: ${error.message}`)
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка'
+      Alert.alert('Ошибка', `Не удалось загрузить данные: ${errorMessage}`)
     } finally {
       setIsLoading(false)
     }
@@ -77,35 +74,42 @@ export function QuickIntakeScreen() {
   const handleIntake = async (medicine: Medicine) => {
     try {
       const stock = stocks.get(medicine.id)
-      if (!stock) {
-        Alert.alert('Ошибка', 'Не найден запас лекарства')
-        return
-      }
 
-      if (stock.quantity <= 0) {
-        Alert.alert('Внимание', 'Лекарство закончилось')
-        return
-      }
-
-      // Уменьшаем количество на 1
-      const updatedStock = {
-        ...stock,
-        quantity: stock.quantity - 1,
-        updatedAt: new Date(),
-      }
-
-      await databaseService.updateMedicineStock(stock.id, {
-        quantity: updatedStock.quantity,
-        updatedAt: updatedStock.updatedAt,
+      // Создаем запись в истории
+      await databaseService.createMedicineUsage({
+        medicineId: medicine.id,
+        quantityUsed: 1,
+        usageDate: new Date(),
+        notes: 'Быстрый прием'
       })
 
-      // Обновляем локальное состояние
-      setStocks(prev => new Map(prev.set(medicine.id, updatedStock)))
+      // Если есть запас, уменьшаем количество
+      if (stock && stock.quantity > 0) {
+        const updatedStock = {
+          ...stock,
+          quantity: stock.quantity - 1,
+          updatedAt: new Date(),
+        }
 
-      Alert.alert(
-        '✅ Прием отмечен',
-        `${medicine.name} принят успешно!\n\nОсталось: ${updatedStock.quantity} ${stock.unit}`
-      )
+        await databaseService.updateMedicineStock(stock.id, {
+          quantity: updatedStock.quantity,
+          updatedAt: updatedStock.updatedAt,
+        })
+
+        // Обновляем локальное состояние
+        setStocks(prev => new Map(prev.set(medicine.id, updatedStock)))
+
+        Alert.alert(
+          '✅ Прием отмечен',
+          `${medicine.name} принят успешно!\n\nОсталось: ${updatedStock.quantity} ${stock.unit}`
+        )
+      } else {
+        // Просто отмечаем прием без изменения остатка
+        Alert.alert(
+          '✅ Прием отмечен',
+          `${medicine.name} принят успешно!${!stock || stock.quantity === 0 ? '\n\n⚠️ Запас закончился' : ''}`
+        )
+      }
     } catch (error) {
       console.error('Failed to mark intake:', error)
       Alert.alert('Ошибка', 'Не удалось отметить прием')
@@ -144,12 +148,8 @@ export function QuickIntakeScreen() {
     )
   }
 
-  // Фильтруем лекарства для быстрого приема
-  const availableMedicines = medicines.filter(medicine => {
-    const stock = stocks.get(medicine.id)
-    // Показываем только лекарства с остатком > 0
-    return stock && stock.quantity > 0
-  })
+  // Показываем все лекарства (даже без остатка)
+  const availableMedicines = medicines
 
   // Группируем по аптечкам для удобства
   const medicinesByKit = availableMedicines.reduce((acc, medicine) => {
@@ -174,10 +174,10 @@ export function QuickIntakeScreen() {
         {availableMedicines.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={[styles.emptyTitle, { color: colors.text }]}>
-              Нет доступных лекарств
+              Нет лекарств
             </Text>
             <Text style={[styles.emptyDescription, { color: colors.textSecondary }]}>
-              Все лекарства закончились или не добавлены в аптечки
+              Добавьте лекарства в аптечки
             </Text>
           </View>
         ) : (
@@ -193,14 +193,36 @@ export function QuickIntakeScreen() {
 
                   {kitMedicines.map(medicine => {
                     const stockInfo = getStockInfo(medicine)
+                    const stock = stocks.get(medicine.id)
+                    const isOutOfStock = !stock || stock.quantity === 0
 
                     return (
                       <TouchableOpacity
                         key={medicine.id}
-                        style={[styles.medicineCard, { borderColor: colors.border }]}
+                        style={[
+                          styles.medicineCard,
+                          {
+                            borderColor: colors.border,
+                            opacity: isOutOfStock ? 0.5 : 1,
+                            backgroundColor: isOutOfStock ? '#f5f5f5' : 'white'
+                          }
+                        ]}
                         onPress={() => handleIntake(medicine)}
+                        disabled={isOutOfStock}
                       >
                         <View style={styles.medicineContent}>
+                          {/* Фото лекарства */}
+                          {medicine.photoPath ? (
+                            <Image
+                              source={{ uri: getMedicinePhotoUri(medicine.photoPath) || undefined }}
+                              style={styles.medicinePhoto}
+                            />
+                          ) : (
+                            <View style={styles.medicinePhotoPlaceholder}>
+                              <Text style={styles.medicinePhotoIcon}>💊</Text>
+                            </View>
+                          )}
+
                           <View style={styles.medicineInfo}>
                             <Text style={[styles.medicineName, { color: colors.text }]}>
                               {medicine.name}
@@ -214,9 +236,15 @@ export function QuickIntakeScreen() {
                             <View style={[styles.stockBadge, { backgroundColor: stockInfo.color }]}>
                               <Text style={styles.stockText}>{stockInfo.text}</Text>
                             </View>
-                            <Text style={[styles.intakeButton, { color: colors.primary }]}>
-                              Принять
-                            </Text>
+                            {!isOutOfStock ? (
+                              <Text style={[styles.intakeButton, { color: colors.primary }]}>
+                                Принять
+                              </Text>
+                            ) : (
+                              <Text style={[styles.intakeButtonDisabled, { color: colors.error }]}>
+                                Закончилось
+                              </Text>
+                            )}
                           </View>
                         </View>
                       </TouchableOpacity>
@@ -304,6 +332,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: SPACING.md,
   },
+  medicinePhoto: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    marginRight: SPACING.md,
+    backgroundColor: '#f0f0f0',
+  },
+  medicinePhotoPlaceholder: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    marginRight: SPACING.md,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  medicinePhotoIcon: {
+    fontSize: 28,
+  },
   medicineInfo: {
     flex: 1,
   },
@@ -336,6 +383,11 @@ const styles = StyleSheet.create({
   intakeButton: {
     fontSize: FONT_SIZE.sm,
     fontWeight: '600',
+  },
+  intakeButtonDisabled: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '600',
+    textDecorationLine: 'line-through',
   },
   infoSection: {
     marginTop: SPACING.xl,

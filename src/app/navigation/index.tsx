@@ -6,6 +6,13 @@ import { NotificationSettingsScreen } from '@/screens/NotificationSettings'
 import { QuickIntakeScreen } from '@/screens/QuickIntake'
 import { AddReminderScreen } from '@/screens/AddReminder'
 import { RemindersScreen } from '@/screens/Reminders'
+import { TodayScreen } from '@/screens/Today'
+import { HistoryScreen } from '@/screens/History'
+import { StatisticsScreen } from '@/screens/Statistics'
+import { ExpiringMedicinesScreen } from '@/screens/ExpiringMedicines'
+import { LowStockMedicinesScreen } from '@/screens/LowStockMedicines'
+import { FamilyMembersScreen } from '@/screens/FamilyMembers'
+import { BarcodeScannerScreen } from '@/screens/BarcodeScanner'
 import { useDatabase } from '@/shared/lib'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { useTheme } from '../providers/theme'
@@ -99,6 +106,62 @@ export function AppNavigator() {
         options={{
           title: 'Напоминания',
           headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name='Today'
+        component={TodayScreen}
+        options={{
+          title: 'Сегодня',
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name='History'
+        component={HistoryScreen}
+        options={{
+          title: 'История приема',
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name='Statistics'
+        component={StatisticsScreen}
+        options={{
+          title: 'Статистика',
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name='ExpiringMedicines'
+        component={ExpiringMedicinesScreen}
+        options={{
+          title: 'Истекающие лекарства',
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name='LowStockMedicines'
+        component={LowStockMedicinesScreen}
+        options={{
+          title: 'Заканчиваются',
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name='FamilyMembers'
+        component={FamilyMembersScreen}
+        options={{
+          title: 'Члены семьи',
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name='BarcodeScanner'
+        component={BarcodeScannerScreen}
+        options={{
+          title: 'Сканер штрих-кода',
+          headerShown: false,
         }}
       />
     </Stack.Navigator>

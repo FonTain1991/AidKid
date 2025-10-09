@@ -1,9 +1,10 @@
 import React from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Pressable, Text, View, Image } from 'react-native'
 import { useTheme } from '@/app/providers/theme'
 import { MedicineWithStock } from '@/entities/medicine/model/types'
 import { RADIUS, SPACING } from '@/shared/config'
 import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '@/shared/config/constants/font'
+import { getMedicinePhotoUri } from '@/shared/lib'
 
 interface MedicineCardProps {
   medicine: MedicineWithStock
@@ -42,6 +43,33 @@ export const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, onPress, o
       }}
     >
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        {/* Фото лекарства */}
+        {medicine.photoPath ? (
+          <Image
+            source={{ uri: getMedicinePhotoUri(medicine.photoPath) || undefined }}
+            style={{
+              width: 60,
+              height: 60,
+              borderRadius: 8,
+              marginRight: SPACING.md,
+              backgroundColor: '#f0f0f0',
+            }}
+            resizeMode='cover'
+          />
+        ) : (
+          <View style={{
+            width: 60,
+            height: 60,
+            borderRadius: 8,
+            marginRight: SPACING.md,
+            backgroundColor: '#f0f0f0',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+            <Text style={{ fontSize: 32 }}>💊</Text>
+          </View>
+        )}
+
         <View style={{ flex: 1, marginRight: SPACING.sm }}>
           <Text style={{
             fontFamily: FONT_FAMILY.semiBold,

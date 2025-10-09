@@ -57,6 +57,7 @@ export const MedicineScreen = () => {
               dosage: medicine.dosage || '',
               form: medicine.form,
               kitId: medicine.kitId,
+              photoPath: medicine.photoPath,
               quantity: stock?.quantity || 0,
               unit: stock?.unit || '',
               expiryDate: stock?.expiryDate?.toISOString()
@@ -90,7 +91,8 @@ export const MedicineScreen = () => {
           dosage: data.dosage || undefined,
           form: data.form,
           prescriptionRequired: false,
-          kitId: data.kitId
+          kitId: data.kitId,
+          photoPath: data.photoPath
         })
 
         // Создаем запись о запасе, если указано количество
@@ -125,7 +127,8 @@ export const MedicineScreen = () => {
           manufacturer: data.manufacturer || undefined,
           dosage: data.dosage || undefined,
           form: data.form,
-          prescriptionRequired: false
+          prescriptionRequired: false,
+          photoPath: data.photoPath
         })
 
         // Обновляем запасы
@@ -182,7 +185,7 @@ export const MedicineScreen = () => {
   }
 
   return (
-    <SafeAreaView style={{ backgroundColor: colors.background }}>
+    <SafeAreaView edges={['bottom']} style={{ backgroundColor: colors.background }}>
       <MedicineForm
         initialData={initialData}
         onSubmit={handleSubmit}

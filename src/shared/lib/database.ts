@@ -5,6 +5,7 @@ import {
   MedicineStock,
   MedicineUsage
 } from '@/entities/medicine/model/types'
+import { FamilyMember } from '@/entities/family-member/model/types'
 import { DATABASE_CONFIG } from '../config/database'
 
 // Конфигурация SQLite
@@ -77,6 +78,7 @@ class DatabaseService {
         form TEXT NOT NULL,
         prescription_required BOOLEAN DEFAULT 0,
         kit_id TEXT NOT NULL,
+        photo_path TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         FOREIGN KEY (kit_id) REFERENCES medicine_kits (id) ON DELETE CASCADE
@@ -97,16 +99,30 @@ class DatabaseService {
       )
     `)
 
+    // Таблица членов семьи
+    await this.db.executeSql(`
+      CREATE TABLE IF NOT EXISTS family_members (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        avatar TEXT,
+        color TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    `)
+
     // Таблица использования лекарств
     await this.db.executeSql(`
       CREATE TABLE IF NOT EXISTS medicine_usage (
         id TEXT PRIMARY KEY,
         medicine_id TEXT NOT NULL,
+        family_member_id TEXT,
         quantity_used INTEGER NOT NULL,
         usage_date TEXT NOT NULL,
         notes TEXT,
         created_at TEXT NOT NULL,
-        FOREIGN KEY (medicine_id) REFERENCES medicines (id) ON DELETE CASCADE
+        FOREIGN KEY (medicine_id) REFERENCES medicines (id) ON DELETE CASCADE,
+        FOREIGN KEY (family_member_id) REFERENCES family_members (id) ON DELETE SET NULL
       )
     `)
 
@@ -153,6 +169,65 @@ class DatabaseService {
         console.log('SQLite - Adding parent_id column to medicine_kits table')
         await this.db.executeSql(`
           ALTER TABLE medicine_kits ADD COLUMN parent_id TEXT
+        `)
+      }
+
+      // Проверяем структуру таблицы medicine_usage
+      const [usageResult] = await this.db.executeSql(`
+        PRAGMA table_info(medicine_usage)
+      `)
+
+      let hasFamilyMemberId = false
+      for (let i = 0; i < usageResult.rows.length; i++) {
+        const column = usageResult.rows.item(i)
+        if (column.name === 'family_member_id') {
+          hasFamilyMemberId = true
+        }
+      }
+
+      // Если колонки family_member_id нет, добавляем её
+      if (!hasFamilyMemberId) {
+        console.log('SQLite - Adding family_member_id column to medicine_usage table')
+        await this.db.executeSql(`
+          ALTER TABLE medicine_usage ADD COLUMN family_member_id TEXT
+        `)
+      }
+
+      // Проверяем структуру таблицы medicines
+      const [medicinesResult] = await this.db.executeSql(`
+        PRAGMA table_info(medicines)
+      `)
+
+      let hasPhotoPath = false
+      for (let i = 0; i < medicinesResult.rows.length; i++) {
+        const column = medicinesResult.rows.item(i)
+        if (column.name === 'photo_path') {
+          hasPhotoPath = true
+        }
+      }
+
+      // Если колонки photo_path нет, добавляем её
+      if (!hasPhotoPath) {
+        console.log('SQLite - Adding photo_path column to medicines table')
+        await this.db.executeSql(`
+          ALTER TABLE medicines ADD COLUMN photo_path TEXT
+        `)
+      }
+
+      // Проверяем наличие колонки barcode
+      let hasBarcode = false
+      for (let i = 0; i < medicinesResult.rows.length; i++) {
+        const column = medicinesResult.rows.item(i)
+        if (column.name === 'barcode') {
+          hasBarcode = true
+        }
+      }
+
+      // Если колонки barcode нет, добавляем её
+      if (!hasBarcode) {
+        console.log('SQLite - Adding barcode column to medicines table')
+        await this.db.executeSql(`
+          ALTER TABLE medicines ADD COLUMN barcode TEXT
         `)
       }
 
@@ -322,8 +397,8 @@ class DatabaseService {
 
     await this.db.executeSql(`
       INSERT INTO medicines (
-        id, name, description, manufacturer, dosage, form, prescription_required, kit_id, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        id, name, description, manufacturer, dosage, form, prescription_required, kit_id, photo_path, barcode, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       newMedicine.id,
       newMedicine.name,
@@ -333,6 +408,8 @@ class DatabaseService {
       newMedicine.form,
       newMedicine.prescriptionRequired ? 1 : 0,
       newMedicine.kitId,
+      newMedicine.photoPath || null,
+      newMedicine.barcode || null,
       newMedicine.createdAt.toISOString(),
       newMedicine.updatedAt.toISOString()
     ])
@@ -361,6 +438,8 @@ class DatabaseService {
         form: row.form,
         prescriptionRequired: row.prescription_required === 1,
         kitId: row.kit_id,
+        photoPath: row.photo_path,
+        barcode: row.barcode,
         createdAt: new Date(row.created_at),
         updatedAt: new Date(row.updated_at)
       }
@@ -393,6 +472,8 @@ class DatabaseService {
         form: row.form,
         prescriptionRequired: row.prescription_required === 1,
         kitId: row.kit_id,
+        photoPath: row.photo_path,
+        barcode: row.barcode,
         createdAt: new Date(row.created_at),
         updatedAt: new Date(row.updated_at)
       }
@@ -425,6 +506,8 @@ class DatabaseService {
       form: row.form,
       prescriptionRequired: row.prescription_required === 1,
       kitId: row.kit_id,
+      photoPath: row.photo_path,
+      barcode: row.barcode,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at)
     }
@@ -433,12 +516,45 @@ class DatabaseService {
     return medicine
   }
 
+  async getMedicineByBarcode(barcode: string): Promise<Medicine | null> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    const [results] = await this.db.executeSql(`
+      SELECT * FROM medicines WHERE barcode = ?
+    `, [barcode])
+
+    if (results.rows.length === 0) {
+      return null
+    }
+
+    const row = results.rows.item(0)
+    const medicine: Medicine = {
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      manufacturer: row.manufacturer,
+      dosage: row.dosage,
+      form: row.form,
+      prescriptionRequired: row.prescription_required === 1,
+      kitId: row.kit_id,
+      photoPath: row.photo_path,
+      barcode: row.barcode,
+      createdAt: new Date(row.created_at),
+      updatedAt: new Date(row.updated_at)
+    }
+
+    console.log('SQLite - Loaded medicine by barcode:', medicine)
+    return medicine
+  }
+
   async updateMedicine(id: string, updates: Partial<Medicine>): Promise<void> {
     if (!this.db) {
       throw new Error('Database not initialized')
     }
 
-    const allowedFields = ['name', 'description', 'manufacturer', 'dosage', 'form', 'prescription_required']
+    const allowedFields = ['name', 'description', 'manufacturer', 'dosage', 'form', 'prescription_required', 'photoPath', 'barcode']
     const filteredUpdates = Object.entries(updates)
       .filter(([key]) => key !== 'id' && key !== 'createdAt' && key !== 'updatedAt' && allowedFields.includes(key))
 
@@ -446,7 +562,11 @@ class DatabaseService {
       return
     }
 
-    const setClause = filteredUpdates.map(([key]) => `${key} = ?`).join(', ')
+    const setClause = filteredUpdates.map(([key]) => {
+      // Маппинг camelCase в snake_case
+      const dbField = key === 'photoPath' ? 'photo_path' : key === 'barcode' ? 'barcode' : key
+      return `${dbField} = ?`
+    }).join(', ')
     const values = filteredUpdates.map(([_, value]) => value)
 
     await this.db.executeSql(`
@@ -588,11 +708,12 @@ class DatabaseService {
 
     await this.db.executeSql(`
       INSERT INTO medicine_usage (
-        id, medicine_id, quantity_used, usage_date, notes, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?)
+        id, medicine_id, family_member_id, quantity_used, usage_date, notes, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
     `, [
       newUsage.id,
       newUsage.medicineId,
+      newUsage.familyMemberId || null,
       newUsage.quantityUsed,
       newUsage.usageDate.toISOString(),
       newUsage.notes || null,
@@ -617,6 +738,7 @@ class DatabaseService {
       const usage: MedicineUsage = {
         id: row.id,
         medicineId: row.medicine_id,
+        familyMemberId: row.family_member_id,
         quantityUsed: row.quantity_used,
         usageDate: new Date(row.usage_date),
         notes: row.notes,
@@ -626,6 +748,145 @@ class DatabaseService {
     }
 
     return usages
+  }
+
+  // CRUD операции для членов семьи
+  async createFamilyMember(member: Omit<FamilyMember, 'id' | 'createdAt' | 'updatedAt'>): Promise<FamilyMember> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    const id = Date.now().toString()
+    const now = new Date().toISOString()
+
+    const newMember: FamilyMember = {
+      ...member,
+      id,
+      createdAt: new Date(now),
+      updatedAt: new Date(now)
+    }
+
+    await this.db.executeSql(`
+      INSERT INTO family_members (
+        id, name, avatar, color, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?)
+    `, [
+      newMember.id,
+      newMember.name,
+      newMember.avatar || null,
+      newMember.color || null,
+      newMember.createdAt.toISOString(),
+      newMember.updatedAt.toISOString()
+    ])
+
+    console.log('SQLite - Created family member:', newMember)
+    return newMember
+  }
+
+  async getFamilyMembers(): Promise<FamilyMember[]> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    const [results] = await this.db.executeSql(`
+      SELECT * FROM family_members ORDER BY name ASC
+    `)
+
+    const members: FamilyMember[] = []
+    for (let i = 0; i < results.rows.length; i++) {
+      const row = results.rows.item(i)
+      const member: FamilyMember = {
+        id: row.id,
+        name: row.name,
+        avatar: row.avatar,
+        color: row.color,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      }
+      members.push(member)
+    }
+
+    return members
+  }
+
+  async getFamilyMemberById(id: string): Promise<FamilyMember | null> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    const [results] = await this.db.executeSql(`
+      SELECT * FROM family_members WHERE id = ?
+    `, [id])
+
+    if (results.rows.length === 0) {
+      return null
+    }
+
+    const row = results.rows.item(0)
+    return {
+      id: row.id,
+      name: row.name,
+      avatar: row.avatar,
+      color: row.color,
+      createdAt: new Date(row.created_at),
+      updatedAt: new Date(row.updated_at)
+    }
+  }
+
+  async updateFamilyMember(id: string, updates: Partial<FamilyMember>): Promise<void> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    const updateFields: string[] = []
+    const updateValues: any[] = []
+
+    if (updates.name !== undefined) {
+      updateFields.push('name = ?')
+      updateValues.push(updates.name)
+    }
+    if (updates.avatar !== undefined) {
+      updateFields.push('avatar = ?')
+      updateValues.push(updates.avatar)
+    }
+    if (updates.color !== undefined) {
+      updateFields.push('color = ?')
+      updateValues.push(updates.color)
+    }
+
+    updateFields.push('updated_at = ?')
+    updateValues.push(new Date().toISOString())
+    updateValues.push(id)
+
+    await this.db.executeSql(`
+      UPDATE family_members SET ${updateFields.join(', ')} WHERE id = ?
+    `, updateValues)
+
+    console.log('SQLite - Updated family member:', id)
+  }
+
+  async deleteFamilyMember(id: string): Promise<void> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    await this.db.executeSql(`
+      DELETE FROM family_members WHERE id = ?
+    `, [id])
+
+    console.log('SQLite - Deleted family member:', id)
+  }
+
+  async deleteMedicineUsage(id: string): Promise<void> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    await this.db.executeSql(`
+      DELETE FROM medicine_usage WHERE id = ?
+    `, [id])
+
+    console.log('SQLite - Deleted medicine usage:', id)
   }
 
   // Справочные данные (заглушки для будущей реализации)

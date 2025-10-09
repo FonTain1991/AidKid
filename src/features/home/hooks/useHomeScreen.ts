@@ -78,6 +78,10 @@ export const useHomeScreen = () => {
     )
   }
 
+  const handleScanBarcode = () => {
+    navigation.navigate('BarcodeScanner')
+  }
+
   const quickCreateOptions = [
     {
       id: 'category',
@@ -90,6 +94,12 @@ export const useHomeScreen = () => {
       title: 'Добавить лекарство',
       icon: 'pill',
       onPress: handleAddMedicine,
+    },
+    {
+      id: 'scan',
+      title: 'Сканировать штрих-код',
+      icon: 'barcode-scan',
+      onPress: handleScanBarcode,
     },
   ]
 

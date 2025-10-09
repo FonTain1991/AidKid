@@ -2,11 +2,11 @@ import type { RootStackParamList } from '@/app/navigation/types'
 import { useTheme } from '@/app/providers/theme'
 import { SPACING } from '@/shared/config'
 import { FONT_SIZE } from '@/shared/config/constants/font'
+import { SafeAreaView } from '@/shared/ui/SafeAreaView'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import React from 'react'
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { displayName } from '../../../app.json'
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>
 
@@ -15,6 +15,14 @@ export function MoreScreen() {
   const navigation = useNavigation<NavigationProp>()
 
   const menuItems = [
+    {
+      title: 'Члены семьи',
+      description: 'Управление членами семьи',
+      icon: '👨‍👩‍👧‍👦',
+      onPress: () => {
+        navigation.navigate('FamilyMembers')
+      },
+    },
     {
       title: 'Настройки уведомлений',
       description: 'Управление уведомлениями о лекарствах',
@@ -68,7 +76,7 @@ export function MoreScreen() {
         </View>
         <View style={styles.footer}>
           <Text style={[styles.version, { color: colors.textSecondary }]}>
-            AidKit v1.0.0
+            {displayName} v1.0.0
           </Text>
           <Text style={[styles.copyright, { color: colors.textSecondary }]}>
             © {new Date().getFullYear()} AidKit. Все права защищены.

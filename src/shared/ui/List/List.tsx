@@ -4,7 +4,7 @@ import { memo, useMemo, useRef } from 'react'
 import { Pressable, Text, View, Keyboard } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { BottomSheet, BottomSheetRef, Separator } from '../'
-import { HEIGHT_SCREEN, IS_ANDROID } from '../../config'
+import { HEIGHT_SCREEN, IS_ANDROID, SPACING } from '../../config'
 import { useEvent } from '../../hooks'
 import { ListButton } from '../ListButton/'
 import { ModalSafeAreaView } from '../ModalSafeAreaView'
@@ -41,7 +41,7 @@ export const List = memo(({ value, onChange, options, fieldName }: ListProps) =>
 
 
   const maxHeight = HEIGHT_SCREEN * 0.9
-  const height = (options.length * 56) + (IS_ANDROID ? bottom : 0)
+  const height = (options.length * 56) + (IS_ANDROID ? bottom : 0) + (SPACING.md / 2)
   const isScroll = !!options.length && height > maxHeight
 
   return (

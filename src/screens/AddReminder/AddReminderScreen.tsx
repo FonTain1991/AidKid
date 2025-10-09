@@ -1,17 +1,27 @@
 import React, { useState, useEffect } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native'
 import { SafeAreaView } from '@/shared/ui/SafeAreaView'
 import { useTheme } from '@/app/providers/theme'
 import { SPACING } from '@/shared/config'
 import { FONT_SIZE } from '@/shared/config/constants/font'
 import { databaseService } from '@/shared/lib/database'
+import { getMedicinePhotoUri } from '@/shared/lib'
 import { notificationService } from '@/shared/lib/notifications'
 import { Medicine, MedicineStock } from '@/entities/medicine/model/types'
 import { MedicineKit } from '@/entities/kit/model/types'
+import { FamilyMember } from '@/entities/family-member/model/types'
 import { DatePicker } from '@/shared/ui/DatePicker'
+import { TextInput } from '@/shared/ui/TextInput'
+import { useNavigation } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import type { RootStackParamList } from '@/app/navigation/types'
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>
 
 interface ReminderData {
   medicineId: string
+  familyMemberId?: string
   title: string
   time: Date
   frequency: 'once' | 'daily' | 'weekly'
@@ -21,12 +31,15 @@ interface ReminderData {
 
 export function AddReminderScreen() {
   const { colors } = useTheme()
+  const navigation = useNavigation<NavigationProp>()
   const [medicines, setMedicines] = useState<Medicine[]>([])
   const [stocks, setStocks] = useState<Map<string, MedicineStock>>(new Map())
   const [kits, setKits] = useState<Map<string, MedicineKit>>(new Map())
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(null)
+  const [selectedFamilyMember, setSelectedFamilyMember] = useState<FamilyMember | null>(null)
   const [reminderTitle, setReminderTitle] = useState('')
   const [reminderTime, setReminderTime] = useState(new Date())
   const [reminderTimes, setReminderTimes] = useState<Date[]>([new Date(), new Date(), new Date()])
@@ -37,6 +50,22 @@ export function AddReminderScreen() {
   useEffect(() => {
     loadData()
   }, [])
+
+  // Перезагружаем членов семьи при фокусе экрана
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', async () => {
+      try {
+        await databaseService.init()
+        const allFamilyMembers = await databaseService.getFamilyMembers()
+        setFamilyMembers(allFamilyMembers)
+        console.log('✅ Family members reloaded:', allFamilyMembers.length)
+      } catch (error) {
+        console.error('❌ Failed to reload family members:', error)
+      }
+    })
+
+    return unsubscribe
+  }, [navigation])
 
   // Инициализируем время по умолчанию для разных приемов
   useEffect(() => {
@@ -70,6 +99,9 @@ export function AddReminderScreen() {
       const allMedicines = await databaseService.getMedicines()
       setMedicines(allMedicines)
 
+      const allFamilyMembers = await databaseService.getFamilyMembers()
+      setFamilyMembers(allFamilyMembers)
+
       const stocksMap = new Map<string, MedicineStock>()
       for (const medicine of allMedicines) {
         try {
@@ -92,10 +124,8 @@ export function AddReminderScreen() {
     }
   }
 
-  const availableMedicines = medicines.filter(medicine => {
-    const stock = stocks.get(medicine.id)
-    return stock && stock.quantity > 0
-  })
+  // Показываем все лекарства (даже без остатка)
+  const availableMedicines = medicines
 
   const getKitName = (kitId: string) => {
     return kits.get(kitId)?.name || 'Неизвестная аптечка'
@@ -122,7 +152,8 @@ export function AddReminderScreen() {
     title: string,
     times: Date[],
     frequency: 'once' | 'daily' | 'weekly',
-    quantity: number
+    quantity: number,
+    familyMemberId?: string
   ) => {
     const now = new Date()
 
@@ -146,6 +177,7 @@ export function AddReminderScreen() {
         data: {
           type: 'reminder',
           medicineId: medicine.id,
+          familyMemberId,
           frequency: 'once',
         },
         kitId: medicine.kitId,
@@ -179,6 +211,7 @@ export function AddReminderScreen() {
             data: {
               type: 'reminder',
               medicineId: medicine.id,
+              familyMemberId,
               frequency: 'daily',
               day,
               intake: intakeNumber,
@@ -219,6 +252,7 @@ export function AddReminderScreen() {
             data: {
               type: 'reminder',
               medicineId: medicine.id,
+              familyMemberId,
               frequency: 'weekly',
               week,
               intake: intakeNumber,
@@ -261,7 +295,8 @@ export function AddReminderScreen() {
         title,
         timesToUse,
         frequency,
-        frequency === 'once' ? 1 : quantity
+        frequency === 'once' ? 1 : quantity,
+        selectedFamilyMember?.id
       )
 
       const frequencyText = frequency === 'once' ? 'один раз' : frequency === 'daily' ? 'ежедневно' : 'еженедельно'
@@ -308,7 +343,10 @@ export function AddReminderScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView style={styles.scroll}>
+      <KeyboardAwareScrollView
+        keyboardShouldPersistTaps='handled'
+        style={styles.scroll}
+      >
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]}>Добавить напоминание</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
@@ -328,7 +366,7 @@ export function AddReminderScreen() {
             </View>
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.medicinesScroll}>
-              {availableMedicines.map((medicine) => {
+              {availableMedicines.map(medicine => {
                 const stockInfo = getStockInfo(medicine)
                 const kitName = getKitName(medicine.kitId)
                 const isSelected = selectedMedicine?.id === medicine.id
@@ -343,8 +381,23 @@ export function AddReminderScreen() {
                         backgroundColor: isSelected ? colors.primary + '10' : 'white'
                       }
                     ]}
-                    onPress={() => setSelectedMedicine(medicine)}
+                    onPress={() => {
+                      setSelectedMedicine(medicine)
+                      setReminderTitle(`Принять ${medicine.name}`)
+                    }}
                   >
+                    {/* Фото лекарства */}
+                    {medicine.photoPath ? (
+                      <Image
+                        source={{ uri: getMedicinePhotoUri(medicine.photoPath) || undefined }}
+                        style={styles.medicinePhoto}
+                      />
+                    ) : (
+                      <View style={styles.medicinePhotoPlaceholder}>
+                        <Text style={styles.medicinePhotoIcon}>💊</Text>
+                      </View>
+                    )}
+
                     <Text style={[styles.medicineName, { color: colors.text }]}>
                       {medicine.name}
                     </Text>
@@ -364,25 +417,90 @@ export function AddReminderScreen() {
           )}
         </View>
 
+        {/* Выбор члена семьи */}
+        {selectedMedicine && (
+          <View style={styles.section}>
+            <View style={styles.familyMemberHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Кто принимает?</Text>
+              {familyMembers.length === 0 && (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('FamilyMembers')}
+                  style={styles.addFamilyButton}
+                >
+                  <Text style={[styles.addFamilyButtonText, { color: colors.primary }]}>
+                    + Добавить
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {familyMembers.length === 0 ? (
+              <View style={styles.noFamilyContainer}>
+                <Text style={[styles.noFamilyText, { color: colors.textSecondary }]}>
+                  Нет членов семьи. Добавьте их, чтобы отслеживать кто принимает лекарства.
+                </Text>
+              </View>
+            ) : (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.familyScroll}>
+                <TouchableOpacity
+                  style={[
+                    styles.familyMemberCard,
+                    {
+                      borderColor: !selectedFamilyMember ? colors.primary : colors.border,
+                      backgroundColor: !selectedFamilyMember ? colors.primary + '10' : 'white'
+                    }
+                  ]}
+                  onPress={() => setSelectedFamilyMember(null)}
+                >
+                  <View style={[styles.familyAvatar, { backgroundColor: colors.border }]}>
+                    <Text style={styles.familyAvatarText}>❓</Text>
+                  </View>
+                  <Text style={[styles.familyMemberName, { color: colors.text }]}>
+                    Не указано
+                  </Text>
+                </TouchableOpacity>
+                {familyMembers.map(member => (
+                  <TouchableOpacity
+                    key={member.id}
+                    style={[
+                      styles.familyMemberCard,
+                      {
+                        borderColor: selectedFamilyMember?.id === member.id ? colors.primary : colors.border,
+                        backgroundColor: selectedFamilyMember?.id === member.id ? colors.primary + '10' : 'white'
+                      }
+                    ]}
+                    onPress={() => setSelectedFamilyMember(member)}
+                  >
+                    <View style={[styles.familyAvatar, { backgroundColor: member.color || colors.primary }]}>
+                      <Text style={styles.familyAvatarText}>{member.avatar || '👤'}</Text>
+                    </View>
+                    <Text style={[styles.familyMemberName, { color: colors.text }]}>
+                      {member.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+        )}
+
         {/* Настройки напоминания */}
         {selectedMedicine && (
           <>
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Настройки</Text>
 
-              <View style={styles.inputContainer}>
-                <Text style={[styles.inputLabel, { color: colors.text }]}>Название</Text>
-                <View style={[styles.textInput, { borderColor: colors.border, backgroundColor: colors.inputBackground }]}>
-                  <Text style={[styles.textInputText, { color: colors.text }]}>
-                    {reminderTitle || `Принять ${selectedMedicine.name}`}
-                  </Text>
-                </View>
-              </View>
+              <TextInput
+                label='Название'
+                value={reminderTitle}
+                onChangeText={setReminderTitle}
+                styleContainer={{ marginBottom: 24 }}
+              />
 
               <View style={styles.inputContainer}>
                 <Text style={[styles.inputLabel, { color: colors.text }]}>Частота</Text>
                 <View style={styles.frequencyContainer}>
-                  {frequencyOptions.map((option) => (
+                  {frequencyOptions.map(option => (
                     <TouchableOpacity
                       key={option.value}
                       style={[
@@ -434,7 +552,7 @@ export function AddReminderScreen() {
                   <DatePicker
                     value={reminderTime}
                     onChange={setReminderTime}
-                    mode="time"
+                    mode='time'
                     style={styles.timePicker}
                   />
                 </View>
@@ -448,12 +566,12 @@ export function AddReminderScreen() {
                       </Text>
                       <DatePicker
                         value={reminderTimes[index]}
-                        onChange={(newTime) => {
+                        onChange={newTime => {
                           const newTimes = [...reminderTimes]
                           newTimes[index] = newTime
                           setReminderTimes(newTimes)
                         }}
-                        mode="time"
+                        mode='time'
                         style={styles.timePicker}
                       />
                     </View>
@@ -484,7 +602,7 @@ export function AddReminderScreen() {
             • Можно отключить или изменить в любой момент
           </Text>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   )
 }
@@ -542,19 +660,42 @@ const styles = StyleSheet.create({
     marginHorizontal: SPACING.sm,
     minWidth: 140,
     backgroundColor: 'white',
+    alignItems: 'center',
+  },
+  medicinePhoto: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginBottom: SPACING.sm,
+    backgroundColor: '#f0f0f0',
+  },
+  medicinePhotoPlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginBottom: SPACING.sm,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  medicinePhotoIcon: {
+    fontSize: 40,
   },
   medicineName: {
     fontSize: FONT_SIZE.md,
     fontWeight: '600',
     marginBottom: SPACING.xs,
+    textAlign: 'center',
   },
   medicineForm: {
     fontSize: FONT_SIZE.sm,
     marginBottom: SPACING.xs,
+    textAlign: 'center',
   },
   medicineKit: {
     fontSize: FONT_SIZE.sm,
     marginBottom: SPACING.sm,
+    textAlign: 'center',
   },
   stockBadge: {
     alignSelf: 'flex-start',
@@ -671,6 +812,57 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: FONT_SIZE.sm,
     lineHeight: 20,
+  },
+  familyMemberHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  addFamilyButton: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+  },
+  addFamilyButtonText: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '600',
+  },
+  noFamilyContainer: {
+    padding: SPACING.md,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+  },
+  noFamilyText: {
+    fontSize: FONT_SIZE.sm,
+    textAlign: 'center',
+  },
+  familyScroll: {
+    marginHorizontal: -SPACING.md,
+  },
+  familyMemberCard: {
+    borderWidth: 2,
+    borderRadius: 12,
+    padding: SPACING.md,
+    marginHorizontal: SPACING.xs,
+    minWidth: 100,
+    alignItems: 'center',
+    backgroundColor: 'white',
+  },
+  familyAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
+  familyAvatarText: {
+    fontSize: 28,
+  },
+  familyMemberName: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 })
 

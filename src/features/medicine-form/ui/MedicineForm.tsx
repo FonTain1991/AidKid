@@ -1,20 +1,31 @@
 import { SPACING } from '@/shared/config'
+import { FONT_SIZE } from '@/shared/config/constants/font'
 import { DatePicker, KitList, List, Textarea } from '@/shared/ui'
 import { Button } from '@/shared/ui/Button'
 import { FormItemWrapper } from '@/shared/ui/FormItemWrapper'
 import { TextInput } from '@/shared/ui/TextInput'
-import React from 'react'
-import { Alert, StyleSheet, View } from 'react-native'
+import React, { useEffect } from 'react'
+import { Alert, StyleSheet, View, TouchableOpacity, Image, Text } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useMedicineForm, useMedicineFormOptions } from '../model'
 import { MedicineFormProps } from '../model/types'
+import { pickMedicinePhoto, getMedicinePhotoUri, deleteMedicinePhoto } from '@/shared/lib'
+import { useTheme } from '@/app/providers/theme'
+import { useNavigation, useRoute } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import type { RootStackParamList } from '@/app/navigation/types'
 // уведомления удалены
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>
 
 export const MedicineForm: React.FC<MedicineFormProps> = ({
   initialData,
   onSubmit,
   kitId
 }) => {
+  const { colors } = useTheme()
+  const navigation = useNavigation<NavigationProp>()
+  const route = useRoute()
   const {
     formData,
     loading,
@@ -26,6 +37,50 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
   } = useMedicineForm(kitId, initialData)
 
   const { formOptions, unitOptions, loading: optionsLoading } = useMedicineFormOptions()
+
+  // Обработка результата сканирования штрих-кода при возврате
+  useEffect(() => {
+    const params = route.params as any
+    if (params?.scannedBarcode) {
+      updateField('barcode', params.scannedBarcode)
+      // Очищаем параметр после использования
+      navigation.setParams({ scannedBarcode: undefined } as any)
+    }
+  }, [route.params, navigation, updateField])
+
+  const handleScanBarcode = () => {
+    navigation.navigate('BarcodeScanner')
+  }
+
+  const handlePickPhoto = async () => {
+    const photoPath = await pickMedicinePhoto()
+    if (photoPath) {
+      updateField('photoPath', photoPath)
+    }
+  }
+
+  const handleRemovePhoto = () => {
+    Alert.alert(
+      'Удалить фото?',
+      'Вы уверены, что хотите удалить фото лекарства?',
+      [
+        {
+          text: 'Отмена',
+          style: 'cancel'
+        },
+        {
+          text: 'Удалить',
+          style: 'destructive',
+          onPress: async () => {
+            if (formData.photoPath) {
+              await deleteMedicinePhoto(formData.photoPath)
+            }
+            updateField('photoPath', undefined)
+          }
+        }
+      ]
+    )
+  }
 
   const handleSubmit = async () => {
     const validation = validateForm()
@@ -41,10 +96,7 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
     try {
       setLoading(true)
       setError(null)
-      // Стабильный id уведомления: medicine:{medicineId}
-      const notificationId = formData.id ? `medicine:${formData.id}` : undefined
 
-      // Если редактирование и дата изменена — отменяем прежнее уведомление
       await onSubmit(formData)
 
       Alert.alert('Успех', 'Лекарство успешно сохранено')
@@ -78,6 +130,62 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
           onChangeText={text => updateField('name', text)}
           error={error || undefined}
         />
+      </FormItemWrapper>
+
+      {/* Фото лекарства */}
+      <FormItemWrapper>
+        <View style={styles.photoContainer}>
+          {formData.photoPath ? (
+            <View style={styles.photoPreview}>
+              <Image
+                source={{ uri: getMedicinePhotoUri(formData.photoPath) || undefined }}
+                style={styles.photoImage}
+                resizeMode='cover'
+              />
+              <View style={styles.photoActions}>
+                <TouchableOpacity
+                  style={[styles.photoButton, { backgroundColor: colors.primary }]}
+                  onPress={handlePickPhoto}
+                >
+                  <Text style={styles.photoButtonText}>Изменить фото</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.photoButton, { backgroundColor: colors.error }]}
+                  onPress={handleRemovePhoto}
+                >
+                  <Text style={styles.photoButtonText}>Удалить</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[styles.addPhotoButton, { borderColor: colors.border }]}
+              onPress={handlePickPhoto}
+            >
+              <Text style={styles.addPhotoIcon}>📷</Text>
+              <Text style={[styles.addPhotoText, { color: colors.text }]}>Добавить фото</Text>
+              <Text style={[styles.addPhotoHint, { color: colors.textSecondary }]}>
+                Сфотографируйте упаковку или само лекарство
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </FormItemWrapper>
+
+      {/* Штрих-код */}
+      <FormItemWrapper>
+        <TextInput
+          label='Штрих-код'
+          value={formData.barcode || ''}
+          onChangeText={text => updateField('barcode', text)}
+        // placeholder='Введите или отсканируйте'
+        />
+        <TouchableOpacity
+          style={[styles.scanButton, { backgroundColor: colors.primary }]}
+          onPress={handleScanBarcode}
+        >
+          <Text style={styles.scanButtonText}>📷 Сканировать штрих-код</Text>
+        </TouchableOpacity>
       </FormItemWrapper>
 
       <FormItemWrapper>
@@ -190,5 +298,65 @@ const styles = StyleSheet.create({
   },
   dosageInput: {
     flex: 1,
+  },
+  photoContainer: {
+    marginVertical: SPACING.sm,
+  },
+  photoPreview: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  photoImage: {
+    width: '100%',
+    height: 200,
+    backgroundColor: '#f0f0f0',
+  },
+  photoActions: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    padding: SPACING.sm,
+  },
+  photoButton: {
+    flex: 1,
+    paddingVertical: SPACING.sm,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  photoButtonText: {
+    color: 'white',
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '600',
+  },
+  addPhotoButton: {
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    padding: SPACING.xl,
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+  },
+  addPhotoIcon: {
+    fontSize: 48,
+    marginBottom: SPACING.sm,
+  },
+  addPhotoText: {
+    fontSize: FONT_SIZE.md,
+    fontWeight: '600',
+    marginBottom: SPACING.xs,
+  },
+  addPhotoHint: {
+    fontSize: FONT_SIZE.sm,
+    textAlign: 'center',
+  },
+  scanButton: {
+    marginTop: SPACING.sm,
+    paddingVertical: SPACING.md,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  scanButtonText: {
+    color: 'white',
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '600',
   },
 })

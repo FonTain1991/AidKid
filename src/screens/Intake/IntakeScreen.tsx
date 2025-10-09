@@ -21,7 +21,7 @@ export function IntakeScreen() {
       icon: '📅',
       count: 0,
       onPress: () => {
-        console.log('Navigate to today intake')
+        navigation.navigate('Today')
       },
     },
     {
@@ -30,7 +30,7 @@ export function IntakeScreen() {
       icon: '📋',
       count: 0,
       onPress: () => {
-        console.log('Navigate to intake history')
+        navigation.navigate('History')
       },
     },
     {
@@ -48,7 +48,7 @@ export function IntakeScreen() {
       icon: '📊',
       count: 0,
       onPress: () => {
-        console.log('Navigate to intake statistics')
+        navigation.navigate('Statistics')
       },
     }
   ]
