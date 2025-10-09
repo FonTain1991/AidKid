@@ -79,6 +79,7 @@ class DatabaseService {
         prescription_required BOOLEAN DEFAULT 0,
         kit_id TEXT NOT NULL,
         photo_path TEXT,
+        barcode TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         FOREIGN KEY (kit_id) REFERENCES medicine_kits (id) ON DELETE CASCADE

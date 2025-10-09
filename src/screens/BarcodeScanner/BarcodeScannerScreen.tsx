@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Linking, Platform } from 'react-native'
 import { Camera, CameraType } from 'react-native-camera-kit'
 import { useNavigation } from '@react-navigation/native'
+import { CommonActions } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RootStackParamList } from '@/app/navigation/types'
 import { useTheme } from '@/app/providers/theme'
@@ -90,34 +91,49 @@ export function BarcodeScannerScreen() {
           ]
         )
       } else {
-        // Лекарство не найдено - предлагаем вернуться или продолжить
-        const canGoBack = navigation.canGoBack()
+        // Лекарство не найдено - возвращаемся с штрих-кодом если есть предыдущий экран
+        const state = navigation.getState()
+        const routes = state.routes
+        const previousRoute = routes[routes.length - 2]
 
-        Alert.alert(
-          'Лекарство не найдено',
-          `Штрих-код ${barcode} не найден в вашей аптечке.${canGoBack ? ' Хотите использовать этот штрих-код для текущего лекарства?' : ''}`,
-          [
-            ...(canGoBack ? [{
-              text: 'Использовать',
-              onPress: () => {
-                // Возвращаемся назад с штрих-кодом
-                navigation.navigate({
-                  name: navigation.getState().routes[navigation.getState().routes.length - 2]?.name as any,
-                  params: { scannedBarcode: barcode },
-                  merge: true
-                } as any)
+        // Если предыдущий экран - Medicine (форма лекарства), возвращаемся с штрих-кодом
+        if (previousRoute && previousRoute.name === 'Medicine') {
+          // Используем dispatch с pop и обновлением параметров предыдущего экрана
+          navigation.dispatch(state => {
+            const routes = state.routes.slice(0, -1) // Удаляем текущий экран (BarcodeScanner)
+            const updatedRoutes = routes.map((route, index) => {
+              if (index === routes.length - 1 && route.name === 'Medicine') {
+                return {
+                  ...route,
+                  params: { ...(route.params as any), scannedBarcode: barcode }
+                }
               }
-            }] : []),
-            {
-              text: 'Сканировать еще',
-              onPress: () => setIsScanning(true)
-            },
-            {
-              text: 'Закрыть',
-              onPress: () => navigation.goBack()
-            }
-          ]
-        )
+              return route
+            })
+
+            return CommonActions.reset({
+              ...state,
+              routes: updatedRoutes,
+              index: updatedRoutes.length - 1
+            })
+          })
+        } else {
+          // Если открыли с главной - показываем что не найдено
+          Alert.alert(
+            'Лекарство не найдено',
+            `Штрих-код ${barcode} не найден в вашей аптечке.`,
+            [
+              {
+                text: 'Сканировать еще',
+                onPress: () => setIsScanning(true)
+              },
+              {
+                text: 'Закрыть',
+                onPress: () => navigation.goBack()
+              }
+            ]
+          )
+        }
       }
     } catch (error) {
       console.error('Ошибка при поиске лекарства:', error)

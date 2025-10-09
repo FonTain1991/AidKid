@@ -4,6 +4,7 @@ import { QuickCreateSheet } from '@/features/quick-create'
 import { useNavigationBarColor, useScreenProperties } from '@/shared/hooks'
 import { FAB } from '@/shared/ui/FAB'
 import { SafeAreaView } from '@/shared/ui/SafeAreaView'
+import { Separator } from '@/shared/ui'
 import { Alert, TouchableOpacity, Text, View, ScrollView, TextInput, StyleSheet, RefreshControl, Image } from 'react-native'
 import { databaseService, getMedicinePhotoUri } from '@/shared/lib'
 import { useState, useEffect } from 'react'
@@ -164,26 +165,7 @@ export function HomeScreen() {
           </Text>
         </View>
 
-        {/* Поиск */}
-        <View style={styles.searchContainer}>
-          <View style={[styles.searchBox, { backgroundColor: 'white', borderColor: colors.border }]}>
-            <Text style={styles.searchIcon}>🔍</Text>
-            <TextInput
-              style={[styles.searchInput, { color: colors.text }]}
-              placeholder='Поиск аптечек и лекарств...'
-              placeholderTextColor={colors.textSecondary}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Text style={styles.clearIcon}>✕</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
-        {/* Плашки предупреждений - скрываем при поиске */}
+        {/* Плашки предупреждений - показываем сверху, скрываем при поиске */}
         {!hasSearchQuery && (expiringCount > 0 || lowStockCount > 0) && (
           <View style={styles.alertsContainer}>
             {expiringCount > 0 && (
@@ -223,6 +205,32 @@ export function HomeScreen() {
             )}
           </View>
         )}
+
+        {/* Разделитель между предупреждениями и поиском */}
+        {!hasSearchQuery && (expiringCount > 0 || lowStockCount > 0) && (
+          <View style={styles.separatorContainer}>
+            <Separator />
+          </View>
+        )}
+
+        {/* Поиск - перемещен после предупреждений */}
+        <View style={styles.searchContainer}>
+          <View style={[styles.searchBox, { backgroundColor: 'white', borderColor: colors.border }]}>
+            <Text style={styles.searchIcon}>🔍</Text>
+            <TextInput
+              style={[styles.searchInput, { color: colors.text }]}
+              placeholder='Поиск аптечек и лекарств...'
+              placeholderTextColor={colors.textSecondary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Text style={styles.clearIcon}>✕</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
 
         {/* Результаты поиска */}
         {loading && kits.length === 0 ? (
@@ -461,6 +469,10 @@ const styles = StyleSheet.create({
   alertArrow: {
     fontSize: 32,
     fontWeight: 'bold',
+  },
+  separatorContainer: {
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.md,
   },
   kitsHeader: {
     paddingHorizontal: SPACING.md,

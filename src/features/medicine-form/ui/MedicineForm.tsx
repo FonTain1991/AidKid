@@ -178,7 +178,6 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
           label='Штрих-код'
           value={formData.barcode || ''}
           onChangeText={text => updateField('barcode', text)}
-        // placeholder='Введите или отсканируйте'
         />
         <TouchableOpacity
           style={[styles.scanButton, { backgroundColor: colors.primary }]}

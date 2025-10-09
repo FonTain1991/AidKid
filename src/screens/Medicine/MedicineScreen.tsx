@@ -58,6 +58,7 @@ export const MedicineScreen = () => {
               form: medicine.form,
               kitId: medicine.kitId,
               photoPath: medicine.photoPath,
+              barcode: medicine.barcode,
               quantity: stock?.quantity || 0,
               unit: stock?.unit || '',
               expiryDate: stock?.expiryDate?.toISOString()
@@ -92,7 +93,8 @@ export const MedicineScreen = () => {
           form: data.form,
           prescriptionRequired: false,
           kitId: data.kitId,
-          photoPath: data.photoPath
+          photoPath: data.photoPath,
+          barcode: data.barcode
         })
 
         // Создаем запись о запасе, если указано количество
@@ -128,7 +130,8 @@ export const MedicineScreen = () => {
           dosage: data.dosage || undefined,
           form: data.form,
           prescriptionRequired: false,
-          photoPath: data.photoPath
+          photoPath: data.photoPath,
+          barcode: data.barcode
         })
 
         // Обновляем запасы

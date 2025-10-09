@@ -14,6 +14,7 @@ export function QuickIntakeScreen() {
   const [medicines, setMedicines] = useState<Medicine[]>([])
   const [stocks, setStocks] = useState<Map<string, MedicineStock>>(new Map())
   const [kits, setKits] = useState<Map<string, MedicineKit>>(new Map())
+  const [selectedMedicines, setSelectedMedicines] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -68,6 +69,79 @@ export function QuickIntakeScreen() {
       Alert.alert('Ошибка', `Не удалось загрузить данные: ${errorMessage}`)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const toggleMedicineSelection = (medicineId: string) => {
+    setSelectedMedicines(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(medicineId)) {
+        newSet.delete(medicineId)
+      } else {
+        newSet.add(medicineId)
+      }
+      return newSet
+    })
+  }
+
+  const handleBatchIntake = async () => {
+    if (selectedMedicines.size === 0) {
+      Alert.alert('Ошибка', 'Выберите хотя бы одно лекарство')
+      return
+    }
+
+    try {
+      let successCount = 0
+      let outOfStockCount = 0
+      const results: string[] = []
+
+      for (const medicineId of selectedMedicines) {
+        const medicine = medicines.find(m => m.id === medicineId)
+        if (!medicine) continue
+
+        const stock = stocks.get(medicineId)
+
+        // Создаем запись в истории
+        await databaseService.createMedicineUsage({
+          medicineId,
+          quantityUsed: 1,
+          usageDate: new Date(),
+          notes: 'Быстрый прием (множественный)'
+        })
+
+        // Если есть запас, уменьшаем количество
+        if (stock && stock.quantity > 0) {
+          const updatedStock = {
+            ...stock,
+            quantity: stock.quantity - 1,
+            updatedAt: new Date(),
+          }
+
+          await databaseService.updateMedicineStock(stock.id, {
+            quantity: updatedStock.quantity,
+            updatedAt: updatedStock.updatedAt,
+          })
+
+          setStocks(prev => new Map(prev.set(medicineId, updatedStock)))
+          results.push(`✅ ${medicine.name}: ${updatedStock.quantity} ${stock.unit}`)
+          successCount++
+        } else {
+          results.push(`⚠️ ${medicine.name}: закончилось`)
+          outOfStockCount++
+        }
+      }
+
+      // Очищаем выбор
+      setSelectedMedicines(new Set())
+
+      Alert.alert(
+        '✅ Прием отмечен',
+        `Принято лекарств: ${successCount}\n${outOfStockCount > 0 ? `Закончилось: ${outOfStockCount}\n` : ''}\n${results.join('\n')}`
+      )
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка'
+      console.error('Failed to record batch intake:', error)
+      Alert.alert('Ошибка', `Не удалось отметить прием: ${errorMessage}`)
     }
   }
 
@@ -195,6 +269,7 @@ export function QuickIntakeScreen() {
                     const stockInfo = getStockInfo(medicine)
                     const stock = stocks.get(medicine.id)
                     const isOutOfStock = !stock || stock.quantity === 0
+                    const isSelected = selectedMedicines.has(medicine.id)
 
                     return (
                       <TouchableOpacity
@@ -202,12 +277,14 @@ export function QuickIntakeScreen() {
                         style={[
                           styles.medicineCard,
                           {
-                            borderColor: colors.border,
+                            borderColor: isSelected ? colors.primary : colors.border,
+                            borderWidth: isSelected ? 2 : 1,
                             opacity: isOutOfStock ? 0.5 : 1,
-                            backgroundColor: isOutOfStock ? '#f5f5f5' : 'white'
+                            backgroundColor: isOutOfStock ? '#f5f5f5' : isSelected ? colors.primary + '10' : 'white'
                           }
                         ]}
-                        onPress={() => handleIntake(medicine)}
+                        onPress={() => isOutOfStock ? null : toggleMedicineSelection(medicine.id)}
+                        onLongPress={() => !isOutOfStock && handleIntake(medicine)}
                         disabled={isOutOfStock}
                       >
                         <View style={styles.medicineContent}>
@@ -236,14 +313,10 @@ export function QuickIntakeScreen() {
                             <View style={[styles.stockBadge, { backgroundColor: stockInfo.color }]}>
                               <Text style={styles.stockText}>{stockInfo.text}</Text>
                             </View>
-                            {!isOutOfStock ? (
-                              <Text style={[styles.intakeButton, { color: colors.primary }]}>
-                                Принять
-                              </Text>
-                            ) : (
-                              <Text style={[styles.intakeButtonDisabled, { color: colors.error }]}>
-                                Закончилось
-                              </Text>
+                            {isSelected && !isOutOfStock && (
+                              <View style={[styles.checkmark, { backgroundColor: colors.primary }]}>
+                                <Text style={styles.checkmarkText}>✓</Text>
+                              </View>
                             )}
                           </View>
                         </View>
@@ -259,12 +332,26 @@ export function QuickIntakeScreen() {
         <View style={styles.infoSection}>
           <Text style={[styles.infoTitle, { color: colors.text }]}>О быстром приеме</Text>
           <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-            • Нажмите на лекарство чтобы отметить прием{'\n'}
-            • Количество автоматически уменьшится{'\n'}
-            • Проверьте остаток перед приемом
+            • Нажмите чтобы выбрать лекарство{'\n'}
+            • Долгое нажатие - мгновенный прием{'\n'}
+            • Выберите несколько и нажмите кнопку внизу
           </Text>
         </View>
       </ScrollView>
+
+      {/* Плавающая кнопка множественного приема */}
+      {selectedMedicines.size > 0 && (
+        <View style={[styles.floatingButton, { backgroundColor: colors.primary }]}>
+          <TouchableOpacity
+            style={styles.floatingButtonContent}
+            onPress={handleBatchIntake}
+          >
+            <Text style={styles.floatingButtonText}>
+              Принять выбранные ({selectedMedicines.size})
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   )
 }
@@ -403,4 +490,40 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.sm,
     lineHeight: 20,
   },
+  checkmark: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: SPACING.xs,
+  },
+  checkmarkText: {
+    color: 'white',
+    fontSize: FONT_SIZE.sm,
+    fontWeight: 'bold',
+  },
+  floatingButton: {
+    position: 'absolute',
+    bottom: SPACING.xl,
+    left: SPACING.md,
+    right: SPACING.md,
+    borderRadius: 12,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  floatingButtonContent: {
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    alignItems: 'center',
+  },
+  floatingButtonText: {
+    color: 'white',
+    fontSize: FONT_SIZE.lg,
+    fontWeight: '600',
+  },
 })
+

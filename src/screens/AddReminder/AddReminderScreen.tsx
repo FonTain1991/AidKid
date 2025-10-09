@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native'
 import { SafeAreaView } from '@/shared/ui/SafeAreaView'
 import { useTheme } from '@/app/providers/theme'
 import { SPACING } from '@/shared/config'
 import { FONT_SIZE } from '@/shared/config/constants/font'
 import { databaseService } from '@/shared/lib/database'
-import { getMedicinePhotoUri } from '@/shared/lib'
 import { notificationService } from '@/shared/lib/notifications'
-import { Medicine, MedicineStock } from '@/entities/medicine/model/types'
-import { MedicineKit } from '@/entities/kit/model/types'
+import { Medicine } from '@/entities/medicine/model/types'
 import { FamilyMember } from '@/entities/family-member/model/types'
 import { DatePicker } from '@/shared/ui/DatePicker'
 import { TextInput } from '@/shared/ui/TextInput'
+import { MedicinePicker } from '@/shared/ui'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RootStackParamList } from '@/app/navigation/types'
@@ -32,13 +31,10 @@ interface ReminderData {
 export function AddReminderScreen() {
   const { colors } = useTheme()
   const navigation = useNavigation<NavigationProp>()
-  const [medicines, setMedicines] = useState<Medicine[]>([])
-  const [stocks, setStocks] = useState<Map<string, MedicineStock>>(new Map())
-  const [kits, setKits] = useState<Map<string, MedicineKit>>(new Map())
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(null)
+  const [selectedMedicines, setSelectedMedicines] = useState<Medicine[]>([])
   const [selectedFamilyMember, setSelectedFamilyMember] = useState<FamilyMember | null>(null)
   const [reminderTitle, setReminderTitle] = useState('')
   const [reminderTime, setReminderTime] = useState(new Date())
@@ -48,22 +44,25 @@ export function AddReminderScreen() {
   const [isEnabled, setIsEnabled] = useState(true)
 
   useEffect(() => {
-    loadData()
+    loadFamilyMembers()
   }, [])
+
+  const loadFamilyMembers = async () => {
+    try {
+      await databaseService.init()
+      const allFamilyMembers = await databaseService.getFamilyMembers()
+      setFamilyMembers(allFamilyMembers)
+      setIsLoading(false)
+      console.log('✅ Family members loaded:', allFamilyMembers.length)
+    } catch (error) {
+      console.error('❌ Failed to load family members:', error)
+      setIsLoading(false)
+    }
+  }
 
   // Перезагружаем членов семьи при фокусе экрана
   useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', async () => {
-      try {
-        await databaseService.init()
-        const allFamilyMembers = await databaseService.getFamilyMembers()
-        setFamilyMembers(allFamilyMembers)
-        console.log('✅ Family members reloaded:', allFamilyMembers.length)
-      } catch (error) {
-        console.error('❌ Failed to reload family members:', error)
-      }
-    })
-
+    const unsubscribe = navigation.addListener('focus', loadFamilyMembers)
     return unsubscribe
   }, [navigation])
 
@@ -84,68 +83,6 @@ export function AddReminderScreen() {
 
     setReminderTimes(defaultTimes)
   }, [])
-
-  const loadData = async () => {
-    try {
-      setIsLoading(true)
-      console.log('🔍 Loading data for reminders...')
-
-      await databaseService.init()
-
-      const allKits = await databaseService.getKits()
-      const kitsMap = new Map(allKits.map(kit => [kit.id, kit]))
-      setKits(kitsMap)
-
-      const allMedicines = await databaseService.getMedicines()
-      setMedicines(allMedicines)
-
-      const allFamilyMembers = await databaseService.getFamilyMembers()
-      setFamilyMembers(allFamilyMembers)
-
-      const stocksMap = new Map<string, MedicineStock>()
-      for (const medicine of allMedicines) {
-        try {
-          const stock = await databaseService.getMedicineStock(medicine.id)
-          if (stock) {
-            stocksMap.set(medicine.id, stock)
-          }
-        } catch (error) {
-          console.warn(`Failed to load stock for medicine ${medicine.id}:`, error)
-        }
-      }
-
-      setStocks(stocksMap)
-      console.log('✅ Data loaded successfully')
-    } catch (error) {
-      console.error('❌ Failed to load data:', error)
-      Alert.alert('Ошибка', `Не удалось загрузить данные: ${error.message}`)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Показываем все лекарства (даже без остатка)
-  const availableMedicines = medicines
-
-  const getKitName = (kitId: string) => {
-    return kits.get(kitId)?.name || 'Неизвестная аптечка'
-  }
-
-  const getStockInfo = (medicine: Medicine) => {
-    const stock = stocks.get(medicine.id)
-    if (!stock) {
-      return { text: 'Нет в наличии', color: colors.error }
-    }
-
-    if (stock.quantity <= 0) {
-      return { text: 'Закончилось', color: colors.error }
-    }
-    if (stock.quantity <= 5) {
-      return { text: `${stock.quantity} ${stock.unit}`, color: colors.warning }
-    }
-
-    return { text: `${stock.quantity} ${stock.unit}`, color: colors.success }
-  }
 
   const scheduleReminderNotifications = async (
     medicine: Medicine,
@@ -269,39 +206,38 @@ export function AddReminderScreen() {
   }
 
   const handleCreateReminder = async () => {
-    if (!selectedMedicine) {
-      Alert.alert('Ошибка', 'Выберите лекарство')
+    if (selectedMedicines.length === 0) {
+      Alert.alert('Ошибка', 'Выберите хотя бы одно лекарство')
       return
     }
 
     // Если название не введено, используем название по умолчанию
-    const title = reminderTitle.trim() || `Принять ${selectedMedicine.name}`
+    const medicineNames = selectedMedicines.map(m => m.name).join(', ')
+    const defaultTitle = selectedMedicines.length === 1
+      ? `Принять ${selectedMedicines[0].name}`
+      : `Принять ${selectedMedicines.length} лекарств`
+    const title = reminderTitle.trim() || defaultTitle
 
     try {
-      // TODO: Создать напоминание в базе данных
-      // const reminder = await databaseService.createReminder({
-      //   medicineId: selectedMedicine.id,
-      //   title,
-      //   time: reminderTime,
-      //   frequency,
-      //   quantity: frequency === 'once' ? 1 : quantity,
-      //   isEnabled,
-      // })
-
-      // Запланировать уведомления
+      // Запланировать уведомления для каждого лекарства
       const timesToUse = frequency === 'once' ? [reminderTime] : reminderTimes.slice(0, quantity)
-      await scheduleReminderNotifications(
-        selectedMedicine,
-        title,
-        timesToUse,
-        frequency,
-        frequency === 'once' ? 1 : quantity,
-        selectedFamilyMember?.id
-      )
+
+      for (const medicine of selectedMedicines) {
+        const medicineTitle = reminderTitle.trim() || `Принять ${medicine.name}`
+        await scheduleReminderNotifications(
+          medicine,
+          medicineTitle,
+          timesToUse,
+          frequency,
+          frequency === 'once' ? 1 : quantity,
+          selectedFamilyMember?.id
+        )
+      }
 
       const frequencyText = frequency === 'once' ? 'один раз' : frequency === 'daily' ? 'ежедневно' : 'еженедельно'
 
-      let message = `Напоминание "${title}" для ${selectedMedicine.name} создано!\n\n`
+      let message = `Напоминания для ${selectedMedicines.length} ${selectedMedicines.length === 1 ? 'лекарства' : 'лекарств'} созданы!\n\n`
+      message += `Лекарства: ${medicineNames}\n`
       message += `Частота: ${frequencyText}\n`
 
       if (frequency === 'once') {
@@ -354,71 +290,18 @@ export function AddReminderScreen() {
           </Text>
         </View>
 
-        {/* Выбор лекарства */}
+        {/* Выбор лекарств через picker */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Лекарство</Text>
-
-          {availableMedicines.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                Нет доступных лекарств
-              </Text>
-            </View>
-          ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.medicinesScroll}>
-              {availableMedicines.map(medicine => {
-                const stockInfo = getStockInfo(medicine)
-                const kitName = getKitName(medicine.kitId)
-                const isSelected = selectedMedicine?.id === medicine.id
-
-                return (
-                  <TouchableOpacity
-                    key={medicine.id}
-                    style={[
-                      styles.medicineCard,
-                      {
-                        borderColor: isSelected ? colors.primary : colors.border,
-                        backgroundColor: isSelected ? colors.primary + '10' : 'white'
-                      }
-                    ]}
-                    onPress={() => {
-                      setSelectedMedicine(medicine)
-                      setReminderTitle(`Принять ${medicine.name}`)
-                    }}
-                  >
-                    {/* Фото лекарства */}
-                    {medicine.photoPath ? (
-                      <Image
-                        source={{ uri: getMedicinePhotoUri(medicine.photoPath) || undefined }}
-                        style={styles.medicinePhoto}
-                      />
-                    ) : (
-                      <View style={styles.medicinePhotoPlaceholder}>
-                        <Text style={styles.medicinePhotoIcon}>💊</Text>
-                      </View>
-                    )}
-
-                    <Text style={[styles.medicineName, { color: colors.text }]}>
-                      {medicine.name}
-                    </Text>
-                    <Text style={[styles.medicineForm, { color: colors.textSecondary }]}>
-                      {medicine.form}
-                    </Text>
-                    <Text style={[styles.medicineKit, { color: colors.textSecondary }]}>
-                      📦 {kitName}
-                    </Text>
-                    <View style={[styles.stockBadge, { backgroundColor: stockInfo.color }]}>
-                      <Text style={styles.stockText}>{stockInfo.text}</Text>
-                    </View>
-                  </TouchableOpacity>
-                )
-              })}
-            </ScrollView>
-          )}
+          <MedicinePicker
+            fieldName='Лекарства'
+            value={selectedMedicines}
+            onChange={setSelectedMedicines}
+            multiple={true}
+          />
         </View>
 
         {/* Выбор члена семьи */}
-        {selectedMedicine && (
+        {selectedMedicines.length > 0 && (
           <View style={styles.section}>
             <View style={styles.familyMemberHeader}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Кто принимает?</Text>
@@ -485,7 +368,7 @@ export function AddReminderScreen() {
         )}
 
         {/* Настройки напоминания */}
-        {selectedMedicine && (
+        {selectedMedicines.length > 0 && (
           <>
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Настройки</Text>
@@ -650,64 +533,6 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: FONT_SIZE.md,
   },
-  medicinesScroll: {
-    marginHorizontal: -SPACING.md,
-  },
-  medicineCard: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: SPACING.md,
-    marginHorizontal: SPACING.sm,
-    minWidth: 140,
-    backgroundColor: 'white',
-    alignItems: 'center',
-  },
-  medicinePhoto: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    marginBottom: SPACING.sm,
-    backgroundColor: '#f0f0f0',
-  },
-  medicinePhotoPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    marginBottom: SPACING.sm,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  medicinePhotoIcon: {
-    fontSize: 40,
-  },
-  medicineName: {
-    fontSize: FONT_SIZE.md,
-    fontWeight: '600',
-    marginBottom: SPACING.xs,
-    textAlign: 'center',
-  },
-  medicineForm: {
-    fontSize: FONT_SIZE.sm,
-    marginBottom: SPACING.xs,
-    textAlign: 'center',
-  },
-  medicineKit: {
-    fontSize: FONT_SIZE.sm,
-    marginBottom: SPACING.sm,
-    textAlign: 'center',
-  },
-  stockBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: 8,
-  },
-  stockText: {
-    color: 'white',
-    fontSize: FONT_SIZE.sm,
-    fontWeight: '600',
-  },
   inputContainer: {
     marginBottom: SPACING.lg,
   },
@@ -835,9 +660,6 @@ const styles = StyleSheet.create({
   noFamilyText: {
     fontSize: FONT_SIZE.sm,
     textAlign: 'center',
-  },
-  familyScroll: {
-    marginHorizontal: -SPACING.md,
   },
   familyMemberCard: {
     borderWidth: 2,

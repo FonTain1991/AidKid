@@ -1,5 +1,5 @@
 import React from 'react'
-import { View, StyleSheet } from 'react-native'
+import Icon from 'react-native-vector-icons/Feather'
 
 interface TabIconProps {
   name: string
@@ -7,19 +7,6 @@ interface TabIconProps {
   size: number
 }
 
-export const TabIcon: React.FC<TabIconProps> = ({ color, size }) => {
-  return (
-    <View style={[styles.icon, {
-      width: size,
-      height: size,
-      backgroundColor: color,
-      borderRadius: size / 2
-    }]} />
-  )
+export const TabIcon: React.FC<TabIconProps> = ({ name, color, size }) => {
+  return <Icon name={name} size={size} color={color} />
 }
-
-const styles = StyleSheet.create({
-  icon: {
-    // Базовые стили для иконки
-  },
-})

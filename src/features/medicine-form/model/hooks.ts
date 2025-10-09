@@ -10,6 +10,8 @@ export const useMedicineForm = (kitId?: string, initialData?: MedicineFormData) 
     dosage: '',
     form: '',
     kitId: kitId || '',
+    photoPath: undefined,
+    barcode: undefined,
     quantity: 0,
     unit: '',
     expiryDate: ''
@@ -79,6 +81,8 @@ export const useMedicineForm = (kitId?: string, initialData?: MedicineFormData) 
       dosage: '',
       form: '',
       kitId: kitId || '',
+      photoPath: undefined,
+      barcode: undefined,
       quantity: 0,
       unit: '',
       expiryDate: ''
