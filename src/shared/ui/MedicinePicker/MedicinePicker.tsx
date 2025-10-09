@@ -105,15 +105,15 @@ export const MedicinePicker = memo(({ value = [], onChange, fieldName = 'Лек�
   const getStockInfo = (medicine: Medicine) => {
     const stock = stocks.get(medicine.id)
     if (!stock) {
-      return { text: 'Нет в наличии', color: '#9E9E9E' }
+      return { text: 'Нет в наличии', color: colors.muted }
     }
     if (stock.quantity === 0) {
-      return { text: 'Закончилось', color: '#F44336' }
+      return { text: 'Закончилось', color: colors.error }
     }
     if (stock.quantity <= 5) {
-      return { text: `${stock.quantity} ${stock.unit}`, color: '#FF9800' }
+      return { text: `${stock.quantity} ${stock.unit}`, color: colors.warning }
     }
-    return { text: `${stock.quantity} ${stock.unit}`, color: '#4CAF50' }
+    return { text: `${stock.quantity} ${stock.unit}`, color: colors.success }
   }
 
   return (

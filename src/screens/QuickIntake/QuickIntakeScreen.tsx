@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native'
 import { SafeAreaView } from '@/shared/ui/SafeAreaView'
 import { useTheme } from '@/app/providers/theme'
+import { useQuickIntakeStyles } from '@/shared/hooks/useQuickIntakeStyles'
 import { SPACING } from '@/shared/config'
 import { FONT_SIZE } from '@/shared/config/constants/font'
 import { databaseService } from '@/shared/lib/database'
@@ -11,6 +12,7 @@ import { MedicineKit } from '@/entities/kit/model/types'
 
 export function QuickIntakeScreen() {
   const { colors } = useTheme()
+  const styles = useQuickIntakeStyles()
   const [medicines, setMedicines] = useState<Medicine[]>([])
   const [stocks, setStocks] = useState<Map<string, MedicineStock>>(new Map())
   const [kits, setKits] = useState<Map<string, MedicineKit>>(new Map())
@@ -358,174 +360,5 @@ export function QuickIntakeScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scroll: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: FONT_SIZE.md,
-  },
-  header: {
-    padding: SPACING.md,
-    paddingBottom: SPACING.sm,
-  },
-  title: {
-    fontSize: FONT_SIZE.heading,
-    fontWeight: 'bold',
-    marginBottom: SPACING.sm,
-  },
-  subtitle: {
-    fontSize: FONT_SIZE.md,
-  },
-  emptyContainer: {
-    padding: SPACING.xl,
-    alignItems: 'center',
-  },
-  emptyTitle: {
-    fontSize: FONT_SIZE.lg,
-    fontWeight: '600',
-    marginBottom: SPACING.sm,
-  },
-  emptyDescription: {
-    fontSize: FONT_SIZE.md,
-    textAlign: 'center',
-  },
-  medicinesList: {
-    paddingHorizontal: SPACING.md,
-  },
-  kitSection: {
-    marginBottom: SPACING.lg,
-  },
-  kitTitle: {
-    fontSize: FONT_SIZE.md,
-    fontWeight: '600',
-    marginBottom: SPACING.sm,
-    paddingHorizontal: SPACING.sm,
-  },
-  medicineCard: {
-    borderWidth: 1,
-    borderRadius: 12,
-    marginBottom: SPACING.md,
-    backgroundColor: 'white',
-  },
-  medicineContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: SPACING.md,
-  },
-  medicinePhoto: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
-    marginRight: SPACING.md,
-    backgroundColor: '#f0f0f0',
-  },
-  medicinePhotoPlaceholder: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
-    marginRight: SPACING.md,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  medicinePhotoIcon: {
-    fontSize: 28,
-  },
-  medicineInfo: {
-    flex: 1,
-  },
-  medicineName: {
-    fontSize: FONT_SIZE.lg,
-    fontWeight: '600',
-    marginBottom: SPACING.xs,
-  },
-  medicineForm: {
-    fontSize: FONT_SIZE.sm,
-    marginBottom: SPACING.xs,
-  },
-  medicineKit: {
-    fontSize: FONT_SIZE.sm,
-  },
-  medicineRight: {
-    alignItems: 'flex-end',
-  },
-  stockBadge: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: 8,
-    marginBottom: SPACING.xs,
-  },
-  stockText: {
-    color: 'white',
-    fontSize: FONT_SIZE.sm,
-    fontWeight: '600',
-  },
-  intakeButton: {
-    fontSize: FONT_SIZE.sm,
-    fontWeight: '600',
-  },
-  intakeButtonDisabled: {
-    fontSize: FONT_SIZE.sm,
-    fontWeight: '600',
-    textDecorationLine: 'line-through',
-  },
-  infoSection: {
-    marginTop: SPACING.xl,
-    paddingHorizontal: SPACING.md,
-    paddingBottom: SPACING.md,
-  },
-  infoTitle: {
-    fontSize: FONT_SIZE.md,
-    fontWeight: '600',
-    marginBottom: SPACING.sm,
-  },
-  infoText: {
-    fontSize: FONT_SIZE.sm,
-    lineHeight: 20,
-  },
-  checkmark: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: SPACING.xs,
-  },
-  checkmarkText: {
-    color: 'white',
-    fontSize: FONT_SIZE.sm,
-    fontWeight: 'bold',
-  },
-  floatingButton: {
-    position: 'absolute',
-    bottom: SPACING.xl,
-    left: SPACING.md,
-    right: SPACING.md,
-    borderRadius: 12,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  floatingButtonContent: {
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    alignItems: 'center',
-  },
-  floatingButtonText: {
-    color: 'white',
-    fontSize: FONT_SIZE.lg,
-    fontWeight: '600',
-  },
-})
+// Styles теперь в useQuickIntakeStyles hook
 

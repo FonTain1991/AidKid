@@ -1,13 +1,13 @@
 
-const orange = '#FF6B35'
-const orangeRgba = (opacity: number | string) => `rgba(255, 107, 53, ${opacity})`
+const green = '#3A944E'
+const greenRgba = (opacity: number | string) => `rgba(58, 148, 78, ${opacity})`
 
 export const LIGHT_COLORS = {
   background: '#FFFFFF',
   text: '#1A1A1A',
   textSecondary: '#666666',
-  primary: '#FF6B35',
-  secondary: '#FF8A65',
+  primary: '#3A944E',
+  secondary: '#4CAF50',
   border: '#E0E0E0',
   card: '#FFFFFF',
   error: '#FF5252',
@@ -16,7 +16,7 @@ export const LIGHT_COLORS = {
   muted: '#9E9E9E',
   placeholder: '#BDBDBD',
   inputBackground: '#FAFAFA',
-  headerBackground: orange,
+  headerBackground: green,
   headerColor: '#FFFFFF',
   bottomBarBackground: '#FFFFFF',
   white: '#FFFFFF',

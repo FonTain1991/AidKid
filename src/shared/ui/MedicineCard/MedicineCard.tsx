@@ -52,7 +52,7 @@ export const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, onPress, o
               height: 60,
               borderRadius: 8,
               marginRight: SPACING.md,
-              backgroundColor: '#f0f0f0',
+              backgroundColor: colors.border,
             }}
             resizeMode='cover'
           />

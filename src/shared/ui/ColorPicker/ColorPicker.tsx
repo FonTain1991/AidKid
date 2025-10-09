@@ -25,7 +25,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   textStyle
 }) => {
   const bottomSheetRef = useRef<BottomSheetRef>(null)
-  const [currentColor, setCurrentColor] = React.useState(value || '#007AFF')
+  const [currentColor, setCurrentColor] = React.useState(value || '#3A944E')
   const { styles } = useColorPickerStyles(value)
 
   const handlePress = () => {

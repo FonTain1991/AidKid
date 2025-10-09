@@ -1,21 +1,21 @@
 import { HomeScreen, IntakeScreen, MoreScreen } from '@/screens'
 import { useNavigationStyles } from '@/shared/hooks'
-import { TabIcon } from '@/shared/ui'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import React from 'react'
+import { Text } from 'react-native'
 
 const Tab = createBottomTabNavigator()
 
-const homeTabBarIcon = ({ color, size }: { color: string; size: number }) => (
-  <TabIcon name='home' color={color} size={size} />
+const homeTabBarIcon = () => (
+  <Text style={{ fontSize: 24 }}>🏠</Text>
 )
 
-const intakeTabBarIcon = ({ color, size }: { color: string; size: number }) => (
-  <TabIcon name='calendar' color={color} size={size} />
+const intakeTabBarIcon = () => (
+  <Text style={{ fontSize: 22 }}>💊</Text>
 )
 
-const moreTabBarIcon = ({ color, size }: { color: string; size: number }) => (
-  <TabIcon name='more-horizontal' color={color} size={size} />
+const moreTabBarIcon = () => (
+  <Text style={{ fontSize: 24 }}>⋯</Text>
 )
 
 export function BottomTabsStack() {

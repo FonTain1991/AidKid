@@ -39,9 +39,9 @@ export const KitForm = ({ initialData, onSubmit }: KitFormProps) => {
 
   // Опции для выбора цвета
   const colorOptions = [
-    { label: 'Оранжевый', value: '#FF6B35' },
+    { label: 'Зеленый', value: '#3A944E' },
     { label: 'Синий', value: '#007AFF' },
-    { label: 'Зеленый', value: '#34C759' },
+    { label: 'Светло-зеленый', value: '#34C759' },
     { label: 'Красный', value: '#FF3B30' },
     { label: 'Фиолетовый', value: '#AF52DE' },
   ]

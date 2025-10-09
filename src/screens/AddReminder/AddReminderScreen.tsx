@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native'
 import { SafeAreaView } from '@/shared/ui/SafeAreaView'
 import { useTheme } from '@/app/providers/theme'
-import { SPACING } from '@/shared/config'
-import { FONT_SIZE } from '@/shared/config/constants/font'
+import { useAddReminderStyles } from '@/shared/hooks/useAddReminderStyles'
 import { databaseService } from '@/shared/lib/database'
 import { notificationService } from '@/shared/lib/notifications'
 import { Medicine } from '@/entities/medicine/model/types'
@@ -18,18 +17,10 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>
 
-interface ReminderData {
-  medicineId: string
-  familyMemberId?: string
-  title: string
-  time: Date
-  frequency: 'once' | 'daily' | 'weekly'
-  quantity: number
-  isEnabled: boolean
-}
 
 export function AddReminderScreen() {
   const { colors } = useTheme()
+  const styles = useAddReminderStyles()
   const navigation = useNavigation<NavigationProp>()
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -41,7 +32,7 @@ export function AddReminderScreen() {
   const [reminderTimes, setReminderTimes] = useState<Date[]>([new Date(), new Date(), new Date()])
   const [frequency, setFrequency] = useState<'once' | 'daily' | 'weekly'>('daily')
   const [quantity, setQuantity] = useState(1)
-  const [isEnabled, setIsEnabled] = useState(true)
+  const [_isEnabled, _setIsEnabled] = useState(true)
 
   useEffect(() => {
     loadFamilyMembers()
@@ -483,7 +474,6 @@ export function AddReminderScreen() {
                     value={reminderTime}
                     onChange={setReminderTime}
                     mode='time'
-                    style={styles.timePicker}
                   />
                 </View>
               ) : (
@@ -502,7 +492,6 @@ export function AddReminderScreen() {
                           setReminderTimes(newTimes)
                         }}
                         mode='time'
-                        style={styles.timePicker}
                       />
                     </View>
                   ))}
@@ -537,201 +526,5 @@ export function AddReminderScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scroll: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: FONT_SIZE.md,
-  },
-  header: {
-    padding: SPACING.md,
-    paddingBottom: SPACING.sm,
-  },
-  title: {
-    fontSize: FONT_SIZE.heading,
-    fontWeight: 'bold',
-    marginBottom: SPACING.sm,
-  },
-  subtitle: {
-    fontSize: FONT_SIZE.md,
-  },
-  section: {
-    marginTop: SPACING.lg,
-    paddingHorizontal: SPACING.md,
-  },
-  sectionTitle: {
-    fontSize: FONT_SIZE.lg,
-    fontWeight: '600',
-    marginBottom: SPACING.md,
-  },
-  emptyContainer: {
-    padding: SPACING.lg,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: FONT_SIZE.md,
-  },
-  inputContainer: {
-    marginBottom: SPACING.lg,
-  },
-  inputLabel: {
-    fontSize: FONT_SIZE.md,
-    fontWeight: '600',
-    marginBottom: SPACING.sm,
-  },
-  textInput: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: SPACING.md,
-  },
-  textInputText: {
-    fontSize: FONT_SIZE.md,
-  },
-  timePicker: {
-    marginVertical: SPACING.sm,
-  },
-  frequencyContainer: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-  },
-  frequencyOption: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: SPACING.md,
-    alignItems: 'center',
-  },
-  frequencyIcon: {
-    fontSize: FONT_SIZE.xl,
-    marginBottom: SPACING.xs,
-  },
-  frequencyLabel: {
-    fontSize: FONT_SIZE.sm,
-    fontWeight: '600',
-  },
-  quantityContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.md,
-  },
-  quantityButton: {
-    width: 40,
-    height: 40,
-    borderWidth: 1,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  quantityButtonText: {
-    fontSize: FONT_SIZE.xl,
-    fontWeight: 'bold',
-  },
-  quantityDisplay: {
-    width: 60,
-    height: 40,
-    borderWidth: 1,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  quantityText: {
-    fontSize: FONT_SIZE.lg,
-    fontWeight: '600',
-  },
-  timePickerContainer: {
-    marginBottom: SPACING.md,
-    paddingLeft: SPACING.sm,
-  },
-  timePickerLabel: {
-    fontSize: FONT_SIZE.md,
-    fontWeight: '600',
-    marginBottom: SPACING.xs,
-  },
-  buttonContainer: {
-    paddingHorizontal: SPACING.md,
-    marginTop: SPACING.lg,
-  },
-  createButton: {
-    paddingVertical: SPACING.md,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  createButtonText: {
-    color: 'white',
-    fontSize: FONT_SIZE.lg,
-    fontWeight: '600',
-  },
-  infoSection: {
-    marginTop: SPACING.xl,
-    paddingHorizontal: SPACING.md,
-    paddingBottom: SPACING.md,
-  },
-  infoTitle: {
-    fontSize: FONT_SIZE.md,
-    fontWeight: '600',
-    marginBottom: SPACING.sm,
-  },
-  infoText: {
-    fontSize: FONT_SIZE.sm,
-    lineHeight: 20,
-  },
-  familyMemberHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-  },
-  addFamilyButton: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-  },
-  addFamilyButtonText: {
-    fontSize: FONT_SIZE.sm,
-    fontWeight: '600',
-  },
-  noFamilyContainer: {
-    padding: SPACING.md,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-  },
-  noFamilyText: {
-    fontSize: FONT_SIZE.sm,
-    textAlign: 'center',
-  },
-  familyMemberCard: {
-    borderWidth: 2,
-    borderRadius: 12,
-    padding: SPACING.md,
-    marginHorizontal: SPACING.xs,
-    minWidth: 100,
-    alignItems: 'center',
-    backgroundColor: 'white',
-  },
-  familyAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
-  },
-  familyAvatarText: {
-    fontSize: 28,
-  },
-  familyMemberName: {
-    fontSize: FONT_SIZE.sm,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-})
+// Styles теперь в useAddReminderStyles hook
 

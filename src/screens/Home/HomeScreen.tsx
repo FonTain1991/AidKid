@@ -1,19 +1,19 @@
 import { useTheme } from '@/app/providers/theme'
+import { useHomeScreenStyles } from '@/shared/hooks/useHomeScreenStyles'
 import { ErrorState, useHomeScreen } from '@/features/home'
 import { QuickCreateSheet } from '@/features/quick-create'
 import { useNavigationBarColor, useScreenProperties } from '@/shared/hooks'
 import { FAB } from '@/shared/ui/FAB'
 import { SafeAreaView } from '@/shared/ui/SafeAreaView'
 import { Separator } from '@/shared/ui'
-import { Alert, TouchableOpacity, Text, View, ScrollView, TextInput, StyleSheet, RefreshControl, Image } from 'react-native'
+import { Alert, TouchableOpacity, Text, View, ScrollView, TextInput, RefreshControl, Image } from 'react-native'
+import Icon from 'react-native-vector-icons/Feather'
 import { databaseService, getMedicinePhotoUri } from '@/shared/lib'
-import { useState, useEffect } from 'react'
-import { SPACING } from '@/shared/config'
-import { FONT_SIZE } from '@/shared/config/constants/font'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RootStackParamList } from '@/app/navigation/types'
-import { Medicine } from '@/entities/medicine/model/types'
+import type { Medicine } from '@/entities/medicine/model/types'
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'BottomTabs'>
 
@@ -24,6 +24,7 @@ interface MedicineWithKit extends Medicine {
 
 export function HomeScreen() {
   const { colors } = useTheme()
+  const styles = useHomeScreenStyles()
   const navigation = useNavigation<NavigationProp>()
   const {
     kits,
@@ -44,11 +45,36 @@ export function HomeScreen() {
   const [lowStockCount, setLowStockCount] = useState(0)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [medicines, setMedicines] = useState<MedicineWithKit[]>([])
+  const [kitsWithMedicines, setKitsWithMedicines] = useState<any[]>([])
+
+  const loadKitsWithMedicines = useCallback(async () => {
+    try {
+      await databaseService.init()
+      const kitsWithData = await Promise.all(kits.map(async kit => {
+        const kitMedicines = await databaseService.getMedicinesByKitId(kit.id)
+        const medicinesWithStock = await Promise.all(kitMedicines.map(async (medicine: Medicine) => {
+          const stock = await databaseService.getMedicineStock(medicine.id)
+          return { ...medicine, stock }
+        }))
+        return { ...kit, medicines: medicinesWithStock }
+      }))
+      setKitsWithMedicines(kitsWithData)
+    } catch (err) {
+      console.error('Failed to load kits with medicines:', err)
+    }
+  }, [kits])
 
   useEffect(() => {
     loadAlerts()
     loadMedicines()
-  }, [])
+    loadKitsWithMedicines()
+  }, [loadKitsWithMedicines])
+
+  useEffect(() => {
+    if (kits.length > 0) {
+      loadKitsWithMedicines()
+    }
+  }, [kits, loadKitsWithMedicines])
 
   const loadMedicines = async () => {
     try {
@@ -118,6 +144,7 @@ export function HomeScreen() {
     await refreshKits()
     await loadAlerts()
     await loadMedicines()
+    await loadKitsWithMedicines()
     setIsRefreshing(false)
   }
 
@@ -319,59 +346,79 @@ export function HomeScreen() {
                   </Text>
                 </View>
                 <View style={styles.kitsList}>
-                  {filteredKits.map(kit => (
+                  {kitsWithMedicines.map(kit => (
                     <TouchableOpacity
                       key={kit.id}
-                      style={[styles.kitCard, { borderColor: colors.border }]}
+                      style={styles.kitCard}
                       onPress={() => handleKitPress(kit.id)}
                     >
                       <View style={[styles.kitColorBar, { backgroundColor: kit.color || colors.primary }]} />
+
+                      <TouchableOpacity
+                        style={styles.kitMenuButton}
+                        onPress={() => {
+                          Alert.alert(
+                            kit.name,
+                            'Выберите действие',
+                            [
+                              {
+                                text: 'Редактировать',
+                                onPress: () => handleKitEdit(kit.id)
+                              },
+                              {
+                                text: 'Добавить лекарство',
+                                onPress: () => handleAddMedicineToKit(kit.id)
+                              },
+                              {
+                                text: 'Удалить',
+                                onPress: () => handleKitDelete(kit.id),
+                                style: 'destructive'
+                              },
+                              {
+                                text: 'Отмена',
+                                style: 'cancel'
+                              }
+                            ],
+                            {
+                              cancelable: true,
+                              onDismiss: () => {
+                                // Закрытие без действия
+                              }
+                            }
+                          )
+                        }}
+                      >
+                        <Icon name='more-horizontal' size={20} color={colors.textSecondary} />
+                      </TouchableOpacity>
+
                       <View style={styles.kitContent}>
                         <View style={styles.kitHeader}>
                           <View style={styles.kitTitleContainer}>
-                            <Text style={[styles.kitName, { color: colors.text }]}>{kit.name}</Text>
+                            <View style={[styles.kitIconContainer, { backgroundColor: kit.color || colors.primary }]}>
+                              <Icon name='package' size={28} color={colors.white} />
+                            </View>
+                            <Text style={styles.kitTitle}>{kit.name}</Text>
                             {kit.description && (
-                              <Text style={[styles.kitDescription, { color: colors.textSecondary }]} numberOfLines={2}>
+                              <Text style={styles.kitDescription} numberOfLines={2}>
                                 {kit.description}
                               </Text>
                             )}
                           </View>
-                          <TouchableOpacity
-                            style={styles.kitMenuButton}
-                            onPress={() => {
-                              Alert.alert(
-                                kit.name,
-                                'Выберите действие',
-                                [
-                                  {
-                                    text: 'Редактировать',
-                                    onPress: () => handleKitEdit(kit.id)
-                                  },
-                                  {
-                                    text: 'Добавить лекарство',
-                                    onPress: () => handleAddMedicineToKit(kit.id)
-                                  },
-                                  {
-                                    text: 'Удалить',
-                                    onPress: () => handleKitDelete(kit.id),
-                                    style: 'destructive'
-                                  },
-                                  {
-                                    text: 'Отмена',
-                                    style: 'cancel'
-                                  }
-                                ],
-                                {
-                                  cancelable: true,
-                                  onDismiss: () => {
-                                    // Закрытие без действия
-                                  }
-                                }
-                              )
-                            }}
-                          >
-                            <Text style={[styles.kitMenuIcon, { color: colors.textSecondary }]}>⋯</Text>
-                          </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.kitStats}>
+                          <View style={styles.kitStat}>
+                            <Text style={styles.kitStatValue}>{kit.medicines?.length || 0}</Text>
+                            <Text style={styles.kitStatLabel}>Лекарств</Text>
+                          </View>
+                          <View style={styles.kitStat}>
+                            <Text style={styles.kitStatValue}>{kit.medicines?.filter((m: any) => m.stock?.quantity > 0).length || 0}</Text>
+                            <Text style={styles.kitStatLabel}>В наличии</Text>
+                          </View>
+                          <View style={styles.kitStat}>
+                            <Text style={styles.kitStatValue}>{kit.medicines?.filter((m: any) => m.stock?.quantity === 0).length || 0}</Text>
+                            <Text style={styles.kitStatLabel}>Закончились</Text>
+                          </View>
                         </View>
                       </View>
                     </TouchableOpacity>
@@ -394,235 +441,4 @@ export function HomeScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scroll: {
-    flex: 1,
-  },
-  header: {
-    padding: SPACING.md,
-    paddingBottom: SPACING.sm,
-  },
-  title: {
-    fontSize: FONT_SIZE.heading,
-    fontWeight: 'bold',
-    marginBottom: SPACING.sm,
-  },
-  subtitle: {
-    fontSize: FONT_SIZE.md,
-  },
-  searchContainer: {
-    paddingHorizontal: SPACING.md,
-    paddingBottom: SPACING.sm,
-  },
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-  },
-  searchIcon: {
-    fontSize: FONT_SIZE.lg,
-    marginRight: SPACING.sm,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: FONT_SIZE.md,
-    padding: 0,
-  },
-  clearIcon: {
-    fontSize: FONT_SIZE.lg,
-    color: '#999',
-    paddingLeft: SPACING.sm,
-  },
-  alertsContainer: {
-    paddingHorizontal: SPACING.md,
-    gap: SPACING.sm,
-    marginBottom: SPACING.sm,
-  },
-  alertCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 12,
-    borderWidth: 2,
-    padding: SPACING.md,
-  },
-  alertIcon: {
-    fontSize: 32,
-    marginRight: SPACING.md,
-  },
-  alertContent: {
-    flex: 1,
-  },
-  alertTitle: {
-    fontSize: FONT_SIZE.md,
-    fontWeight: 'bold',
-    marginBottom: SPACING.xs,
-  },
-  alertText: {
-    fontSize: FONT_SIZE.sm,
-  },
-  alertArrow: {
-    fontSize: 32,
-    fontWeight: 'bold',
-  },
-  separatorContainer: {
-    paddingTop: SPACING.sm,
-    paddingBottom: SPACING.md,
-  },
-  kitsHeader: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  kitsTitle: {
-    fontSize: FONT_SIZE.xl,
-    fontWeight: 'bold',
-  },
-  kitsCount: {
-    fontSize: FONT_SIZE.sm,
-  },
-  section: {
-    marginBottom: SPACING.lg,
-  },
-  loadingContainer: {
-    padding: SPACING.xl,
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: FONT_SIZE.md,
-  },
-  emptyContainer: {
-    padding: SPACING.xl,
-    alignItems: 'center',
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: SPACING.md,
-  },
-  emptyTitle: {
-    fontSize: FONT_SIZE.xl,
-    fontWeight: '600',
-    marginBottom: SPACING.sm,
-  },
-  emptyText: {
-    fontSize: FONT_SIZE.md,
-    textAlign: 'center',
-  },
-  medicinesList: {
-    paddingHorizontal: SPACING.md,
-    gap: SPACING.sm,
-  },
-  medicineCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    borderWidth: 1,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  medicineColorBar: {
-    height: 4,
-  },
-  medicineContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: SPACING.md,
-  },
-  medicinePhoto: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
-    marginRight: SPACING.md,
-    backgroundColor: '#f0f0f0',
-  },
-  medicinePhotoPlaceholder: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
-    marginRight: SPACING.md,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  medicinePhotoIcon: {
-    fontSize: 28,
-  },
-  medicineInfo: {
-    flex: 1,
-  },
-  medicineName: {
-    fontSize: FONT_SIZE.md,
-    fontWeight: '600',
-    marginBottom: SPACING.xs,
-  },
-  medicineForm: {
-    fontSize: FONT_SIZE.sm,
-    marginBottom: SPACING.xs,
-  },
-  medicineKit: {
-    fontSize: FONT_SIZE.sm,
-  },
-  kitsList: {
-    paddingHorizontal: SPACING.md,
-    paddingBottom: SPACING.md,
-    gap: SPACING.md,
-  },
-  kitCard: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    borderWidth: 1,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  kitColorBar: {
-    height: 6,
-  },
-  kitContent: {
-    padding: SPACING.md,
-  },
-  kitHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  kitTitleContainer: {
-    flex: 1,
-    marginRight: SPACING.sm,
-  },
-  kitName: {
-    fontSize: FONT_SIZE.lg,
-    fontWeight: 'bold',
-    marginBottom: SPACING.xs,
-  },
-  kitDescription: {
-    fontSize: FONT_SIZE.sm,
-    lineHeight: 18,
-  },
-  kitMenuButton: {
-    padding: SPACING.xs,
-  },
-  kitMenuIcon: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-})
+// Styles теперь в useHomeScreenStyles hook

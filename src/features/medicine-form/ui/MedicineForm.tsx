@@ -5,12 +5,13 @@ import { Button } from '@/shared/ui/Button'
 import { FormItemWrapper } from '@/shared/ui/FormItemWrapper'
 import { TextInput } from '@/shared/ui/TextInput'
 import React, { useEffect } from 'react'
-import { Alert, StyleSheet, View, TouchableOpacity, Image, Text } from 'react-native'
+import { Alert, View, TouchableOpacity, Image, Text } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useMedicineForm, useMedicineFormOptions } from '../model'
 import { MedicineFormProps } from '../model/types'
 import { pickMedicinePhoto, getMedicinePhotoUri, deleteMedicinePhoto } from '@/shared/lib'
 import { useTheme } from '@/app/providers/theme'
+import { useMedicineFormStyles } from '@/shared/hooks/useMedicineFormStyles'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RootStackParamList } from '@/app/navigation/types'
@@ -24,6 +25,7 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
   kitId
 }) => {
   const { colors } = useTheme()
+  const styles = useMedicineFormStyles()
   const navigation = useNavigation<NavigationProp>()
   const route = useRoute()
   const {
@@ -280,82 +282,4 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: SPACING.md,
-  },
-  rowContainer: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-  },
-  dosageContainer: {
-    flex: 2,
-  },
-  unitContainer: {
-    flex: 1,
-  },
-  dosageInput: {
-    flex: 1,
-  },
-  photoContainer: {
-    marginVertical: SPACING.sm,
-  },
-  photoPreview: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  photoImage: {
-    width: '100%',
-    height: 200,
-    backgroundColor: '#f0f0f0',
-  },
-  photoActions: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-    padding: SPACING.sm,
-  },
-  photoButton: {
-    flex: 1,
-    paddingVertical: SPACING.sm,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  photoButtonText: {
-    color: 'white',
-    fontSize: FONT_SIZE.sm,
-    fontWeight: '600',
-  },
-  addPhotoButton: {
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderRadius: 12,
-    padding: SPACING.xl,
-    alignItems: 'center',
-    backgroundColor: '#f9f9f9',
-  },
-  addPhotoIcon: {
-    fontSize: 48,
-    marginBottom: SPACING.sm,
-  },
-  addPhotoText: {
-    fontSize: FONT_SIZE.md,
-    fontWeight: '600',
-    marginBottom: SPACING.xs,
-  },
-  addPhotoHint: {
-    fontSize: FONT_SIZE.sm,
-    textAlign: 'center',
-  },
-  scanButton: {
-    marginTop: SPACING.sm,
-    paddingVertical: SPACING.md,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  scanButtonText: {
-    color: 'white',
-    fontSize: FONT_SIZE.sm,
-    fontWeight: '600',
-  },
-})
+// Styles теперь в useMedicineFormStyles hook
