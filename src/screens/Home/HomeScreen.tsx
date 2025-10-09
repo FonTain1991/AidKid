@@ -67,14 +67,10 @@ export function HomeScreen() {
   useEffect(() => {
     loadAlerts()
     loadMedicines()
-    loadKitsWithMedicines()
-  }, [loadKitsWithMedicines])
-
-  useEffect(() => {
     if (kits.length > 0) {
       loadKitsWithMedicines()
     }
-  }, [kits, loadKitsWithMedicines])
+  }, [kits.length])
 
   const loadMedicines = async () => {
     try {

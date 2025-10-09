@@ -16,6 +16,7 @@ export const useAddReminderStyles = () => {
     header: {
       padding: SPACING.lg,
       paddingBottom: SPACING.sm,
+      paddingHorizontal: SPACING.md,
     },
     headerTitle: {
       fontSize: FONT_SIZE.heading,
@@ -32,6 +33,7 @@ export const useAddReminderStyles = () => {
     },
     section: {
       marginBottom: SPACING.xl,
+      paddingHorizontal: SPACING.md,
     },
     sectionTitle: {
       fontSize: FONT_SIZE.lg,
@@ -43,9 +45,11 @@ export const useAddReminderStyles = () => {
       backgroundColor: colors.card,
       borderRadius: 12,
       padding: SPACING.md,
-      marginBottom: SPACING.sm,
+      marginRight: SPACING.sm,
       borderWidth: 1,
       borderColor: colors.border,
+      alignItems: 'center',
+      minWidth: 80,
     },
     familyMemberSelected: {
       borderColor: colors.primary,
@@ -395,6 +399,17 @@ export const useAddReminderStyles = () => {
       marginBottom: SPACING.sm,
       textAlign: 'center',
       color: colors.text,
+    },
+    familyMemberHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: SPACING.md,
+    },
+    emptyDescription: {
+      fontSize: FONT_SIZE.md,
+      textAlign: 'center',
+      color: colors.textSecondary,
     },
   })
 }

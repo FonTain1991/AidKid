@@ -178,5 +178,107 @@ export const useQuickIntakeStyles = () => {
       lineHeight: 22,
       color: colors.textSecondary,
     },
+    scroll: {
+      flex: 1,
+    },
+    title: {
+      fontSize: FONT_SIZE.heading,
+      fontWeight: 'bold',
+    },
+    subtitle: {
+      fontSize: FONT_SIZE.md,
+      marginTop: SPACING.xs,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    loadingText: {
+      fontSize: FONT_SIZE.md,
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: SPACING.xl,
+    },
+    emptyTitle: {
+      fontSize: FONT_SIZE.xl,
+      fontWeight: 'bold',
+      marginBottom: SPACING.sm,
+    },
+    emptyDescription: {
+      fontSize: FONT_SIZE.md,
+      textAlign: 'center',
+    },
+    medicinesList: {
+      paddingHorizontal: SPACING.md,
+    },
+    kitSection: {
+      marginBottom: SPACING.lg,
+    },
+    kitTitle: {
+      fontSize: FONT_SIZE.lg,
+      fontWeight: '600',
+      marginBottom: SPACING.md,
+    },
+    medicineContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    medicinePhoto: {
+      width: 50,
+      height: 50,
+      borderRadius: 8,
+      marginRight: SPACING.md,
+    },
+    medicinePhotoPlaceholder: {
+      width: 50,
+      height: 50,
+      borderRadius: 8,
+      backgroundColor: colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: SPACING.md,
+    },
+    medicinePhotoIcon: {
+      fontSize: 24,
+    },
+    medicineForm: {
+      fontSize: FONT_SIZE.sm,
+      marginTop: SPACING.xs,
+    },
+    medicineRight: {
+      alignItems: 'flex-end',
+    },
+    stockBadge: {
+      paddingHorizontal: SPACING.sm,
+      paddingVertical: SPACING.xs,
+      borderRadius: 4,
+      marginBottom: SPACING.xs,
+    },
+    stockText: {
+      color: colors.white,
+      fontSize: FONT_SIZE.sm,
+      fontWeight: '600',
+    },
+    infoSection: {
+      padding: SPACING.md,
+      marginTop: SPACING.lg,
+      backgroundColor: colors.inputBackground,
+      borderRadius: 8,
+      marginHorizontal: SPACING.md,
+      marginBottom: SPACING.xl,
+    },
+    infoTitle: {
+      fontSize: FONT_SIZE.md,
+      fontWeight: '600',
+      marginBottom: SPACING.sm,
+    },
+    infoText: {
+      fontSize: FONT_SIZE.sm,
+      lineHeight: 20,
+    },
   })
 }
