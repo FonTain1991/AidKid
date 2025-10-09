@@ -42,7 +42,7 @@ export function MoreScreen() {
   ]
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         <View>
           <View style={styles.header}>

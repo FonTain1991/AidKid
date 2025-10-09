@@ -112,6 +112,49 @@ class DatabaseService {
       )
     `)
 
+    // Таблица напоминаний (без medicine_id, так как может быть много лекарств)
+    await this.db.executeSql(`
+      CREATE TABLE IF NOT EXISTS reminders (
+        id TEXT PRIMARY KEY,
+        family_member_id TEXT,
+        title TEXT NOT NULL,
+        frequency TEXT NOT NULL,
+        times_per_day INTEGER DEFAULT 1,
+        time TEXT NOT NULL,
+        is_active BOOLEAN DEFAULT 1,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (family_member_id) REFERENCES family_members (id) ON DELETE SET NULL
+      )
+    `)
+
+    // Связующая таблица напоминание <-> лекарства (many-to-many)
+    await this.db.executeSql(`
+      CREATE TABLE IF NOT EXISTS reminder_medicines (
+        id TEXT PRIMARY KEY,
+        reminder_id TEXT NOT NULL,
+        medicine_id TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (reminder_id) REFERENCES reminders (id) ON DELETE CASCADE,
+        FOREIGN KEY (medicine_id) REFERENCES medicines (id) ON DELETE CASCADE
+      )
+    `)
+
+    // Таблица приемов по напоминаниям (для отслеживания выполнения)
+    await this.db.executeSql(`
+      CREATE TABLE IF NOT EXISTS reminder_intakes (
+        id TEXT PRIMARY KEY,
+        reminder_id TEXT NOT NULL,
+        scheduled_date TEXT NOT NULL,
+        scheduled_time TEXT NOT NULL,
+        is_taken BOOLEAN DEFAULT 0,
+        taken_at TEXT,
+        usage_id TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (reminder_id) REFERENCES reminders (id) ON DELETE CASCADE,
+        FOREIGN KEY (usage_id) REFERENCES medicine_usage (id) ON DELETE SET NULL
+      )
+    `)
+
     // Таблица использования лекарств
     await this.db.executeSql(`
       CREATE TABLE IF NOT EXISTS medicine_usage (
@@ -229,6 +272,133 @@ class DatabaseService {
         console.log('SQLite - Adding barcode column to medicines table')
         await this.db.executeSql(`
           ALTER TABLE medicines ADD COLUMN barcode TEXT
+        `)
+      }
+
+      // Проверяем наличие таблицы reminders
+      const [remindersTable] = await this.db.executeSql(`
+        SELECT name FROM sqlite_master WHERE type='table' AND name='reminders'
+      `)
+
+      if (remindersTable.rows.length === 0) {
+        console.log('SQLite - Creating reminders table')
+        await this.db.executeSql(`
+          CREATE TABLE IF NOT EXISTS reminders (
+            id TEXT PRIMARY KEY,
+            family_member_id TEXT,
+            title TEXT NOT NULL,
+            frequency TEXT NOT NULL,
+            times_per_day INTEGER DEFAULT 1,
+            time TEXT NOT NULL,
+            is_active BOOLEAN DEFAULT 1,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (family_member_id) REFERENCES family_members (id) ON DELETE SET NULL
+          )
+        `)
+
+        await this.db.executeSql(`
+          CREATE TABLE IF NOT EXISTS reminder_medicines (
+            id TEXT PRIMARY KEY,
+            reminder_id TEXT NOT NULL,
+            medicine_id TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (reminder_id) REFERENCES reminders (id) ON DELETE CASCADE,
+            FOREIGN KEY (medicine_id) REFERENCES medicines (id) ON DELETE CASCADE
+          )
+        `)
+      } else {
+        // Таблица существует - проверяем её структуру
+        const [tableInfo] = await this.db.executeSql(`
+          PRAGMA table_info(reminders)
+        `)
+
+        let hasMedicineId = false
+        for (let i = 0; i < tableInfo.rows.length; i++) {
+          const column = tableInfo.rows.item(i)
+          if (column.name === 'medicine_id') {
+            hasMedicineId = true
+            break
+          }
+        }
+
+        // Если есть старая структура с medicine_id - пересоздаем таблицу
+        if (hasMedicineId) {
+          console.log('SQLite - Migrating reminders table to new structure')
+
+          // Сохраняем старые данные
+          const [oldReminders] = await this.db.executeSql(`
+            SELECT * FROM reminders
+          `)
+
+          // Удаляем старую таблицу
+          await this.db.executeSql(`DROP TABLE IF EXISTS reminders`)
+          await this.db.executeSql(`DROP TABLE IF EXISTS reminder_intakes`)
+
+          // Создаем новые таблицы
+          await this.db.executeSql(`
+            CREATE TABLE reminders (
+              id TEXT PRIMARY KEY,
+              family_member_id TEXT,
+              title TEXT NOT NULL,
+              frequency TEXT NOT NULL,
+              times_per_day INTEGER DEFAULT 1,
+              time TEXT NOT NULL,
+              is_active BOOLEAN DEFAULT 1,
+              created_at TEXT NOT NULL,
+              FOREIGN KEY (family_member_id) REFERENCES family_members (id) ON DELETE SET NULL
+            )
+          `)
+
+          await this.db.executeSql(`
+            CREATE TABLE reminder_medicines (
+              id TEXT PRIMARY KEY,
+              reminder_id TEXT NOT NULL,
+              medicine_id TEXT NOT NULL,
+              created_at TEXT NOT NULL,
+              FOREIGN KEY (reminder_id) REFERENCES reminders (id) ON DELETE CASCADE,
+              FOREIGN KEY (medicine_id) REFERENCES medicines (id) ON DELETE CASCADE
+            )
+          `)
+
+          await this.db.executeSql(`
+            CREATE TABLE reminder_intakes (
+              id TEXT PRIMARY KEY,
+              reminder_id TEXT NOT NULL,
+              scheduled_date TEXT NOT NULL,
+              scheduled_time TEXT NOT NULL,
+              is_taken BOOLEAN DEFAULT 0,
+              taken_at TEXT,
+              usage_id TEXT,
+              created_at TEXT NOT NULL,
+              FOREIGN KEY (reminder_id) REFERENCES reminders (id) ON DELETE CASCADE,
+              FOREIGN KEY (usage_id) REFERENCES medicine_usage (id) ON DELETE SET NULL
+            )
+          `)
+
+          console.log('SQLite - Reminders table migrated successfully')
+        }
+      }
+
+      // Проверяем наличие таблицы reminder_intakes
+      const [reminderIntakesTable] = await this.db.executeSql(`
+        SELECT name FROM sqlite_master WHERE type='table' AND name='reminder_intakes'
+      `)
+
+      if (reminderIntakesTable.rows.length === 0) {
+        console.log('SQLite - Creating reminder_intakes table')
+        await this.db.executeSql(`
+          CREATE TABLE IF NOT EXISTS reminder_intakes (
+            id TEXT PRIMARY KEY,
+            reminder_id TEXT NOT NULL,
+            scheduled_date TEXT NOT NULL,
+            scheduled_time TEXT NOT NULL,
+            is_taken BOOLEAN DEFAULT 0,
+            taken_at TEXT,
+            usage_id TEXT,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (reminder_id) REFERENCES reminders (id) ON DELETE CASCADE,
+            FOREIGN KEY (usage_id) REFERENCES medicine_usage (id) ON DELETE SET NULL
+          )
         `)
       }
 
@@ -721,7 +891,82 @@ class DatabaseService {
       newUsage.createdAt.toISOString()
     ])
 
+    // Автоматически отмечаем связанные напоминания как выполненные
+    await this.markTodayRemindersAsTaken(newUsage.medicineId, newUsage.usageDate, newUsage.id)
+
     return newUsage
+  }
+
+  // Отмечаем напоминания на сегодня как выполненные
+  async markTodayRemindersAsTaken(medicineId: string, usageDate: Date, usageId: string): Promise<void> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    const today = new Date(usageDate)
+    today.setHours(0, 0, 0, 0)
+    // Используем локальную дату без UTC
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    const todayStr = `${year}-${month}-${day}`
+
+    // Находим невыполненные приемы по напоминаниям для этого лекарства на сегодня
+    const [results] = await this.db.executeSql(`
+      SELECT DISTINCT ri.id, ri.reminder_id, ri.scheduled_time, r.id as reminder_id_check
+      FROM reminder_intakes ri
+      JOIN reminders r ON ri.reminder_id = r.id
+      JOIN reminder_medicines rm ON r.id = rm.reminder_id
+      WHERE rm.medicine_id = ?
+        AND ri.scheduled_date = ?
+        AND ri.is_taken = 0
+      ORDER BY ri.scheduled_time ASC
+      LIMIT 1
+    `, [medicineId, todayStr])
+
+    if (results.rows.length > 0) {
+      const intake = results.rows.item(0)
+      const reminderId = intake.reminder_id
+
+      // Проверяем: приняты ли ВСЕ лекарства из этого напоминания сегодня?
+      const [medicinesInReminder] = await this.db.executeSql(`
+        SELECT medicine_id FROM reminder_medicines WHERE reminder_id = ?
+      `, [reminderId])
+
+      // Получаем все приемы лекарств на сегодня (используем локальную дату)
+      const [usagesToday] = await this.db.executeSql(`
+        SELECT DISTINCT medicine_id 
+        FROM medicine_usage 
+        WHERE strftime('%Y-%m-%d', usage_date) = ?
+      `, [todayStr])
+
+      const takenMedicineIds = new Set()
+      for (let i = 0; i < usagesToday.rows.length; i++) {
+        takenMedicineIds.add(usagesToday.rows.item(i).medicine_id)
+      }
+
+      let allTaken = true
+      for (let i = 0; i < medicinesInReminder.rows.length; i++) {
+        const medId = medicinesInReminder.rows.item(i).medicine_id
+        if (!takenMedicineIds.has(medId)) {
+          allTaken = false
+          break
+        }
+      }
+
+      // Отмечаем напоминание как выполненное только если приняты ВСЕ лекарства
+      if (allTaken) {
+        await this.db.executeSql(`
+          UPDATE reminder_intakes
+          SET is_taken = 1, taken_at = ?, usage_id = ?
+          WHERE id = ?
+        `, [new Date().toISOString(), usageId, intake.id])
+
+        // Удаляем пуш-уведомление для этого напоминания
+        const { notificationService } = require('./notifications')
+        await notificationService.cancelTodayReminderNotification(reminderId, intake.scheduled_time)
+      }
+    }
   }
 
   async getMedicineUsage(medicineId: string): Promise<MedicineUsage[]> {
@@ -888,6 +1133,144 @@ class DatabaseService {
     `, [id])
 
     console.log('SQLite - Deleted medicine usage:', id)
+  }
+
+  // CRUD для напоминаний
+  async createReminder(data: {
+    medicineIds: string[]
+    familyMemberId?: string
+    title: string
+    frequency: 'once' | 'daily' | 'weekly'
+    timesPerDay: number
+    time: string
+  }): Promise<string> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    const id = Date.now().toString()
+    const now = new Date().toISOString()
+
+    // Создаем напоминание
+    await this.db.executeSql(`
+      INSERT INTO reminders (
+        id, family_member_id, title, frequency, times_per_day, time, is_active, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, 1, ?)
+    `, [
+      id,
+      data.familyMemberId || null,
+      data.title,
+      data.frequency,
+      data.timesPerDay,
+      data.time,
+      now
+    ])
+
+    // Связываем с лекарствами
+    for (const medicineId of data.medicineIds) {
+      const linkId = `${id}_${medicineId}`
+      await this.db.executeSql(`
+        INSERT INTO reminder_medicines (
+          id, reminder_id, medicine_id, created_at
+        ) VALUES (?, ?, ?, ?)
+      `, [linkId, id, medicineId, now])
+    }
+
+    return id
+  }
+
+  async createReminderIntake(data: {
+    reminderId: string
+    scheduledDate: string
+    scheduledTime: string
+  }): Promise<void> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    const id = Date.now().toString() + Math.random()
+    const now = new Date().toISOString()
+
+    await this.db.executeSql(`
+      INSERT INTO reminder_intakes (
+        id, reminder_id, scheduled_date, scheduled_time, is_taken, created_at
+      ) VALUES (?, ?, ?, ?, 0, ?)
+    `, [id, data.reminderId, data.scheduledDate, data.scheduledTime, now])
+  }
+
+  async getTodayReminderIntakes(): Promise<any[]> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    // Используем локальную дату без UTC
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    const todayStr = `${year}-${month}-${day}`
+
+    const [results] = await this.db.executeSql(`
+      SELECT 
+        ri.id,
+        ri.reminder_id,
+        ri.scheduled_time,
+        ri.is_taken,
+        ri.taken_at,
+        r.title,
+        r.family_member_id,
+        fm.name as family_member_name,
+        fm.avatar as family_member_avatar,
+        fm.color as family_member_color
+      FROM reminder_intakes ri
+      JOIN reminders r ON ri.reminder_id = r.id
+      LEFT JOIN family_members fm ON r.family_member_id = fm.id
+      WHERE ri.scheduled_date = ?
+        AND r.is_active = 1
+      ORDER BY ri.scheduled_time ASC, ri.is_taken ASC
+    `, [todayStr])
+
+    const intakes = []
+    for (let i = 0; i < results.rows.length; i++) {
+      const row = results.rows.item(i)
+
+      // Загружаем все лекарства для этого напоминания
+      const [medicinesResult] = await this.db.executeSql(`
+        SELECT 
+          m.id,
+          m.name,
+          m.form,
+          m.photo_path
+        FROM reminder_medicines rm
+        JOIN medicines m ON rm.medicine_id = m.id
+        WHERE rm.reminder_id = ?
+      `, [row.reminder_id])
+
+      const medicines = []
+      for (let j = 0; j < medicinesResult.rows.length; j++) {
+        medicines.push(medicinesResult.rows.item(j))
+      }
+
+      intakes.push({
+        ...row,
+        medicines
+      })
+    }
+
+    return intakes
+  }
+
+  async markReminderIntakeAsTaken(intakeId: string, usageId: string): Promise<void> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    await this.db.executeSql(`
+      UPDATE reminder_intakes
+      SET is_taken = 1, taken_at = ?, usage_id = ?
+      WHERE id = ?
+    `, [new Date().toISOString(), usageId, intakeId])
   }
 
   // Справочные данные (заглушки для будущей реализации)

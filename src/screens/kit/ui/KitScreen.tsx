@@ -90,7 +90,7 @@ export const KitScreen = () => {
   // Показываем загрузку при редактировании
   if (mode === 'edit' && loading) {
     return (
-      <SafeAreaView style={{ backgroundColor: colors.background, flex: 1 }}>
+      <SafeAreaView edges={['bottom']} style={{ backgroundColor: colors.background, flex: 1 }}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size='large' color={colors.primary} />
         </View>
@@ -99,7 +99,7 @@ export const KitScreen = () => {
   }
 
   return (
-    <SafeAreaView style={{ backgroundColor: colors.background }}>
+    <SafeAreaView edges={['bottom']} style={{ backgroundColor: colors.background }}>
       <KitForm
         initialData={initialData}
         onSubmit={handleSubmit}

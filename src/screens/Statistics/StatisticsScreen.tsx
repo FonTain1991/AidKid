@@ -146,7 +146,9 @@ export function StatisticsScreen() {
 
     for (const item of items) {
       const medicine = medicinesMap.get(item.medicineId)
-      if (!medicine) continue
+      if (!medicine) {
+        continue
+      }
 
       const kit = kitsMap.get(medicine.kitId)
 
@@ -174,7 +176,9 @@ export function StatisticsScreen() {
   }
 
   const getAveragePerDay = () => {
-    if (history.length === 0) return 0
+    if (history.length === 0) {
+      return 0
+    }
 
     const oldestDate = history[history.length - 1].usageDate
     const days = Math.ceil((new Date().getTime() - oldestDate.getTime()) / (1000 * 60 * 60 * 24))
@@ -264,7 +268,7 @@ export function StatisticsScreen() {
   const filteredStats = getFilteredStats()
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         style={styles.scroll}
         refreshControl={

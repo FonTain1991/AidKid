@@ -169,9 +169,7 @@ export function HistoryScreen() {
     const weekAgo = new Date()
     weekAgo.setDate(weekAgo.getDate() - 7)
 
-    const weekItems = history.filter(item =>
-      item.usageDate >= weekAgo
-    )
+    const weekItems = history.filter(item => item.usageDate >= weekAgo)
 
     return weekItems.length
   }
@@ -192,7 +190,7 @@ export function HistoryScreen() {
   const weekStats = getWeekStats()
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         style={styles.scroll}
         refreshControl={

@@ -147,8 +147,8 @@ export function NotificationSettingsScreen() {
     }
   })
 
-  const getStatusIcon = (status: boolean) => status ? '✅' : '❌'
-  const getStatusText = (status: boolean) => status ? 'Включено' : 'Отключено'
+  const getStatusIcon = (status: boolean) => (status ? '✅' : '❌')
+  const getStatusText = (status: boolean) => (status ? 'Включено' : 'Отключено')
 
   if (isLoading) {
     return (
@@ -163,7 +163,7 @@ export function NotificationSettingsScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView style={styles.scroll}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]}>Настройки уведомлений</Text>

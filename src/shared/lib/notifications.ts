@@ -253,6 +253,46 @@ class NotificationService {
   }
 
   /**
+   * Отмена уведомлений для конкретного напоминания на сегодня
+   * @param {string} reminderId ID напоминания
+   * @param {string} scheduledTime Время напоминания (HH:MM)
+   * @returns {Promise<void>} Promise
+   */
+  async cancelTodayReminderNotification(reminderId: string, scheduledTime: string): Promise<void> {
+    try {
+      const notifications = await notifee.getTriggerNotifications()
+
+      // Ищем уведомление для этого напоминания на сегодня
+      for (const item of notifications) {
+        const { notification } = item
+        const data = notification.data as any
+
+        // Проверяем что это уведомление для нашего напоминания
+        if (data?.type === 'reminder' && data?.reminderId === reminderId) {
+          // Проверяем время срабатывания
+          const trigger = item.trigger as any
+          if (trigger?.timestamp) {
+            const notifDate = new Date(trigger.timestamp)
+            const notifTime = `${String(notifDate.getHours()).padStart(2, '0')}:${String(notifDate.getMinutes()).padStart(2, '0')}`
+            const notifDateStr = notifDate.toDateString()
+            const todayStr = new Date().toDateString()
+
+            // Если это сегодняшнее уведомление с нужным временем - удаляем
+            if (notifDateStr === todayStr && notifTime === scheduledTime) {
+              console.log(`🔕 Cancelling notification for reminder ${reminderId} at ${scheduledTime}`)
+              if (notification.id) {
+                await notifee.cancelNotification(notification.id)
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to cancel reminder notification:', error)
+    }
+  }
+
+  /**
    * Отмена всех уведомлений
    * @returns {Promise<void>} Promise
    */

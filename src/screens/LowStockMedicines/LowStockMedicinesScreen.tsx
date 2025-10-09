@@ -75,15 +75,21 @@ export function LowStockMedicinesScreen() {
   }
 
   const getStockColor = (quantity: number) => {
-    if (quantity === 0) return colors.error
-    if (quantity === 1) return '#FF6B00'
-    if (quantity <= 3) return colors.warning
+    if (quantity === 0) {
+      return colors.error
+    }
+    if (quantity === 1) {
+      return '#FF6B00'
+    }
+    if (quantity <= 3) {
+      return colors.warning
+    }
     return colors.secondary
   }
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
           <Text style={[styles.loadingText, { color: colors.text }]}>
             Загрузка...
@@ -94,7 +100,7 @@ export function LowStockMedicinesScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         style={styles.scroll}
         refreshControl={
@@ -126,7 +132,7 @@ export function LowStockMedicinesScreen() {
           </View>
         ) : (
           <View style={styles.medicinesList}>
-            {medicines.map((medicine) => {
+            {medicines.map(medicine => {
               const stockColor = getStockColor(medicine.stock.quantity)
 
               return (

@@ -138,7 +138,7 @@ export function HomeScreen() {
 
   if (error) {
     return (
-      <SafeAreaView style={{ backgroundColor: colors.background, flex: 1 }}>
+      <SafeAreaView edges={['bottom']} style={{ backgroundColor: colors.background, flex: 1 }}>
         <ErrorState error={error} onRetry={refreshKits} />
         <FAB onPress={() => quickCreateSheetRef.current?.present()} />
       </SafeAreaView>
@@ -146,7 +146,7 @@ export function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         style={styles.scroll}
         refreshControl={

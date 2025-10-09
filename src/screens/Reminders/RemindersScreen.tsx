@@ -190,7 +190,7 @@ export function RemindersScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
           <Text style={[styles.loadingText, { color: colors.text }]}>
             Загрузка напоминаний...
@@ -201,7 +201,7 @@ export function RemindersScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView style={styles.scroll}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]}>Напоминания</Text>

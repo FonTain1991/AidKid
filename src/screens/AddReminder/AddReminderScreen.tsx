@@ -84,15 +84,19 @@ export function AddReminderScreen() {
     setReminderTimes(defaultTimes)
   }, [])
 
-  const scheduleReminderNotifications = async (
-    medicine: Medicine,
-    title: string,
-    times: Date[],
-    frequency: 'once' | 'daily' | 'weekly',
-    quantity: number,
+  const scheduleReminderNotifications = async (options: {
+    medicines: Medicine[]
+    reminderId: string
+    title: string
+    times: Date[]
+    frequency: 'once' | 'daily' | 'weekly'
+    quantity: number
     familyMemberId?: string
-  ) => {
+  }) => {
+    const { medicines, reminderId, title, times, frequency, quantity, familyMemberId } = options
     const now = new Date()
+    const medicineNames = medicines.map(m => m.name).join(', ')
+    const medicineIds = medicines.map(m => m.id)
 
     if (frequency === 'once') {
       // Одноразовое напоминание - всегда 1 уведомление
@@ -106,18 +110,19 @@ export function AddReminderScreen() {
         notificationTime.setDate(notificationTime.getDate() + 1)
       }
 
-      const notificationId = `reminder-once-${medicine.id}-${Date.now()}`
+      const notificationId = `reminder-once-${reminderId}-${Date.now()}`
       await notificationService.scheduleNotification(notificationId, {
         title,
-        body: `Время принять ${medicine.name}`,
+        body: `Время принять: ${medicineNames}`,
         notificationDate: notificationTime,
         data: {
           type: 'reminder',
-          medicineId: medicine.id,
-          familyMemberId,
+          reminderId,
+          medicineIds: JSON.stringify(medicineIds),
+          familyMemberId: familyMemberId || '',
           frequency: 'once',
         },
-        kitId: medicine.kitId,
+        kitId: medicines[0].kitId,
         critical: false,
       })
       console.log(`✅ Запланировано одноразовое напоминание на ${notificationTime.toLocaleString('ru-RU')}`)
@@ -139,22 +144,23 @@ export function AddReminderScreen() {
           }
 
           const intakeNumber = intake + 1
-          const notificationId = `reminder-daily-${medicine.id}-day${day}-intake${intake}`
+          const notificationId = `reminder-daily-${reminderId}-day${day}-intake${intake}`
 
           await notificationService.scheduleNotification(notificationId, {
             title,
-            body: `Время принять ${medicine.name} (прием ${intakeNumber} из ${quantity})`,
+            body: `Время принять: ${medicineNames} (прием ${intakeNumber} из ${quantity})`,
             notificationDate: notificationTime,
             data: {
               type: 'reminder',
-              medicineId: medicine.id,
-              familyMemberId,
+              reminderId,
+              medicineIds: JSON.stringify(medicineIds),
+              familyMemberId: familyMemberId || '',
               frequency: 'daily',
-              day,
-              intake: intakeNumber,
-              totalIntakes: quantity,
+              day: String(day),
+              intake: String(intakeNumber),
+              totalIntakes: String(quantity),
             },
-            kitId: medicine.kitId,
+            kitId: medicines[0].kitId,
             critical: false,
           })
           notificationCount++
@@ -180,22 +186,23 @@ export function AddReminderScreen() {
           }
 
           const intakeNumber = intake + 1
-          const notificationId = `reminder-weekly-${medicine.id}-week${week}-intake${intake}`
+          const notificationId = `reminder-weekly-${reminderId}-week${week}-intake${intake}`
 
           await notificationService.scheduleNotification(notificationId, {
             title,
-            body: `Время принять ${medicine.name} (прием ${intakeNumber} из ${quantity} в неделю)`,
+            body: `Время принять: ${medicineNames} (прием ${intakeNumber} из ${quantity} в неделю)`,
             notificationDate: notificationTime,
             data: {
               type: 'reminder',
-              medicineId: medicine.id,
-              familyMemberId,
+              reminderId,
+              medicineIds: JSON.stringify(medicineIds),
+              familyMemberId: familyMemberId || '',
               frequency: 'weekly',
-              week,
-              intake: intakeNumber,
-              totalIntakes: quantity,
+              week: String(week),
+              intake: String(intakeNumber),
+              totalIntakes: String(quantity),
             },
-            kitId: medicine.kitId,
+            kitId: medicines[0].kitId,
             critical: false,
           })
           notificationCount++
@@ -219,20 +226,54 @@ export function AddReminderScreen() {
     const title = reminderTitle.trim() || defaultTitle
 
     try {
-      // Запланировать уведомления для каждого лекарства
+      // Создаем ОДНО напоминание для всех выбранных лекарств
       const timesToUse = frequency === 'once' ? [reminderTime] : reminderTimes.slice(0, quantity)
 
-      for (const medicine of selectedMedicines) {
-        const medicineTitle = reminderTitle.trim() || `Принять ${medicine.name}`
-        await scheduleReminderNotifications(
-          medicine,
-          medicineTitle,
-          timesToUse,
-          frequency,
-          frequency === 'once' ? 1 : quantity,
-          selectedFamilyMember?.id
-        )
+      // Сохраняем напоминание в БД
+      const reminderId = await databaseService.createReminder({
+        medicineIds: selectedMedicines.map(m => m.id),
+        familyMemberId: selectedFamilyMember?.id,
+        title,
+        frequency,
+        timesPerDay: timesToUse.length,
+        time: JSON.stringify(timesToUse.map(t => ({
+          hour: t.getHours(),
+          minute: t.getMinutes()
+        })))
+      })
+
+      // Создаем записи приемов на ближайшие дни
+      const daysToCreate = frequency === 'once' ? 1 : frequency === 'daily' ? 30 : 84 // 12 недель
+
+      for (let day = 0; day < daysToCreate; day++) {
+        const date = new Date()
+        date.setDate(date.getDate() + day)
+        // Используем локальную дату без UTC
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const dayStr = String(date.getDate()).padStart(2, '0')
+        const dateStr = `${year}-${month}-${dayStr}`
+
+        for (const time of timesToUse) {
+          const timeStr = `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`
+          await databaseService.createReminderIntake({
+            reminderId,
+            scheduledDate: dateStr,
+            scheduledTime: timeStr
+          })
+        }
       }
+
+      // Запланировать уведомления для всех лекарств напоминания
+      await scheduleReminderNotifications({
+        medicines: selectedMedicines,
+        reminderId,
+        title,
+        times: timesToUse,
+        frequency,
+        quantity: frequency === 'once' ? 1 : quantity,
+        familyMemberId: selectedFamilyMember?.id
+      })
 
       const frequencyText = frequency === 'once' ? 'один раз' : frequency === 'daily' ? 'ежедневно' : 'еженедельно'
 
@@ -252,10 +293,16 @@ export function AddReminderScreen() {
         }
       }
 
-      Alert.alert('✅ Напоминание создано', message)
+      Alert.alert('✅ Напоминание создано', message, [
+        {
+          text: 'OK',
+          onPress: () => navigation.goBack()
+        }
+      ])
     } catch (error) {
-      console.error('Failed to create reminder:', error)
-      Alert.alert('Ошибка', 'Не удалось создать напоминание')
+      console.error('Failed to create reminders:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка'
+      Alert.alert('Ошибка', `Не удалось создать напоминание: ${errorMessage}`)
     }
   }
 
@@ -267,7 +314,7 @@ export function AddReminderScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
           <Text style={[styles.loadingText, { color: colors.text }]}>
             Загрузка лекарств...
@@ -278,7 +325,7 @@ export function AddReminderScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAwareScrollView
         keyboardShouldPersistTaps='handled'
         style={styles.scroll}

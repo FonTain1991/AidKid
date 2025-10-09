@@ -97,7 +97,9 @@ export function QuickIntakeScreen() {
 
       for (const medicineId of selectedMedicines) {
         const medicine = medicines.find(m => m.id === medicineId)
-        if (!medicine) continue
+        if (!medicine) {
+          continue
+        }
 
         const stock = stocks.get(medicineId)
 
@@ -236,7 +238,7 @@ export function QuickIntakeScreen() {
   }, {} as Record<string, Medicine[]>)
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView style={styles.scroll}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]}>Быстрый прием</Text>
@@ -283,7 +285,7 @@ export function QuickIntakeScreen() {
                             backgroundColor: isOutOfStock ? '#f5f5f5' : isSelected ? colors.primary + '10' : 'white'
                           }
                         ]}
-                        onPress={() => isOutOfStock ? null : toggleMedicineSelection(medicine.id)}
+                        onPress={() => (isOutOfStock ? null : toggleMedicineSelection(medicine.id))}
                         onLongPress={() => !isOutOfStock && handleIntake(medicine)}
                         disabled={isOutOfStock}
                       >

@@ -51,9 +51,7 @@ export function ExpiringMedicinesScreen() {
         try {
           const stock = await databaseService.getMedicineStock(medicine.id)
           if (stock?.expiryDate) {
-            const daysUntilExpiry = Math.ceil(
-              (stock.expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-            )
+            const daysUntilExpiry = Math.ceil((stock.expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
 
             if (daysUntilExpiry <= 30 && daysUntilExpiry >= 0) {
               const kit = kitsMap.get(medicine.kitId)
@@ -84,24 +82,40 @@ export function ExpiringMedicinesScreen() {
   }
 
   const getUrgencyColor = (days: number) => {
-    if (days <= 3) return colors.error
-    if (days <= 7) return '#FF6B00'
-    if (days <= 14) return colors.warning
+    if (days <= 3) {
+      return colors.error
+    }
+    if (days <= 7) {
+      return '#FF6B00'
+    }
+    if (days <= 14) {
+      return colors.warning
+    }
     return colors.secondary
   }
 
   const getUrgencyLabel = (days: number) => {
-    if (days === 0) return 'Истекает сегодня!'
-    if (days === 1) return 'Истекает завтра'
-    if (days <= 3) return `${days} дня`
-    if (days <= 7) return `${days} дней`
-    if (days <= 14) return `${days} дней`
+    if (days === 0) {
+      return 'Истекает сегодня!'
+    }
+    if (days === 1) {
+      return 'Истекает завтра'
+    }
+    if (days <= 3) {
+      return `${days} дня`
+    }
+    if (days <= 7) {
+      return `${days} дней`
+    }
+    if (days <= 14) {
+      return `${days} дней`
+    }
     return `${days} дней`
   }
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
           <Text style={[styles.loadingText, { color: colors.text }]}>
             Загрузка...
@@ -112,7 +126,7 @@ export function ExpiringMedicinesScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         style={styles.scroll}
         refreshControl={
@@ -144,7 +158,7 @@ export function ExpiringMedicinesScreen() {
           </View>
         ) : (
           <View style={styles.medicinesList}>
-            {medicines.map((medicine) => {
+            {medicines.map(medicine => {
               const urgencyColor = getUrgencyColor(medicine.daysUntilExpiry)
               const urgencyLabel = getUrgencyLabel(medicine.daysUntilExpiry)
 

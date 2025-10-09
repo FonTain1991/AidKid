@@ -1,54 +1,69 @@
 import { useTheme } from '@/app/providers/theme'
 import { SPACING } from '@/shared/config'
 import { FONT_SIZE } from '@/shared/config/constants/font'
-import { databaseService } from '@/shared/lib/database'
-import { notificationService } from '@/shared/lib/notifications'
+import { databaseService, getMedicinePhotoUri, notificationService } from '@/shared/lib'
 import { SafeAreaView } from '@/shared/ui/SafeAreaView'
-import { Medicine, MedicineStock } from '@/entities/medicine/model/types'
-import { FamilyMember } from '@/entities/family-member/model/types'
+import { MedicineStock } from '@/entities/medicine/model/types'
 import { useEffect, useState } from 'react'
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View, Image, RefreshControl } from 'react-native'
+import { useNavigation } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import type { RootStackParamList } from '@/app/navigation/types'
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>
+
+interface Medicine {
+  id: string
+  name: string
+  form: string
+  photo_path?: string
+}
 
 interface TodayIntake {
-  medicineId: string
-  medicineName: string
-  medicineForm: string
+  id: string
+  reminderId: string
+  medicines: Medicine[]
   time: string
-  timestamp: Date
-  taken: boolean
-  stock?: MedicineStock
-  familyMemberId?: string
+  isTaken: boolean
+  takenAt?: Date
   familyMemberName?: string
   familyMemberAvatar?: string
+  familyMemberColor?: string
+  title: string
 }
 
 export function TodayScreen() {
   const { colors } = useTheme()
-  const [todayIntakes, setTodayIntakes] = useState<TodayIntake[]>([])
+  const navigation = useNavigation<NavigationProp>()
+  const [intakes, setIntakes] = useState<TodayIntake[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [medicines, setMedicines] = useState<Map<string, Medicine>>(new Map())
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [stocks, setStocks] = useState<Map<string, MedicineStock>>(new Map())
 
   useEffect(() => {
     loadTodayIntakes()
   }, [])
 
-  const loadTodayIntakes = async () => {
+  // Перезагружаем при фокусе экрана
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadTodayIntakes()
+    })
+    return unsubscribe
+  }, [navigation])
+
+  const loadTodayIntakes = async (isRefresh = false) => {
     try {
-      setIsLoading(true)
-      console.log('🔍 Loading today intakes...')
+      if (isRefresh) {
+        setIsRefreshing(true)
+      } else {
+        setIsLoading(true)
+      }
 
-      // Загружаем все лекарства
       await databaseService.init()
+
+      // Загружаем запасы для всех лекарств
       const allMedicines = await databaseService.getMedicines()
-      const medicinesMap = new Map(allMedicines.map(m => [m.id, m]))
-
-      // Загружаем членов семьи
-      const allFamilyMembers = await databaseService.getFamilyMembers()
-      const familyMembersMap = new Map(allFamilyMembers.map(m => [m.id, m]))
-      setMedicines(medicinesMap)
-
-      // Загружаем запасы
       const stocksMap = new Map<string, MedicineStock>()
       for (const medicine of allMedicines) {
         try {
@@ -62,76 +77,38 @@ export function TodayScreen() {
       }
       setStocks(stocksMap)
 
-      // Загружаем все запланированные уведомления
-      const notifications = await notificationService.getTriggerNotifications()
-      console.log(`📋 Found ${notifications.length} scheduled notifications`)
+      // Загружаем запланированные приемы на сегодня из БД
+      const reminderIntakes = await databaseService.getTodayReminderIntakes()
 
-      // Фильтруем уведомления на сегодня
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      const tomorrow = new Date(today)
-      tomorrow.setDate(tomorrow.getDate() + 1)
+      const todayIntakes: TodayIntake[] = reminderIntakes.map(intake => ({
+        id: intake.id,
+        reminderId: intake.reminder_id,
+        medicines: intake.medicines || [],
+        time: intake.scheduled_time,
+        isTaken: intake.is_taken === 1,
+        takenAt: intake.taken_at ? new Date(intake.taken_at) : undefined,
+        familyMemberName: intake.family_member_name,
+        familyMemberAvatar: intake.family_member_avatar,
+        familyMemberColor: intake.family_member_color,
+        title: intake.title
+      }))
 
-      const intakes: TodayIntake[] = []
-
-      for (const item of notifications) {
-        const { notification } = item
-        const data = notification.data as any
-
-        // Только напоминания о приеме
-        if (data?.type !== 'reminder') {
-          continue
-        }
-
-        const trigger = item.trigger as any
-        const notificationTime = trigger?.timestamp ? new Date(trigger.timestamp) : null
-
-        // Проверяем что уведомление на сегодня
-        if (!notificationTime || notificationTime < today || notificationTime >= tomorrow) {
-          continue
-        }
-
-        const { medicineId, familyMemberId } = data
-        const medicine = medicinesMap.get(medicineId)
-
-        if (!medicine) {
-          continue
-        }
-
-        const stock = stocksMap.get(medicineId)
-        const familyMember = familyMemberId ? familyMembersMap.get(familyMemberId) : null
-
-        intakes.push({
-          medicineId,
-          medicineName: medicine.name,
-          medicineForm: medicine.form,
-          time: notificationTime.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
-          timestamp: notificationTime,
-          taken: false, // TODO: проверять историю приема
-          stock,
-          familyMemberId,
-          familyMemberName: familyMember?.name,
-          familyMemberAvatar: familyMember?.avatar,
-        })
-      }
-
-      // Сортируем по времени
-      intakes.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
-
-      setTodayIntakes(intakes)
-      console.log(`✅ Loaded ${intakes.length} intakes for today`)
+      setIntakes(todayIntakes)
     } catch (error) {
       console.error('❌ Failed to load today intakes:', error)
       Alert.alert('Ошибка', 'Не удалось загрузить приемы на сегодня')
     } finally {
       setIsLoading(false)
+      setIsRefreshing(false)
     }
   }
 
   const handleMarkTaken = async (intake: TodayIntake) => {
+    const medicineNames = intake.medicines.map(m => m.name).join(', ')
+
     Alert.alert(
       'Отметить прием?',
-      `${intake.medicineName} в ${intake.time}${!intake.stock || intake.stock.quantity === 0 ? '\n\n⚠️ Запас закончился' : ''}`,
+      `${medicineNames} в ${intake.time}`,
       [
         {
           text: 'Отмена',
@@ -141,33 +118,45 @@ export function TodayScreen() {
           text: 'Принял',
           onPress: async () => {
             try {
-              // Создаем запись в истории
-              await databaseService.createMedicineUsage({
-                medicineId: intake.medicineId,
-                familyMemberId: intake.familyMemberId,
-                quantityUsed: 1,
-                usageDate: new Date(),
-                notes: `Запланированный прием в ${intake.time}`
-              })
+              let firstUsageId: string | null = null
 
-              // Если есть запас, уменьшаем количество
-              if (intake.stock && intake.stock.quantity > 0) {
-                await databaseService.updateMedicineStock(intake.stock.id, {
-                  quantity: intake.stock.quantity - 1,
-                  updatedAt: new Date(),
+              // Создаем записи в истории для каждого лекарства
+              for (const medicine of intake.medicines) {
+                const usage = await databaseService.createMedicineUsage({
+                  medicineId: medicine.id,
+                  quantityUsed: 1,
+                  usageDate: new Date(),
+                  notes: `Запланированный прием в ${intake.time}`
                 })
+
+                if (!firstUsageId) {
+                  firstUsageId = usage.id
+                }
+
+                // Уменьшаем запас если есть
+                const stock = stocks.get(medicine.id)
+                if (stock && stock.quantity > 0) {
+                  await databaseService.updateMedicineStock(stock.id, {
+                    quantity: stock.quantity - 1,
+                    updatedAt: new Date(),
+                  })
+                }
               }
 
-              // Обновляем локальное состояние
-              setTodayIntakes(prev =>
-                prev.map(i =>
-                  i.medicineId === intake.medicineId && i.time === intake.time
-                    ? { ...i, taken: true }
-                    : i
-                )
-              )
+              // Отмечаем напоминание как выполненное
+              if (firstUsageId) {
+                await databaseService.markReminderIntakeAsTaken(intake.id, firstUsageId)
+              }
 
-              const message = `${intake.medicineName} принят успешно!${!intake.stock || intake.stock.quantity === 0 ? '\n\n⚠️ Не забудьте пополнить запас' : ''}`
+              // Удаляем пуш-уведомление для этого напоминания
+              await notificationService.cancelTodayReminderNotification(intake.reminderId, intake.time)
+
+              // Обновляем локальное состояние
+              setIntakes(prev => prev.map(i => (i.id === intake.id
+                ? { ...i, isTaken: true, takenAt: new Date() }
+                : i)))
+
+              const message = `${medicineNames} принято успешно!`
               Alert.alert('✅ Прием отмечен', message)
 
               // Перезагружаем данные
@@ -183,25 +172,34 @@ export function TodayScreen() {
   }
 
   const getStockStatus = (intake: TodayIntake) => {
-    if (!intake.stock) {
+    // Проверяем запасы всех лекарств
+    const allStocks = intake.medicines.map(m => stocks.get(m.id))
+    const hasNoStock = allStocks.some(s => !s)
+    const hasZeroStock = allStocks.some(s => s && s.quantity <= 0)
+    const hasLowStock = allStocks.some(s => s && s.quantity > 0 && s.quantity <= 5)
+
+    if (hasNoStock) {
       return { text: 'Нет в наличии', color: colors.error }
     }
-
-    if (intake.stock.quantity <= 0) {
+    if (hasZeroStock) {
       return { text: 'Закончилось', color: colors.error }
     }
-    if (intake.stock.quantity <= 5) {
-      return { text: `Осталось ${intake.stock.quantity}`, color: colors.warning }
+    if (hasLowStock) {
+      return { text: 'Мало', color: colors.warning }
     }
-
-    return { text: `В наличии ${intake.stock.quantity}`, color: colors.success }
+    return { text: 'В наличии', color: colors.success }
   }
 
-  const getTimeStatus = (timestamp: Date) => {
+  const getTimeStatus = (timeStr: string) => {
     const now = new Date()
+    const [hours, minutes] = timeStr.split(':').map(Number)
+    const timestamp = new Date()
+    timestamp.setHours(hours, minutes, 0, 0)
+
     if (timestamp <= now) {
       return { text: 'Время приема', color: colors.primary }
     }
+
     const hoursUntil = Math.floor((timestamp.getTime() - now.getTime()) / (1000 * 60 * 60))
     const minutesUntil = Math.floor((timestamp.getTime() - now.getTime()) / (1000 * 60)) % 60
 
@@ -213,7 +211,7 @@ export function TodayScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
           <Text style={[styles.loadingText, { color: colors.text }]}>
             Загрузка приемов на сегодня...
@@ -224,8 +222,17 @@ export function TodayScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView style={styles.scroll}>
+    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView
+        style={styles.scroll}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={() => loadTodayIntakes(true)}
+            tintColor={colors.primary}
+          />
+        }
+      >
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]}>Сегодня</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
@@ -237,42 +244,50 @@ export function TodayScreen() {
           </Text>
         </View>
 
-        {todayIntakes.length === 0 ? (
+        {intakes.filter(i => !i.isTaken).length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>📅</Text>
+            <Text style={styles.emptyIcon}>{intakes.length > 0 ? '✅' : '📅'}</Text>
             <Text style={[styles.emptyTitle, { color: colors.text }]}>
-              Нет запланированных приемов
+              {intakes.length > 0 ? 'Все выполнено!' : 'Нет запланированных приемов'}
             </Text>
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              На сегодня не запланировано ни одного приема лекарств
+              {intakes.length > 0
+                ? `Вы выполнили все ${intakes.length} ${intakes.length === 1 ? 'прием' : 'приема'} на сегодня`
+                : 'На сегодня не запланировано ни одного приема лекарств'
+              }
             </Text>
           </View>
         ) : (
           <>
             <View style={styles.statsContainer}>
               <View style={[styles.statCard, { backgroundColor: colors.primary }]}>
-                <Text style={styles.statNumber}>{todayIntakes.length}</Text>
+                <Text style={styles.statNumber}>{intakes.length}</Text>
                 <Text style={styles.statLabel}>Всего приемов</Text>
               </View>
               <View style={[styles.statCard, { backgroundColor: colors.success }]}>
                 <Text style={styles.statNumber}>
-                  {todayIntakes.filter(i => i.taken).length}
+                  {intakes.filter(i => i.isTaken).length}
                 </Text>
                 <Text style={styles.statLabel}>Принято</Text>
               </View>
               <View style={[styles.statCard, { backgroundColor: colors.warning }]}>
                 <Text style={styles.statNumber}>
-                  {todayIntakes.filter(i => !i.taken).length}
+                  {intakes.filter(i => !i.isTaken).length}
                 </Text>
                 <Text style={styles.statLabel}>Осталось</Text>
               </View>
             </View>
 
             <View style={styles.intakesList}>
-              {todayIntakes.map((intake, index) => {
+              {intakes.filter(i => !i.isTaken).map((intake, index) => {
                 const stockStatus = getStockStatus(intake)
-                const timeStatus = getTimeStatus(intake.timestamp)
-                const isPast = intake.timestamp <= new Date()
+                const timeStatus = getTimeStatus(intake.time)
+
+                // Вычисляем isPast из времени
+                const [hours, minutes] = intake.time.split(':').map(Number)
+                const timestamp = new Date()
+                timestamp.setHours(hours, minutes, 0, 0)
+                const isPast = timestamp <= new Date()
 
                 return (
                   <TouchableOpacity
@@ -280,13 +295,13 @@ export function TodayScreen() {
                     style={[
                       styles.intakeCard,
                       {
-                        backgroundColor: intake.taken ? colors.background : 'white',
-                        borderColor: intake.taken ? colors.success : colors.border,
-                        opacity: intake.taken ? 0.7 : 1,
+                        backgroundColor: intake.isTaken ? colors.background : 'white',
+                        borderColor: intake.isTaken ? colors.success : colors.border,
+                        opacity: intake.isTaken ? 0.7 : 1,
                       }
                     ]}
-                    onPress={() => !intake.taken && handleMarkTaken(intake)}
-                    disabled={intake.taken}
+                    onPress={() => !intake.isTaken && handleMarkTaken(intake)}
+                    disabled={intake.isTaken}
                   >
                     <View style={styles.intakeCardContent}>
                       <View style={styles.intakeLeft}>
@@ -303,17 +318,35 @@ export function TodayScreen() {
                       <View style={styles.intakeCenter}>
                         <View style={styles.intakeHeader}>
                           <Text style={[styles.intakeMedicine, { color: colors.text }]}>
-                            {intake.medicineName}
+                            {intake.title}
                           </Text>
-                          {intake.taken && (
+                          {intake.isTaken && (
                             <View style={[styles.takenBadge, { backgroundColor: colors.success }]}>
                               <Text style={styles.takenText}>✓</Text>
                             </View>
                           )}
                         </View>
-                        <Text style={[styles.intakeForm, { color: colors.textSecondary }]}>
-                          {intake.medicineForm}
-                        </Text>
+
+                        {/* Список лекарств */}
+                        <View style={styles.medicinesList}>
+                          {intake.medicines.map((medicine, idx) => (
+                            <View key={medicine.id} style={styles.medicineItem}>
+                              {medicine.photo_path ? (
+                                <Image
+                                  source={{ uri: getMedicinePhotoUri(medicine.photo_path) || undefined }}
+                                  style={styles.medicinePhotoSmall}
+                                />
+                              ) : (
+                                <View style={[styles.medicinePhotoSmallPlaceholder, { backgroundColor: colors.border }]}>
+                                  <Text style={styles.medicinePhotoSmallIcon}>💊</Text>
+                                </View>
+                              )}
+                              <Text style={[styles.medicineItemText, { color: colors.textSecondary }]}>
+                                {medicine.name}
+                              </Text>
+                            </View>
+                          ))}
+                        </View>
                         {intake.familyMemberName && (
                           <View style={styles.familyMemberBadge}>
                             <Text style={styles.familyMemberIcon}>{intake.familyMemberAvatar || '👤'}</Text>
@@ -333,7 +366,7 @@ export function TodayScreen() {
                         </View>
                       </View>
 
-                      {!intake.taken && (
+                      {!intake.isTaken && (
                         <View style={styles.intakeRight}>
                           <View style={[styles.checkButton, { backgroundColor: colors.primary }]}>
                             <Text style={styles.checkButtonText}>✓</Text>
@@ -446,6 +479,51 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: SPACING.md,
+  },
+  medicinePhoto: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    marginRight: SPACING.sm,
+  },
+  medicinePhotoPlaceholder: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    marginRight: SPACING.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  medicinePhotoIcon: {
+    fontSize: 28,
+  },
+  medicinesList: {
+    marginTop: SPACING.xs,
+  },
+  medicineItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.xs / 2,
+  },
+  medicinePhotoSmall: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+    marginRight: SPACING.xs,
+  },
+  medicinePhotoSmallPlaceholder: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+    marginRight: SPACING.xs,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  medicinePhotoSmallIcon: {
+    fontSize: 14,
+  },
+  medicineItemText: {
+    fontSize: FONT_SIZE.sm,
   },
   intakeLeft: {
     marginRight: SPACING.md,
