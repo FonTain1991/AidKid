@@ -242,13 +242,6 @@ export function QuickIntakeScreen() {
   return (
     <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView style={styles.scroll}>
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>Быстрый прием</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Выберите лекарство для отметки приема
-          </Text>
-        </View>
-
         {availableMedicines.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={[styles.emptyTitle, { color: colors.text }]}>

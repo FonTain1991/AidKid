@@ -9,6 +9,7 @@ export const useMedicineFormStyles = () => {
   return StyleSheet.create({
     container: {
       flex: 1,
+      paddingHorizontal: SPACING.md,
     },
     rowContainer: {
       flexDirection: 'row',
@@ -24,17 +25,20 @@ export const useMedicineFormStyles = () => {
       flex: 1,
     },
     photoContainer: {
+      width: '100%',
       alignItems: 'center',
       marginVertical: SPACING.sm,
     },
     photoPreview: {
+      width: '100%',
       borderRadius: 12,
       overflow: 'hidden',
+      backgroundColor: colors.border,
     },
     photoImage: {
       width: '100%',
       height: 200,
-      backgroundColor: colors.border,
+      resizeMode: 'cover',
     },
     photoActions: {
       flexDirection: 'row',

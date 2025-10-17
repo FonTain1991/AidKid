@@ -14,6 +14,13 @@ export type RootStackParamList = {
     mode: 'create' | 'edit';
     kitId?: string;
     scannedBarcode?: string;
+    initialName?: string;
+    initialDescription?: string;
+  }
+  AddMedicine: {
+    kitId?: string;
+    initialName?: string;
+    initialDescription?: string;
   }
   NotificationSettings: undefined
   QuickIntake: undefined
@@ -26,4 +33,6 @@ export type RootStackParamList = {
   LowStockMedicines: undefined
   FamilyMembers: undefined
   BarcodeScanner: undefined
+  ShoppingList: undefined
+  AddShoppingItem: undefined
 }

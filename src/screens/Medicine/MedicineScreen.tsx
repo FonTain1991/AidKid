@@ -14,14 +14,17 @@ interface RouteParams {
   medicineId?: string
   mode: 'create' | 'edit'
   kitId?: string
+  initialName?: string
+  initialDescription?: string
 }
 
 export const MedicineScreen = () => {
   const navigation = useNavigation()
   const route = useRoute()
-  const { mode, medicineId, kitId } = (route.params as RouteParams) || {
-    mode: 'create'
-  }
+  const params = (route.params as RouteParams) || {}
+  // Если route.name === 'AddMedicine', то это создание
+  const mode = params.mode || (route.name === 'AddMedicine' ? 'create' : 'create')
+  const { medicineId, kitId, initialName, initialDescription } = params
   const { colors } = useTheme()
   const [initialData, setInitialData] = useState<MedicineFormData | undefined>(undefined)
   const [loading, setLoading] = useState(false)
@@ -36,6 +39,28 @@ export const MedicineScreen = () => {
   })
 
   useNavigationBarColor({ color: 'transparent' })
+
+  // Устанавливаем начальные данные из параметров навигации
+  useEffect(() => {
+    if (mode === 'create' && (initialName || initialDescription)) {
+      console.log('Setting initial data from params:', { initialName, initialDescription })
+      const data = {
+        name: initialName || '',
+        description: initialDescription || '',
+        manufacturer: '',
+        dosage: '',
+        form: 'Таблетки',
+        kitId: kitId || '',
+        photoPath: undefined,
+        barcode: undefined,
+        quantity: 0,
+        unit: 'шт',
+        expiryDate: undefined
+      }
+      console.log('Initial data object:', data)
+      setInitialData(data)
+    }
+  }, [initialName, initialDescription, kitId, mode])
 
   // Загружаем данные лекарства для редактирования
   useEffect(() => {

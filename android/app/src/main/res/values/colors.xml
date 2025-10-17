@@ -1,4 +1,6 @@
 <resources>
     <color name="white">#FFF</color>
     <color name="notification_color">#42A669</color>
+    <color name="bootsplash_background">#42A669</color>
+    <color name="navigation_bar_color_red">#42A669</color>
 </resources>

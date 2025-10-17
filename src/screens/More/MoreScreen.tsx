@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { displayName } from '../../../app.json'
+import DeviceInfo from 'react-native-device-info'
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>
 
@@ -15,6 +16,14 @@ export function MoreScreen() {
   const navigation = useNavigation<NavigationProp>()
 
   const menuItems = [
+    {
+      title: 'Список покупок',
+      description: 'Список лекарств для покупки',
+      icon: '🛒',
+      onPress: () => {
+        navigation.navigate('ShoppingList')
+      },
+    },
     {
       title: 'Члены семьи',
       description: 'Управление членами семьи',
@@ -31,26 +40,20 @@ export function MoreScreen() {
         navigation.navigate('NotificationSettings')
       },
     },
-    {
-      title: 'Резервное копирование',
-      description: 'Синхронизация и экспорт данных',
-      icon: '💾',
-      onPress: () => {
-        console.log('Navigate to backup settings')
-      },
-    }
+    // {
+    //   title: 'Резервное копирование',
+    //   description: 'Синхронизация и экспорт данных',
+    //   icon: '💾',
+    //   onPress: () => {
+    //     console.log('Navigate to backup settings')
+    //   },
+    // }
   ]
 
   return (
     <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         <View>
-          <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.text }]}>Еще</Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              Дополнительные настройки и функции
-            </Text>
-          </View>
           <View style={styles.section}>
             {menuItems.map((item, index) => (
               <TouchableOpacity
@@ -76,10 +79,10 @@ export function MoreScreen() {
         </View>
         <View style={styles.footer}>
           <Text style={[styles.version, { color: colors.textSecondary }]}>
-            {displayName} v1.0.0
+            {displayName} v{DeviceInfo.getVersion()}
           </Text>
           <Text style={[styles.copyright, { color: colors.textSecondary }]}>
-            © {new Date().getFullYear()} AidKit. Все права защищены.
+            © {new Date().getFullYear()}. Все права защищены.
           </Text>
         </View>
       </ScrollView>

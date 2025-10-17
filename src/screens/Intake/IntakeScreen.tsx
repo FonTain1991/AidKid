@@ -77,12 +77,6 @@ export function IntakeScreen() {
   return (
     <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView style={styles.scroll}>
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>Прием</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Управление приемом лекарств
-          </Text>
-        </View>
 
         {/* Быстрые действия */}
         <View style={styles.section}>

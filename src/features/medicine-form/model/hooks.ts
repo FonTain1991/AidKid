@@ -26,7 +26,7 @@ export const useMedicineForm = (kitId?: string, initialData?: MedicineFormData) 
       console.log('Setting form data from initialData:', initialData)
       setFormData(initialData)
     }
-  }, [initialData])
+  }, [initialData?.name, initialData?.description, initialData?.kitId])
 
   const updateField = (field: keyof MedicineFormData, value: any) => {
     console.log('updateField:', field, value)

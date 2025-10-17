@@ -9,12 +9,15 @@ export const useHomeScreenStyles = () => {
   return StyleSheet.create({
     container: {
       flex: 1,
+      paddingTop: 0,
+      paddingBottom: 0
     },
     scrollView: {
       flex: 1,
     },
     scroll: {
       flex: 1,
+      paddingTop: SPACING.md,
     },
     header: {
       padding: SPACING.lg,
@@ -29,15 +32,6 @@ export const useHomeScreenStyles = () => {
       fontSize: FONT_SIZE.md,
       color: colors.textSecondary,
       marginTop: SPACING.xs,
-    },
-    title: {
-      fontSize: FONT_SIZE.heading,
-      fontWeight: 'bold',
-      color: colors.text,
-    },
-    subtitle: {
-      fontSize: FONT_SIZE.md,
-      color: colors.textSecondary,
     },
     alertsContainer: {
       paddingHorizontal: SPACING.lg,

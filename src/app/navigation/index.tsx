@@ -13,6 +13,8 @@ import { ExpiringMedicinesScreen } from '@/screens/ExpiringMedicines'
 import { LowStockMedicinesScreen } from '@/screens/LowStockMedicines'
 import { FamilyMembersScreen } from '@/screens/FamilyMembers'
 import { BarcodeScannerScreen } from '@/screens/BarcodeScanner'
+import { ShoppingListScreen } from '@/screens/ShoppingList'
+import { AddShoppingItemScreen } from '@/screens/AddShoppingItem'
 import { useDatabase } from '@/shared/lib'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { useTheme } from '../providers/theme'
@@ -28,14 +30,14 @@ export function AppNavigator() {
   const { colors } = useTheme()
   const { isInitialized, error } = useDatabase()
 
-  // Показываем splash экран пока база данных не инициализирована
-  if (!isInitialized) {
-    return (
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name='Splash' component={SplashScreen} />
-      </Stack.Navigator>
-    )
-  }
+  // // Показываем splash экран пока база данных не инициализирована
+  // if (!isInitialized) {
+  //   return (
+  //     <Stack.Navigator screenOptions={{ headerShown: false }}>
+  //       <Stack.Screen name='Splash' component={SplashScreen} />
+  //     </Stack.Navigator>
+  //   )
+  // }
 
   // Если ошибка инициализации БД, показываем splash с ошибкой
   if (error) {
@@ -61,9 +63,6 @@ export function AppNavigator() {
       <Stack.Screen
         name='Kit'
         component={KitScreen}
-      // options={{
-      //   title: 'Аптечка'
-      // }}
       />
       <Stack.Screen
         name='KitDetails'
@@ -72,9 +71,14 @@ export function AppNavigator() {
       <Stack.Screen
         name='Medicine'
         component={MedicineScreen}
-      // options={{
-      //   title: 'Лекарство'
-      // }}
+      />
+      <Stack.Screen
+        name='AddMedicine'
+        component={MedicineScreen}
+        options={{
+          title: 'Добавить лекарство',
+          headerShown: true,
+        }}
       />
       <Stack.Screen
         name='NotificationSettings'
@@ -161,6 +165,22 @@ export function AppNavigator() {
         component={BarcodeScannerScreen}
         options={{
           title: 'Сканер штрих-кода',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name='ShoppingList'
+        component={ShoppingListScreen}
+        options={{
+          title: 'Список покупок',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name='AddShoppingItem'
+        component={AddShoppingItemScreen}
+        options={{
+          title: 'Добавить товар',
           headerShown: false,
         }}
       />

@@ -143,6 +143,14 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
                 source={{ uri: getMedicinePhotoUri(formData.photoPath) || undefined }}
                 style={styles.photoImage}
                 resizeMode='cover'
+                onError={(error) => {
+                  console.error('Image load error:', error.nativeEvent.error)
+                  console.log('Photo path:', formData.photoPath)
+                  console.log('Photo URI:', getMedicinePhotoUri(formData.photoPath))
+                }}
+                onLoad={() => {
+                  console.log('Image loaded successfully:', formData.photoPath)
+                }}
               />
               <View style={styles.photoActions}>
                 <TouchableOpacity

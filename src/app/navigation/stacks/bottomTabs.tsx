@@ -1,5 +1,4 @@
 import { HomeScreen, IntakeScreen, MoreScreen } from '@/screens'
-import { useNavigationStyles } from '@/shared/hooks'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import React from 'react'
 import { Text } from 'react-native'
@@ -19,12 +18,9 @@ const moreTabBarIcon = () => (
 )
 
 export function BottomTabsStack() {
-  const navigationStyles = useNavigationStyles()
 
   return (
-    <Tab.Navigator
-      screenOptions={navigationStyles}
-    >
+    <Tab.Navigator>
       <Tab.Screen
         name='Home'
         component={HomeScreen}

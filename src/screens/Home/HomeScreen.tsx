@@ -153,7 +153,7 @@ export function HomeScreen() {
 
   useScreenProperties({
     navigationOptions: {
-      headerShown: false,
+      headerShown: true,
     }
   })
   useNavigationBarColor()
@@ -169,7 +169,7 @@ export function HomeScreen() {
   }
 
   return (
-    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView edges={[]} style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         style={styles.scroll}
         refreshControl={
@@ -180,14 +180,6 @@ export function HomeScreen() {
           />
         }
       >
-        {/* Заголовок */}
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>Аптечки</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Управление домашней аптечкой
-          </Text>
-        </View>
-
         {/* Плашки предупреждений - показываем сверху, скрываем при поиске */}
         {!hasSearchQuery && (expiringCount > 0 || lowStockCount > 0) && (
           <View style={styles.alertsContainer}>
@@ -235,7 +227,6 @@ export function HomeScreen() {
             <Separator />
           </View>
         )}
-
         {/* Поиск - перемещен после предупреждений */}
         <View style={styles.searchContainer}>
           <View style={[styles.searchBox, { backgroundColor: 'white', borderColor: colors.border }]}>
@@ -436,5 +427,3 @@ export function HomeScreen() {
     </SafeAreaView>
   )
 }
-
-// Styles теперь в useHomeScreenStyles hook

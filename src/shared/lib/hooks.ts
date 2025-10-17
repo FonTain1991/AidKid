@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import BootSplash from 'react-native-bootsplash'
 import { databaseService } from './database'
 
 export const useDatabase = () => {
@@ -14,6 +15,9 @@ export const useDatabase = () => {
       } catch (err) {
         console.error('Ошибка инициализации базы данных:', err)
         setError(err instanceof Error ? err.message : 'Ошибка инициализации базы данных')
+      } finally {
+        await BootSplash.hide()
+        setIsInitialized(true)
       }
     }
 

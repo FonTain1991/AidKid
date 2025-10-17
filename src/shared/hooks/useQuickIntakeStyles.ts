@@ -13,10 +13,6 @@ export const useQuickIntakeStyles = () => {
     scrollView: {
       flex: 1,
     },
-    header: {
-      padding: SPACING.lg,
-      paddingBottom: SPACING.sm,
-    },
     headerTitle: {
       fontSize: FONT_SIZE.heading,
       fontWeight: 'bold',
@@ -187,7 +183,8 @@ export const useQuickIntakeStyles = () => {
     },
     subtitle: {
       fontSize: FONT_SIZE.md,
-      marginTop: SPACING.xs,
+      marginVertical: SPACING.md,
+      paddingHorizontal: SPACING.md,
     },
     loadingContainer: {
       flex: 1,

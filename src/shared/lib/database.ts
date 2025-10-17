@@ -187,6 +187,18 @@ class DatabaseService {
         symbol TEXT NOT NULL
       )
     `)
+
+    // Таблица списка покупок
+    await this.db.executeSql(`
+      CREATE TABLE IF NOT EXISTS shopping_list (
+        id TEXT PRIMARY KEY,
+        medicine_name TEXT NOT NULL,
+        description TEXT,
+        is_purchased BOOLEAN DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    `)
   }
 
   private async migrateDatabase(): Promise<void> {
@@ -400,6 +412,74 @@ class DatabaseService {
             FOREIGN KEY (usage_id) REFERENCES medicine_usage (id) ON DELETE SET NULL
           )
         `)
+      }
+
+      // Проверяем наличие таблицы shopping_list и мигрируем её
+      const [shoppingListTable] = await this.db.executeSql(`
+        SELECT name FROM sqlite_master WHERE type='table' AND name='shopping_list'
+      `)
+
+      if (shoppingListTable.rows.length > 0) {
+        // Проверяем структуру таблицы shopping_list
+        const [tableInfo] = await this.db.executeSql(`
+          PRAGMA table_info(shopping_list)
+        `)
+
+        let hasQuantity = false
+        let hasUnit = false
+        for (let i = 0; i < tableInfo.rows.length; i++) {
+          const column = tableInfo.rows.item(i)
+          if (column.name === 'quantity') {
+            hasQuantity = true
+          }
+          if (column.name === 'unit') {
+            hasUnit = true
+          }
+        }
+
+        // Если есть лишние столбцы, пересоздаем таблицу
+        if (hasQuantity || hasUnit) {
+          console.log('SQLite - Migrating shopping_list table to remove quantity and unit columns')
+
+          // Сохраняем старые данные
+          const [oldData] = await this.db.executeSql(`
+            SELECT id, medicine_name, description, is_purchased, created_at, updated_at FROM shopping_list
+          `)
+
+          // Удаляем старую таблицу
+          await this.db.executeSql(`DROP TABLE IF EXISTS shopping_list`)
+
+          // Создаем новую таблицу
+          await this.db.executeSql(`
+            CREATE TABLE shopping_list (
+              id TEXT PRIMARY KEY,
+              medicine_name TEXT NOT NULL,
+              description TEXT,
+              is_purchased BOOLEAN DEFAULT 0,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL
+            )
+          `)
+
+          // Восстанавливаем данные
+          for (let i = 0; i < oldData.rows.length; i++) {
+            const row = oldData.rows.item(i)
+            await this.db.executeSql(`
+              INSERT INTO shopping_list (
+                id, medicine_name, description, is_purchased, created_at, updated_at
+              ) VALUES (?, ?, ?, ?, ?, ?)
+            `, [
+              row.id,
+              row.medicine_name,
+              row.description,
+              row.is_purchased,
+              row.created_at,
+              row.updated_at
+            ])
+          }
+
+          console.log('SQLite - Shopping list table migrated successfully')
+        }
       }
 
     } catch (error) {
@@ -1301,6 +1381,123 @@ class DatabaseService {
       await this.db.close()
       this.db = null
     }
+  }
+
+  // CRUD операции для списка покупок
+  async createShoppingItem(item: {
+    medicineName: string
+    description?: string
+  }): Promise<any> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    const id = Date.now().toString()
+    const now = new Date().toISOString()
+
+    await this.db.executeSql(`
+      INSERT INTO shopping_list (
+        id, medicine_name, description, is_purchased, created_at, updated_at
+      ) VALUES (?, ?, ?, 0, ?, ?)
+    `, [
+      id,
+      item.medicineName,
+      item.description || null,
+      now,
+      now
+    ])
+
+    return {
+      id,
+      medicineName: item.medicineName,
+      description: item.description,
+      isPurchased: false,
+      createdAt: new Date(now),
+      updatedAt: new Date(now)
+    }
+  }
+
+  async getShoppingItems(): Promise<any[]> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    const [results] = await this.db.executeSql(`
+      SELECT * FROM shopping_list ORDER BY is_purchased ASC, created_at DESC
+    `)
+
+    const items: any[] = []
+    for (let i = 0; i < results.rows.length; i++) {
+      const row = results.rows.item(i)
+      items.push({
+        id: row.id,
+        medicineName: row.medicine_name,
+        description: row.description,
+        isPurchased: row.is_purchased === 1,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      })
+    }
+
+    return items
+  }
+
+  async updateShoppingItem(id: string, updates: {
+    medicineName?: string
+    description?: string
+    isPurchased?: boolean
+  }): Promise<void> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    const updateFields: string[] = []
+    const updateValues: any[] = []
+
+    if (updates.medicineName !== undefined) {
+      updateFields.push('medicine_name = ?')
+      updateValues.push(updates.medicineName)
+    }
+    if (updates.description !== undefined) {
+      updateFields.push('description = ?')
+      updateValues.push(updates.description)
+    }
+    if (updates.isPurchased !== undefined) {
+      updateFields.push('is_purchased = ?')
+      updateValues.push(updates.isPurchased ? 1 : 0)
+    }
+
+    if (updateFields.length === 0) {
+      return
+    }
+
+    updateFields.push('updated_at = ?')
+    updateValues.push(new Date().toISOString())
+    updateValues.push(id)
+
+    await this.db.executeSql(`
+      UPDATE shopping_list SET ${updateFields.join(', ')} WHERE id = ?
+    `, updateValues)
+  }
+
+  async deleteShoppingItem(id: string): Promise<void> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    await this.db.executeSql(`
+      DELETE FROM shopping_list WHERE id = ?
+    `, [id])
+  }
+
+  async clearPurchasedItems(): Promise<void> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    await this.db.executeSql(`
+      DELETE FROM shopping_list WHERE is_purchased = 1
+    `)
   }
 }
 
