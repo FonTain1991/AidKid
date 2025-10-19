@@ -4,6 +4,7 @@ export interface ShoppingItem {
   medicineName: string
   description?: string
   isPurchased: boolean
+  reminderDate?: Date
   createdAt: Date
   updatedAt: Date
 }
@@ -17,5 +18,6 @@ export interface UpdateShoppingItemData {
   medicineName?: string
   description?: string
   isPurchased?: boolean
+  reminderDate?: Date
 }
 

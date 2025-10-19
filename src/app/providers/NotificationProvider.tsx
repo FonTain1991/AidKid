@@ -26,6 +26,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (data.kitId) {
         (navigation as any).navigate('KitDetails', { kitId: data.kitId })
       }
+    } else if (notificationType === 'shopping-list-reminder') {
+      // Уведомление о покупках - открываем список покупок
+      console.log('📲 Navigating to ShoppingList screen');
+      (navigation as any).navigate('ShoppingList')
     }
   }, [navigation])
 

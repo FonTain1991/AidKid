@@ -5,15 +5,44 @@ import { FONT_SIZE } from '@/shared/config/constants/font'
 import { SafeAreaView } from '@/shared/ui/SafeAreaView'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert } from 'react-native'
 import { displayName } from '../../../app.json'
 import DeviceInfo from 'react-native-device-info'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>
 
 export function MoreScreen() {
   const { colors } = useTheme()
   const navigation = useNavigation<NavigationProp>()
+
+  const handleShowOnboarding = async () => {
+    Alert.alert(
+      'Показать знакомство',
+      'Хотите посмотреть приветственные экраны снова?',
+      [
+        {
+          text: 'Отмена',
+          style: 'cancel'
+        },
+        {
+          text: 'Показать',
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem('@onboarding_completed')
+              Alert.alert(
+                'Готово',
+                'Перезапустите приложение, чтобы увидеть приветственные экраны'
+              )
+            } catch (error) {
+              console.error('Failed to reset onboarding:', error)
+              Alert.alert('Ошибка', 'Не удалось сбросить настройки')
+            }
+          }
+        }
+      ]
+    )
+  }
 
   const menuItems = [
     {
@@ -39,6 +68,12 @@ export function MoreScreen() {
       onPress: () => {
         navigation.navigate('NotificationSettings')
       },
+    },
+    {
+      title: 'О приложении',
+      description: 'Повторно показать приветственные экраны',
+      icon: '💡',
+      onPress: handleShowOnboarding,
     },
     // {
     //   title: 'Резервное копирование',

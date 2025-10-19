@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { Alert } from 'react-native'
-import { databaseService } from '@/shared/lib'
+import { databaseService, notificationService } from '@/shared/lib'
 import type { ShoppingItem } from '@/entities/shopping-item'
 import { useEvent } from '@/shared/hooks'
 
@@ -120,6 +120,54 @@ export const useShoppingList = () => {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     })
 
+  const setReminder = useEvent(async (reminderDate: Date) => {
+    try {
+      const success = await notificationService.scheduleShoppingListReminder(reminderDate)
+      
+      if (success) {
+        Alert.alert(
+          'Успешно',
+          `Напоминание установлено на ${reminderDate.toLocaleString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}`
+        )
+        return true
+      } else {
+        Alert.alert('Ошибка', 'Не удалось установить напоминание')
+        return false
+      }
+    } catch (err) {
+      console.error('Failed to set reminder:', err)
+      Alert.alert('Ошибка', 'Не удалось установить напоминание')
+      return false
+    }
+  })
+
+  const cancelReminder = useEvent(async () => {
+    try {
+      await notificationService.cancelShoppingListReminder()
+      Alert.alert('Успешно', 'Напоминание отменено')
+      return true
+    } catch (err) {
+      console.error('Failed to cancel reminder:', err)
+      Alert.alert('Ошибка', 'Не удалось отменить напоминание')
+      return false
+    }
+  })
+
+  const getReminder = useEvent(async () => {
+    try {
+      return await notificationService.getShoppingListReminder()
+    } catch (err) {
+      console.error('Failed to get reminder:', err)
+      return null
+    }
+  })
+
   const stats = {
     total: items.length,
     pending: items.filter(i => !i.isPurchased).length,
@@ -137,7 +185,10 @@ export const useShoppingList = () => {
     addItem,
     togglePurchased,
     deleteItem,
-    clearPurchased
+    clearPurchased,
+    setReminder,
+    cancelReminder,
+    getReminder
   }
 }
 

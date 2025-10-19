@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import {
   View,
   Text,
@@ -18,7 +18,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RootStackParamList } from '@/app/navigation/types'
 import {
   useShoppingList,
-  ShoppingListItem
+  ShoppingListItem,
+  ShoppingReminderModal
 } from '@/features/shopping-list'
 import type { ShoppingItem } from '@/entities/shopping-item'
 import { databaseService } from '@/shared/lib'
@@ -37,37 +38,62 @@ export function ShoppingListScreen() {
     loadItems,
     togglePurchased,
     deleteItem,
-    clearPurchased
+    clearPurchased,
+    setReminder,
+    cancelReminder,
+    getReminder
   } = useShoppingList()
+
+  const [reminderModalVisible, setReminderModalVisible] = useState(false)
+  const [currentReminder, setCurrentReminder] = useState<Date | null>(null)
 
   useEffect(() => {
     loadItems()
+    loadCurrentReminder()
   }, [loadItems])
 
   // Обновляем список при фокусе экрана (когда возвращаемся с экрана добавления)
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       loadItems()
+      loadCurrentReminder()
     })
 
     return unsubscribe
   }, [navigation, loadItems])
+
+  const loadCurrentReminder = async () => {
+    const reminder = await getReminder()
+    setCurrentReminder(reminder)
+  }
 
   useScreenProperties({
     navigationOptions: {
       headerShown: true,
       title: 'Список покупок',
       headerRight: () => (
-        stats.purchased > 0 ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginRight: 16 }}>
+          {/* Иконка напоминания */}
           <TouchableOpacity
-            onPress={clearPurchased}
-            style={{ marginRight: 16 }}
+            onPress={() => setReminderModalVisible(true)}
+            style={{ padding: 4 }}
           >
-            <Text style={{ color: colors.primary, fontWeight: '600' }}>
-              Очистить
-            </Text>
+            <Icon
+              name={currentReminder ? 'bell' : 'bell'}
+              size={22}
+              color={currentReminder ? colors.primary : colors.textSecondary}
+            />
           </TouchableOpacity>
-        ) : null
+
+          {/* Кнопка очистки */}
+          {stats.purchased > 0 && (
+            <TouchableOpacity onPress={clearPurchased}>
+              <Text style={{ color: colors.primary, fontWeight: '600' }}>
+                Очистить
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
       )
     }
   })
@@ -79,6 +105,20 @@ export function ShoppingListScreen() {
 
   const handleAddItem = () => {
     navigation.navigate('AddShoppingItem')
+  }
+
+  const handleSetReminder = async (date: Date) => {
+    const success = await setReminder(date)
+    if (success) {
+      setCurrentReminder(date)
+    }
+  }
+
+  const handleCancelReminder = async () => {
+    const success = await cancelReminder()
+    if (success) {
+      setCurrentReminder(null)
+    }
   }
 
   const handleAddToKit = async (item: ShoppingItem) => {
@@ -264,6 +304,15 @@ export function ShoppingListScreen() {
       </ScrollView>
 
       <FAB onPress={handleAddItem} />
+
+      {/* Модальное окно напоминания */}
+      <ShoppingReminderModal
+        visible={reminderModalVisible}
+        currentReminder={currentReminder}
+        onClose={() => setReminderModalVisible(false)}
+        onSetReminder={handleSetReminder}
+        onCancelReminder={handleCancelReminder}
+      />
     </SafeAreaView>
   )
 }

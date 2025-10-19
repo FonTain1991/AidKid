@@ -1,4 +1,7 @@
+import { useState, useEffect } from 'react'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { SplashScreen } from '@/screens'
+import { OnboardingScreen } from '@/screens/Onboarding'
 import { KitDetailsScreen } from '@/screens/KitDetails'
 import { KitScreen } from '@/screens/kit'
 import { MedicineScreen } from '@/screens/Medicine'
@@ -28,7 +31,42 @@ const Stack = createNativeStackNavigator<RootStackParamList>()
 // Главный навигатор приложения
 export function AppNavigator() {
   const { colors } = useTheme()
-  const { isInitialized, error } = useDatabase()
+  const { error: dbError } = useDatabase()
+  const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    checkOnboardingStatus()
+  }, [])
+
+  const checkOnboardingStatus = async () => {
+    try {
+      const completed = await AsyncStorage.getItem('@onboarding_completed')
+      setShowOnboarding(completed !== 'true')
+    } catch (error) {
+      console.error('Failed to check onboarding status:', error)
+      setShowOnboarding(false)
+    }
+  }
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false)
+  }
+
+  // Показываем загрузку пока проверяем статус онбординга
+  if (showOnboarding === null) {
+    return null
+  }
+
+  // Если нужно показать онбординг
+  if (showOnboarding) {
+    return (
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name='Splash'>
+          {() => <OnboardingScreen onComplete={handleOnboardingComplete} />}
+        </Stack.Screen>
+      </Stack.Navigator>
+    )
+  }
 
   // // Показываем splash экран пока база данных не инициализирована
   // if (!isInitialized) {
@@ -40,7 +78,7 @@ export function AppNavigator() {
   // }
 
   // Если ошибка инициализации БД, показываем splash с ошибкой
-  if (error) {
+  if (dbError) {
     return (
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name='Splash' component={SplashScreen} />

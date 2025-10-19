@@ -10,6 +10,8 @@ import { MedicineKit } from '@/entities/kit/model/types'
 class NotificationService {
   // Канал по умолчанию для мгновенных уведомлений
   private defaultChannelId = 'medicine-general'
+  // Канал для напоминаний списка покупок
+  private shoppingListChannelId = 'shopping-list-reminders'
 
   /**
    * Инициализация сервиса уведомлений
@@ -18,6 +20,7 @@ class NotificationService {
   async init(): Promise<void> {
     if (Platform.OS === 'android') {
       await this.createDefaultChannel()
+      await this.createShoppingListChannel()
     }
   }
 
@@ -33,6 +36,22 @@ class NotificationService {
       importance: AndroidImportance.HIGH,
       sound: 'default',
       lightColor: '#3A944E',
+    })
+  }
+
+  /**
+   * Создание канала для напоминаний списка покупок
+   * @returns {Promise<void>} Promise
+   */
+  private async createShoppingListChannel(): Promise<void> {
+    await notifee.createChannel({
+      id: this.shoppingListChannelId,
+      name: 'Напоминания о покупках',
+      description: 'Напоминания о необходимости совершить покупки',
+      importance: AndroidImportance.HIGH,
+      sound: 'default',
+      vibration: true,
+      lightColor: '#FF9800',
     })
   }
 
@@ -763,6 +782,109 @@ class NotificationService {
       })
     } catch (error) {
       console.error('❌ Ошибка при получении запланированных уведомлений:', error)
+    }
+  }
+
+  /**
+   * Планирование напоминания для списка покупок
+   * @param {Date} reminderDate Дата и время напоминания
+   * @returns {Promise<boolean>} Успешно запланировано
+   */
+  async scheduleShoppingListReminder(reminderDate: Date): Promise<boolean> {
+    const hasPermission = await this.checkPermission()
+    if (!hasPermission) {
+      return false
+    }
+
+    const canSchedule = await this.canScheduleExactAlarms()
+    if (!canSchedule) {
+      console.warn('No SCHEDULE_EXACT_ALARM permission - notifications may not work when app is closed')
+    }
+
+    const now = new Date()
+    if (reminderDate <= now) {
+      return false
+    }
+
+    const notificationId = 'shopping-list-reminder'
+
+    try {
+      // Отменяем предыдущее напоминание если оно есть
+      await this.cancelNotification(notificationId)
+
+      await notifee.createTriggerNotification(
+        {
+          id: notificationId,
+          title: '🛒 Напоминание о покупках',
+          body: 'Не забудьте купить необходимые товары',
+          data: {
+            type: 'shopping-list-reminder',
+            screen: 'ShoppingList',
+          },
+          android: {
+            channelId: this.shoppingListChannelId,
+            importance: AndroidImportance.HIGH,
+            smallIcon: 'ic_notification',
+            color: '#FF9800',
+            pressAction: {
+              id: 'default',
+            },
+          },
+          ios: {
+            sound: 'default',
+            categoryId: 'shopping-list',
+          },
+        },
+        {
+          type: TriggerType.TIMESTAMP,
+          timestamp: reminderDate.getTime(),
+          alarmManager: {
+            allowWhileIdle: true,
+          },
+        }
+      )
+
+      console.log('✅ Напоминание списка покупок запланировано на', reminderDate.toLocaleString('ru-RU'))
+      return true
+    } catch (error) {
+      console.error('Failed to schedule shopping list reminder:', error)
+      return false
+    }
+  }
+
+  /**
+   * Отмена напоминания списка покупок
+   * @returns {Promise<void>} Promise
+   */
+  async cancelShoppingListReminder(): Promise<void> {
+    try {
+      await this.cancelNotification('shopping-list-reminder')
+      console.log('✅ Напоминание списка покупок отменено')
+    } catch (error) {
+      console.error('Failed to cancel shopping list reminder:', error)
+    }
+  }
+
+  /**
+   * Получение текущего запланированного напоминания списка покупок
+   * @returns {Promise<Date | null>} Дата напоминания или null
+   */
+  async getShoppingListReminder(): Promise<Date | null> {
+    try {
+      const notifications = await this.getTriggerNotifications()
+      const shoppingReminder = notifications.find(n => n.notification.id === 'shopping-list-reminder')
+
+      if (shoppingReminder && shoppingReminder.trigger) {
+        const trigger = shoppingReminder.trigger as any
+        if (trigger.timestamp) {
+          return new Date(trigger.timestamp)
+        }
+      }
+
+      return null
+    } catch (error) {
+      console.error('Failed to get shopping list reminder:', error)
+      return null
     }
   }
 }

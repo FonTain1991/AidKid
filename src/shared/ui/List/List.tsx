@@ -14,7 +14,7 @@ import { useTheme } from '@/app/providers/theme'
 interface ListProps {
   value?: any
   onChange?: (value: any) => void
-  options: { label: string, subtitle?: string, value: string }[]
+  options: { label: string, subtitle?: string, value: string | number }[]
   fieldName?: string
 }
 

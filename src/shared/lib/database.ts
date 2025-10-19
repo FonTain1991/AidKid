@@ -195,10 +195,12 @@ class DatabaseService {
         medicine_name TEXT NOT NULL,
         description TEXT,
         is_purchased BOOLEAN DEFAULT 0,
+        reminder_date TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       )
     `)
+
   }
 
   private async migrateDatabase(): Promise<void> {
@@ -343,8 +345,8 @@ class DatabaseService {
           `)
 
           // Удаляем старую таблицу
-          await this.db.executeSql(`DROP TABLE IF EXISTS reminders`)
-          await this.db.executeSql(`DROP TABLE IF EXISTS reminder_intakes`)
+          await this.db.executeSql('DROP TABLE IF EXISTS reminders')
+          await this.db.executeSql('DROP TABLE IF EXISTS reminder_intakes')
 
           // Создаем новые таблицы
           await this.db.executeSql(`
@@ -427,6 +429,7 @@ class DatabaseService {
 
         let hasQuantity = false
         let hasUnit = false
+        let hasReminderDate = false
         for (let i = 0; i < tableInfo.rows.length; i++) {
           const column = tableInfo.rows.item(i)
           if (column.name === 'quantity') {
@@ -434,6 +437,9 @@ class DatabaseService {
           }
           if (column.name === 'unit') {
             hasUnit = true
+          }
+          if (column.name === 'reminder_date') {
+            hasReminderDate = true
           }
         }
 
@@ -447,7 +453,7 @@ class DatabaseService {
           `)
 
           // Удаляем старую таблицу
-          await this.db.executeSql(`DROP TABLE IF EXISTS shopping_list`)
+          await this.db.executeSql('DROP TABLE IF EXISTS shopping_list')
 
           // Создаем новую таблицу
           await this.db.executeSql(`
@@ -456,6 +462,7 @@ class DatabaseService {
               medicine_name TEXT NOT NULL,
               description TEXT,
               is_purchased BOOLEAN DEFAULT 0,
+              reminder_date TEXT,
               created_at TEXT NOT NULL,
               updated_at TEXT NOT NULL
             )
@@ -479,6 +486,12 @@ class DatabaseService {
           }
 
           console.log('SQLite - Shopping list table migrated successfully')
+        } else if (!hasReminderDate) {
+          // Добавляем колонку reminder_date если её нет
+          console.log('SQLite - Adding reminder_date column to shopping_list table')
+          await this.db.executeSql(`
+            ALTER TABLE shopping_list ADD COLUMN reminder_date TEXT
+          `)
         }
       }
 
@@ -1387,6 +1400,7 @@ class DatabaseService {
   async createShoppingItem(item: {
     medicineName: string
     description?: string
+    reminderDate?: Date
   }): Promise<any> {
     if (!this.db) {
       throw new Error('Database not initialized')
@@ -1397,12 +1411,13 @@ class DatabaseService {
 
     await this.db.executeSql(`
       INSERT INTO shopping_list (
-        id, medicine_name, description, is_purchased, created_at, updated_at
-      ) VALUES (?, ?, ?, 0, ?, ?)
+        id, medicine_name, description, is_purchased, reminder_date, created_at, updated_at
+      ) VALUES (?, ?, ?, 0, ?, ?, ?)
     `, [
       id,
       item.medicineName,
       item.description || null,
+      item.reminderDate ? item.reminderDate.toISOString() : null,
       now,
       now
     ])
@@ -1412,6 +1427,7 @@ class DatabaseService {
       medicineName: item.medicineName,
       description: item.description,
       isPurchased: false,
+      reminderDate: item.reminderDate,
       createdAt: new Date(now),
       updatedAt: new Date(now)
     }
@@ -1434,6 +1450,7 @@ class DatabaseService {
         medicineName: row.medicine_name,
         description: row.description,
         isPurchased: row.is_purchased === 1,
+        reminderDate: row.reminder_date ? new Date(row.reminder_date) : undefined,
         createdAt: new Date(row.created_at),
         updatedAt: new Date(row.updated_at)
       })
@@ -1446,6 +1463,7 @@ class DatabaseService {
     medicineName?: string
     description?: string
     isPurchased?: boolean
+    reminderDate?: Date | null
   }): Promise<void> {
     if (!this.db) {
       throw new Error('Database not initialized')
@@ -1465,6 +1483,10 @@ class DatabaseService {
     if (updates.isPurchased !== undefined) {
       updateFields.push('is_purchased = ?')
       updateValues.push(updates.isPurchased ? 1 : 0)
+    }
+    if (updates.reminderDate !== undefined) {
+      updateFields.push('reminder_date = ?')
+      updateValues.push(updates.reminderDate ? updates.reminderDate.toISOString() : null)
     }
 
     if (updateFields.length === 0) {
