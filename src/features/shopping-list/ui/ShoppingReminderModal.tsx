@@ -4,9 +4,10 @@ import {
   Text,
   StyleSheet,
   Modal,
-  TouchableOpacity
+  TouchableOpacity,
+  Alert
 } from 'react-native'
-import DatePicker from 'react-native-date-picker'
+import { DatePicker } from '@/shared/ui/DatePicker'
 import { useTheme } from '@/app/providers/theme'
 import Icon from 'react-native-vector-icons/Feather'
 
@@ -45,7 +46,7 @@ export function ShoppingReminderModal({
   const handleSave = () => {
     const now = new Date()
     if (selectedDate <= now) {
-      alert('Пожалуйста, выберите время в будущем')
+      Alert.alert('Ошибка', 'Пожалуйста, выберите время в будущем')
       return
     }
 
@@ -64,14 +65,14 @@ export function ShoppingReminderModal({
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType='fade'
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
         <View style={[styles.container, { backgroundColor: colors.card }]}>
           {/* Заголовок */}
           <View style={styles.header}>
-            <Icon name="bell" size={24} color={colors.primary} />
+            <Icon name='bell' size={24} color={colors.primary} />
             <Text style={[styles.title, { color: colors.text }]}>
               Напоминание о покупках
             </Text>
@@ -81,17 +82,17 @@ export function ShoppingReminderModal({
           <View style={styles.content}>
             <View style={styles.pickerContainer}>
               <DatePicker
-                date={selectedDate}
-                onDateChange={setSelectedDate}
-                mode="datetime"
-                locale="ru"
+                fieldName='Выберите дату и время'
+                value={selectedDate}
+                onChange={setSelectedDate}
+                mode='datetime'
                 minimumDate={new Date()}
               />
             </View>
 
             {/* Информация */}
             <View style={[styles.infoBox, { backgroundColor: colors.background }]}>
-              <Icon name="info" size={16} color={colors.textSecondary} />
+              <Icon name='info' size={16} color={colors.textSecondary} />
               <Text style={[styles.infoText, { color: colors.textSecondary }]}>
                 Вы получите уведомление в указанное время
               </Text>
@@ -109,7 +110,7 @@ export function ShoppingReminderModal({
                 ]}
                 onPress={handleCancel}
               >
-                <Icon name="trash-2" size={18} color="#FF3B30" />
+                <Icon name='trash-2' size={18} color='#FF3B30' />
                 <Text style={[styles.buttonText, { color: '#FF3B30' }]}>
                   Удалить
                 </Text>
@@ -133,7 +134,7 @@ export function ShoppingReminderModal({
               style={[styles.button, styles.saveButton, { backgroundColor: colors.primary }]}
               onPress={handleSave}
             >
-              <Icon name="check" size={18} color="#FFFFFF" />
+              <Icon name='check' size={18} color='#FFFFFF' />
               <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>
                 Установить
               </Text>
@@ -179,7 +180,7 @@ const styles = StyleSheet.create({
     gap: 16
   },
   pickerContainer: {
-    alignItems: 'center',
+    alignItems: 'stretch',
     justifyContent: 'center'
   },
   infoBox: {

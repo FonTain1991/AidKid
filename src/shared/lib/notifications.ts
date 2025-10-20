@@ -10,6 +10,7 @@ import { MedicineKit } from '@/entities/kit/model/types'
 class NotificationService {
   // Канал по умолчанию для мгновенных уведомлений
   private defaultChannelId = 'medicine-general'
+
   // Канал для напоминаний списка покупок
   private shoppingListChannelId = 'shopping-list-reminders'
 
@@ -588,6 +589,39 @@ class NotificationService {
       }
     } catch (error) {
       console.error('Failed to check background restrictions:', error)
+    }
+  }
+
+  /**
+   * Показать диалог об эмуляторе после онбординга
+   * @returns {Promise<void>}
+   */
+  async showEmulatorInfoDialog(): Promise<void> {
+    try {
+      const batteryOptEnabled = await notifee.isBatteryOptimizationEnabled()
+      const isEmulator = __DEV__ && batteryOptEnabled
+
+      if (isEmulator) {
+        Alert.alert(
+          'ℹ️ Информация об эмуляторе',
+          'На эмуляторе оптимизация батареи всегда включена.\n\n' +
+          'На реальном устройстве рекомендуется отключить оптимизацию для надежной работы уведомлений.',
+          [
+            {
+              text: 'ОТКРЫТЬ НАСТРОЙКИ',
+              onPress: async () => {
+                await notifee.openBatteryOptimizationSettings()
+              },
+            },
+            {
+              text: 'ПОЗЖЕ',
+              style: 'cancel',
+            },
+          ]
+        )
+      }
+    } catch (error) {
+      console.error('Failed to show emulator info dialog:', error)
     }
   }
 

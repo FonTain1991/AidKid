@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking, AppState } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useTheme } from '@/app/providers/theme'
 import { notificationService } from '@/shared/lib'
@@ -32,6 +32,22 @@ export function NotificationSettingsScreen() {
 
   useEffect(() => {
     loadSettings()
+  }, [loadSettings])
+
+  // Обработка изменения состояния приложения
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: string) => {
+      if (nextAppState === 'active') {
+        // Обновляем данные когда пользователь возвращается в приложение
+        loadSettings()
+      }
+    }
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange)
+
+    return () => {
+      subscription?.remove()
+    }
   }, [loadSettings])
 
   const requestPermission = useEvent(async () => {
@@ -85,13 +101,6 @@ export function NotificationSettingsScreen() {
   return (
     <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView style={styles.scroll}>
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>Настройки уведомлений</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Управление уведомлениями о лекарствах
-          </Text>
-        </View>
-
         {/* Статус разрешений */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Статус разрешений</Text>

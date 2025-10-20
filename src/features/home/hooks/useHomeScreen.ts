@@ -82,6 +82,8 @@ export const useHomeScreen = () => {
     navigation.navigate('BarcodeScanner')
   }
 
+  const hasKits = kits.length > 0
+
   const quickCreateOptions = [
     {
       id: 'category',
@@ -89,18 +91,20 @@ export const useHomeScreen = () => {
       icon: 'folder-plus',
       onPress: handleAddCategory,
     },
-    {
-      id: 'medicine',
-      title: 'Добавить лекарство',
-      icon: 'pill',
-      onPress: handleAddMedicine,
-    },
-    {
-      id: 'scan',
-      title: 'Сканировать штрих-код',
-      icon: 'barcode-scan',
-      onPress: handleScanBarcode,
-    },
+    ...(hasKits ? [
+      {
+        id: 'medicine',
+        title: 'Добавить лекарство',
+        icon: 'pill',
+        onPress: handleAddMedicine,
+      },
+      {
+        id: 'scan',
+        title: 'Сканировать штрих-код',
+        icon: 'barcode-scan',
+        onPress: handleScanBarcode,
+      },
+    ] : []),
   ]
 
   const handleOptionPress = (option: { onPress: () => void }) => {

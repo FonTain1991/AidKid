@@ -97,7 +97,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         maximumDate={maximumDate}
         minimumDate={minimumDate}
         locale='ru'
-        theme={Platform.OS === 'ios' ? 'light' : 'auto'}
+        theme='light'
       />
     </>
   )

@@ -16,5 +16,9 @@
         <item name="android:statusBarColor">@color/navigation_bar_color_red</item>
     </style>
     
-
+<style name="UCropActivityInsetFix" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:fitsSystemWindows">true</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:statusBarColor">@android:color/white</item>
+    </style>
 </resources>

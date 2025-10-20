@@ -18,7 +18,7 @@ import { FamilyMembersScreen } from '@/screens/FamilyMembers'
 import { BarcodeScannerScreen } from '@/screens/BarcodeScanner'
 import { ShoppingListScreen } from '@/screens/ShoppingList'
 import { AddShoppingItemScreen } from '@/screens/AddShoppingItem'
-import { useDatabase } from '@/shared/lib'
+import { useDatabase, notificationService } from '@/shared/lib'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { useTheme } from '../providers/theme'
 import { RootStackParamList } from './types'
@@ -50,6 +50,19 @@ export function AppNavigator() {
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false)
+    // Показываем диалог об эмуляторе после завершения онбординга
+    setTimeout(async () => {
+      try {
+        // Проверяем, не показывали ли уже диалог об эмуляторе
+        const emulatorDialogShown = await AsyncStorage.getItem('@emulator_dialog_shown')
+        if (!emulatorDialogShown) {
+          await notificationService.showEmulatorInfoDialog()
+          await AsyncStorage.setItem('@emulator_dialog_shown', 'true')
+        }
+      } catch (error) {
+        console.error('Failed to show emulator dialog:', error)
+      }
+    }, 1000) // Небольшая задержка для плавного перехода
   }
 
   // Показываем загрузку пока проверяем статус онбординга
