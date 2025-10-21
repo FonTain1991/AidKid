@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native'
+import React, { useState, useCallback } from 'react'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl } from 'react-native'
 import { SafeAreaView } from '@/shared/ui/SafeAreaView'
 import { useTheme } from '@/app/providers/theme'
 import { SPACING } from '@/shared/config'
@@ -7,7 +7,7 @@ import { FONT_SIZE } from '@/shared/config/constants/font'
 import { notificationService } from '@/shared/lib/notifications'
 import { databaseService } from '@/shared/lib/database'
 import { Medicine } from '@/entities/medicine/model/types'
-import { useNavigation } from '@react-navigation/native'
+import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RootStackParamList } from '@/app/navigation/types'
 
@@ -27,19 +27,18 @@ export function RemindersScreen() {
   const navigation = useNavigation<NavigationProp>()
   const [reminders, setReminders] = useState<ReminderGroup[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
-  useEffect(() => {
-    loadReminders()
-  }, [])
-
-  const loadReminders = async () => {
+  const loadReminders = useCallback(async (isRefresh = false) => {
     try {
-      setIsLoading(true)
-      console.log('🔍 Loading reminders...')
+      if (isRefresh) {
+        setIsRefreshing(true)
+      } else {
+        setIsLoading(true)
+      }
 
       // Загружаем все запланированные уведомления
       const notifications = await notificationService.getTriggerNotifications()
-      console.log(`📋 Found ${notifications.length} scheduled notifications`)
 
       // Загружаем данные о лекарствах
       await databaseService.init()
@@ -58,20 +57,41 @@ export function RemindersScreen() {
           continue
         }
 
-        const { medicineId } = data
-        const medicine = medicinesMap.get(medicineId)
-
-        if (!medicine) {
+        // Парсим medicineIds (новый формат) или используем medicineId (старый формат)
+        let medicineIds: string[] = []
+        if (data.medicineIds) {
+          try {
+            medicineIds = JSON.parse(data.medicineIds)
+          } catch (error) {
+            console.error('Failed to parse medicineIds:', error)
+            continue
+          }
+        } else if (data.medicineId) {
+          medicineIds = [data.medicineId]
+        } else {
           continue
         }
+
+        // Получаем названия всех лекарств для этого напоминания
+        const medicines = medicineIds
+          .map(id => medicinesMap.get(id))
+          .filter(m => m !== undefined) as Medicine[]
+
+        if (medicines.length === 0) {
+          continue
+        }
+
+        // Используем первый medicineId как ключ группировки для напоминания
+        const groupKey = medicineIds.join('-')
+        const medicineName = medicines.map(m => m.name).join(', ')
 
         const trigger = item.trigger as any
         const notificationTime = trigger?.timestamp ? new Date(trigger.timestamp) : null
 
-        if (!groupedReminders.has(medicineId)) {
-          groupedReminders.set(medicineId, {
-            medicineId,
-            medicineName: medicine.name,
+        if (!groupedReminders.has(groupKey)) {
+          groupedReminders.set(groupKey, {
+            medicineId: groupKey,
+            medicineName,
             frequency: data.frequency || 'daily',
             times: [],
             totalCount: 0,
@@ -79,7 +99,7 @@ export function RemindersScreen() {
           })
         }
 
-        const group = groupedReminders.get(medicineId)!
+        const group = groupedReminders.get(groupKey)!
         group.totalCount++
 
         // Обновляем ближайшее уведомление
@@ -114,14 +134,25 @@ export function RemindersScreen() {
       })
 
       setReminders(remindersArray)
-      console.log(`✅ Loaded ${remindersArray.length} reminder groups`)
     } catch (error) {
-      console.error('❌ Failed to load reminders:', error)
-      Alert.alert('Ошибка', 'Не удалось загрузить напоминания')
+      console.error('Failed to load reminders:', error)
+      if (!isRefresh) {
+        Alert.alert('Ошибка', 'Не удалось загрузить напоминания')
+      }
     } finally {
       setIsLoading(false)
+      setIsRefreshing(false)
     }
-  }
+  }, [])
+
+  // Загружаем напоминания при каждом фокусе на экране
+  useFocusEffect(useCallback(() => {
+    loadReminders()
+  }, [loadReminders]))
+
+  const handleRefresh = useCallback(() => {
+    loadReminders(true)
+  }, [loadReminders])
 
   const handleDeleteReminder = async (medicineId: string, medicineName: string) => {
     Alert.alert(
@@ -140,12 +171,29 @@ export function RemindersScreen() {
               // Получаем все уведомления
               const notifications = await notificationService.getTriggerNotifications()
 
-              // Удаляем все уведомления для этого лекарства
+              // Удаляем все уведомления для этого лекарства/группы
               for (const item of notifications) {
                 const data = item.notification.data as any
-                if (data?.type === 'reminder' && data?.medicineId === medicineId) {
-                  if (item.notification.id) {
-                    await notificationService.cancelNotification(item.notification.id)
+                if (data?.type === 'reminder') {
+                  // Проверяем новый формат (medicineIds)
+                  if (data.medicineIds) {
+                    try {
+                      const medicineIds = JSON.parse(data.medicineIds)
+                      const groupKey = medicineIds.join('-')
+                      if (groupKey === medicineId) {
+                        if (item.notification.id) {
+                          await notificationService.cancelNotification(item.notification.id)
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Failed to parse medicineIds:', error)
+                    }
+                  }
+                  // Проверяем старый формат (medicineId)
+                  else if (data?.medicineId === medicineId) {
+                    if (item.notification.id) {
+                      await notificationService.cancelNotification(item.notification.id)
+                    }
                   }
                 }
               }
@@ -202,7 +250,17 @@ export function RemindersScreen() {
 
   return (
     <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView style={styles.scroll}>
+      <ScrollView
+        style={styles.scroll}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
+      >
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]}>Напоминания</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
@@ -403,7 +461,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   reminderIcon: {
-    fontSize: FONT_SIZE.xxl,
+    fontSize: FONT_SIZE.xl,
     marginRight: SPACING.sm,
   },
   reminderTitleText: {
@@ -480,12 +538,13 @@ const styles = StyleSheet.create({
   },
   addButtonContainer: {
     paddingHorizontal: SPACING.md,
-    marginTop: SPACING.md,
+    marginTop: SPACING.md
   },
   addButton: {
     paddingVertical: SPACING.md,
     borderRadius: 12,
     alignItems: 'center',
+    width: '100%'
   },
   addButtonText: {
     color: 'white',

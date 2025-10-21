@@ -50,17 +50,20 @@ export function AppNavigator() {
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false)
-    // Показываем диалог об эмуляторе после завершения онбординга
+    // Запрашиваем разрешение на уведомления после завершения онбординга
     setTimeout(async () => {
       try {
-        // Проверяем, не показывали ли уже диалог об эмуляторе
-        const emulatorDialogShown = await AsyncStorage.getItem('@emulator_dialog_shown')
-        if (!emulatorDialogShown) {
-          await notificationService.showEmulatorInfoDialog()
-          await AsyncStorage.setItem('@emulator_dialog_shown', 'true')
+        // Проверяем, не запрашивали ли уже разрешение
+        const permissionRequested = await AsyncStorage.getItem('@notification_permission_requested')
+        if (!permissionRequested) {
+          const hasPermission = await notificationService.checkPermission()
+          if (!hasPermission) {
+            await notificationService.requestPermission()
+          }
+          await AsyncStorage.setItem('@notification_permission_requested', 'true')
         }
       } catch (error) {
-        console.error('Failed to show emulator dialog:', error)
+        console.error('Failed to request notification permission:', error)
       }
     }, 1000) // Небольшая задержка для плавного перехода
   }

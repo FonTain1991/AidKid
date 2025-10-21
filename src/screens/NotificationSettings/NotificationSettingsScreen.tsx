@@ -9,7 +9,6 @@ export function NotificationSettingsScreen() {
   const { colors } = useTheme()
   const [hasPermission, setHasPermission] = useState(false)
   const [canScheduleAlarms, setCanScheduleAlarms] = useState(false)
-  const [batteryOptimized, setBatteryOptimized] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   const loadSettings = useEvent(async () => {
@@ -18,11 +17,9 @@ export function NotificationSettingsScreen() {
 
       const permission = await notificationService.checkPermission()
       const canSchedule = await notificationService.canScheduleExactAlarms()
-      const batteryOpt = await notificationService.checkBatteryOptimization()
 
       setHasPermission(permission)
       setCanScheduleAlarms(canSchedule)
-      setBatteryOptimized(batteryOpt)
     } catch (error) {
       console.error('Failed to load notification settings:', error)
     } finally {
@@ -64,10 +61,6 @@ export function NotificationSettingsScreen() {
       console.error('Failed to request permission:', error)
       Alert.alert('Ошибка', 'Не удалось запросить разрешение')
     }
-  })
-
-  const openBatterySettings = useEvent(async () => {
-    await notificationService.requestBatteryOptimizationExemption()
   })
 
   const openAlarmSettings = useEvent(async () => {
@@ -127,7 +120,7 @@ export function NotificationSettingsScreen() {
             )}
           </View>
 
-          <View style={[styles.statusItem, { borderBottomColor: colors.border }]}>
+          <View style={styles.statusItem}>
             <View style={styles.statusContent}>
               <Text style={styles.statusIcon}>{getStatusIcon(canScheduleAlarms)}</Text>
               <View style={styles.statusText}>
@@ -148,29 +141,8 @@ export function NotificationSettingsScreen() {
               </TouchableOpacity>
             )}
           </View>
-
-          <View style={styles.statusItem}>
-            <View style={styles.statusContent}>
-              <Text style={styles.statusIcon}>{getStatusIcon(!batteryOptimized)}</Text>
-              <View style={styles.statusText}>
-                <Text style={[styles.statusTitle, { color: colors.text }]}>
-                  Оптимизация батареи
-                </Text>
-                <Text style={[styles.statusDescription, { color: colors.textSecondary }]}>
-                  {batteryOptimized ? 'Включена (может блокировать)' : 'Отключена'}
-                </Text>
-              </View>
-            </View>
-            {batteryOptimized && (
-              <TouchableOpacity
-                style={[styles.actionButton, { backgroundColor: colors.warning }]}
-                onPress={openBatterySettings}
-              >
-                <Text style={styles.actionButtonText}>Отключить</Text>
-              </TouchableOpacity>
-            )}
-          </View>
         </View>
+
 
         {/* Настройки приложения */}
         <View style={styles.section}>
@@ -355,6 +327,17 @@ const styles = StyleSheet.create({
   dangerButtonText: {
     color: 'white',
     fontSize: 15,
+    fontWeight: '600',
+  },
+  checkAllButton: {
+    marginHorizontal: 20,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  checkAllButtonText: {
+    color: 'white',
+    fontSize: 16,
     fontWeight: '600',
   },
 })

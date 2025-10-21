@@ -44,9 +44,8 @@ export function AddReminderScreen() {
       const allFamilyMembers = await databaseService.getFamilyMembers()
       setFamilyMembers(allFamilyMembers)
       setIsLoading(false)
-      console.log('✅ Family members loaded:', allFamilyMembers.length)
     } catch (error) {
-      console.error('❌ Failed to load family members:', error)
+      console.error('Failed to load family members:', error)
       setIsLoading(false)
     }
   }
@@ -102,7 +101,8 @@ export function AddReminderScreen() {
       }
 
       const notificationId = `reminder-once-${reminderId}-${Date.now()}`
-      await notificationService.scheduleNotification(notificationId, {
+
+      const scheduled = await notificationService.scheduleNotification(notificationId, {
         title,
         body: `Время принять: ${medicineNames}`,
         notificationDate: notificationTime,
@@ -116,7 +116,10 @@ export function AddReminderScreen() {
         kitId: medicines[0].kitId,
         critical: false,
       })
-      console.log(`✅ Запланировано одноразовое напоминание на ${notificationTime.toLocaleString('ru-RU')}`)
+
+      if (scheduled) {
+        console.log(`Scheduled once reminder for ${notificationTime.toLocaleString('ru-RU')}`)
+      }
     } else if (frequency === 'daily') {
       // Ежедневные напоминания: создаем quantity уведомлений в день на 30 дней
       let notificationCount = 0
@@ -137,7 +140,7 @@ export function AddReminderScreen() {
           const intakeNumber = intake + 1
           const notificationId = `reminder-daily-${reminderId}-day${day}-intake${intake}`
 
-          await notificationService.scheduleNotification(notificationId, {
+          const scheduled = await notificationService.scheduleNotification(notificationId, {
             title,
             body: `Время принять: ${medicineNames} (прием ${intakeNumber} из ${quantity})`,
             notificationDate: notificationTime,
@@ -154,10 +157,15 @@ export function AddReminderScreen() {
             kitId: medicines[0].kitId,
             critical: false,
           })
-          notificationCount++
+          if (scheduled) {
+            notificationCount++
+          }
         }
       }
-      console.log(`✅ Запланировано ${notificationCount} ежедневных напоминаний (${quantity} раз в день на 30 дней)`)
+
+      if (notificationCount > 0) {
+        console.log(`Scheduled ${notificationCount} daily reminders`)
+      }
     } else if (frequency === 'weekly') {
       // Еженедельные напоминания: создаем quantity уведомлений в неделю на 12 недель
       let notificationCount = 0
@@ -199,7 +207,10 @@ export function AddReminderScreen() {
           notificationCount++
         }
       }
-      console.log(`✅ Запланировано ${notificationCount} еженедельных напоминаний (${quantity} раз в неделю на 12 недель)`)
+
+      if (notificationCount > 0) {
+        console.log(`Scheduled ${notificationCount} weekly reminders`)
+      }
     }
   }
 
@@ -207,6 +218,25 @@ export function AddReminderScreen() {
     if (selectedMedicines.length === 0) {
       Alert.alert('Ошибка', 'Выберите хотя бы одно лекарство')
       return
+    }
+
+    // Проверяем и запрашиваем разрешение на уведомления
+    const hasPermission = await notificationService.checkPermission()
+    if (!hasPermission) {
+      const granted = await notificationService.requestPermission()
+      if (!granted) {
+        Alert.alert(
+          'Требуется разрешение',
+          'Для работы напоминаний необходимо разрешение на отправку уведомлений',
+          [
+            {
+              text: 'OK',
+              style: 'cancel'
+            }
+          ]
+        )
+        return
+      }
     }
 
     // Если название не введено, используем название по умолчанию
@@ -527,4 +557,5 @@ export function AddReminderScreen() {
 }
 
 // Styles теперь в useAddReminderStyles hook
+
 

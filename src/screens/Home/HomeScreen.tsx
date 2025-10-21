@@ -9,7 +9,7 @@ import { Separator } from '@/shared/ui'
 import { Alert, TouchableOpacity, Text, View, ScrollView, TextInput, RefreshControl, Image } from 'react-native'
 import Icon from 'react-native-vector-icons/Feather'
 import { databaseService, getMedicinePhotoUri } from '@/shared/lib'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RootStackParamList } from '@/app/navigation/types'
@@ -47,7 +47,7 @@ export function HomeScreen() {
   const [medicines, setMedicines] = useState<MedicineWithKit[]>([])
   const [kitsWithMedicines, setKitsWithMedicines] = useState<any[]>([])
 
-  const loadKitsWithMedicines = useCallback(async () => {
+  const loadKitsWithMedicines = async () => {
     try {
       await databaseService.init()
       const kitsWithData = await Promise.all(kits.map(async kit => {
@@ -62,15 +62,7 @@ export function HomeScreen() {
     } catch (err) {
       console.error('Failed to load kits with medicines:', err)
     }
-  }, [kits])
-
-  useEffect(() => {
-    loadAlerts()
-    loadMedicines()
-    if (kits.length > 0) {
-      loadKitsWithMedicines()
-    }
-  }, [kits.length])
+  }
 
   const loadMedicines = async () => {
     try {
@@ -134,6 +126,14 @@ export function HomeScreen() {
       console.error('Failed to load alerts:', err)
     }
   }
+
+  useEffect(() => {
+    loadAlerts()
+    loadMedicines()
+    if (kits.length > 0) {
+      loadKitsWithMedicines()
+    }
+  }, [kits.length])
 
   const handleRefresh = async () => {
     setIsRefreshing(true)

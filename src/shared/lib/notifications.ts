@@ -184,6 +184,7 @@ class NotificationService {
     }
   ): Promise<boolean> {
     const { title, body, notificationDate, data, kitId, critical = false } = options
+
     const hasPermission = await this.checkPermission()
     if (!hasPermission) {
       return false
@@ -394,28 +395,10 @@ class NotificationService {
     }
 
     try {
-      const isEnabled = await notifee.isBatteryOptimizationEnabled()
-
-      if (isEnabled) {
-        Alert.alert(
-          'Настройка уведомлений',
-          'Для гарантированной доставки уведомлений о лекарствах, пожалуйста, отключите оптимизацию батареи для приложения.',
-          [
-            {
-              text: 'Открыть настройки',
-              onPress: async () => {
-                await notifee.openBatteryOptimizationSettings()
-              },
-            },
-            {
-              text: 'Позже',
-              style: 'cancel',
-            },
-          ]
-        )
-      }
+      // Просто открываем настройки без алерта
+      await notifee.openBatteryOptimizationSettings()
     } catch (error) {
-      console.error('Failed to request battery optimization exemption:', error)
+      console.error('Failed to open battery optimization settings:', error)
     }
   }
 
@@ -432,26 +415,8 @@ class NotificationService {
       const powerManagerInfo = await notifee.getPowerManagerInfo()
 
       if (powerManagerInfo.activity) {
-        Alert.alert(
-          'Требуются настройки',
-          'Для надежной работы уведомлений, пожалуйста, настройте параметры энергосбережения.\n\n' +
-          'Обычно нужно:\n' +
-          '• Включить автозапуск\n' +
-          '• Отключить ограничения фона\n' +
-          '• Добавить в исключения',
-          [
-            {
-              text: 'Открыть настройки',
-              onPress: async () => {
-                await notifee.openPowerManagerSettings()
-              },
-            },
-            {
-              text: 'Позже',
-              style: 'cancel',
-            },
-          ]
-        )
+        // Просто открываем настройки без алерта
+        await notifee.openPowerManagerSettings()
       }
     } catch (error) {
       console.error('Failed to check power manager:', error)
@@ -558,35 +523,10 @@ class NotificationService {
       }
       console.log('batteryOptEnabled', batteryOptEnabled)
 
-      // ПРИОРИТЕТ 2: Battery Optimization
-      if (batteryOptEnabled) {
-        // На эмуляторе всегда true, поэтому показываем информационный диалог
-        const isEmulator = __DEV__ && batteryOptEnabled
-        const title = isEmulator ? 'ℹ️ Информация об эмуляторе' : '⚠️ Настройка уведомлений'
-        const message = isEmulator
-          ? 'На эмуляторе оптимизация батареи всегда включена.\n\n' +
-          'На реальном устройстве рекомендуется отключить оптимизацию для надежной работы уведомлений.'
-          : 'Обнаружена оптимизация батареи.\n\n' +
-          'Уведомления о лекарствах могут не приходить когда приложение закрыто.\n\n' +
-          'Рекомендуем отключить оптимизацию.'
-
-        Alert.alert(
-          title,
-          message,
-          [
-            {
-              text: 'Открыть настройки',
-              onPress: async () => {
-                await notifee.openBatteryOptimizationSettings()
-              },
-            },
-            {
-              text: 'Позже',
-              style: 'cancel',
-            },
-          ]
-        )
-      }
+      // ПРИОРИТЕТ 2: Battery Optimization - Убрали алерт
+      // if (batteryOptEnabled) {
+      //   // Пользователь может настроить в экране настроек уведомлений
+      // }
     } catch (error) {
       console.error('Failed to check background restrictions:', error)
     }
@@ -597,32 +537,8 @@ class NotificationService {
    * @returns {Promise<void>}
    */
   async showEmulatorInfoDialog(): Promise<void> {
-    try {
-      const batteryOptEnabled = await notifee.isBatteryOptimizationEnabled()
-      const isEmulator = __DEV__ && batteryOptEnabled
-
-      if (isEmulator) {
-        Alert.alert(
-          'ℹ️ Информация об эмуляторе',
-          'На эмуляторе оптимизация батареи всегда включена.\n\n' +
-          'На реальном устройстве рекомендуется отключить оптимизацию для надежной работы уведомлений.',
-          [
-            {
-              text: 'ОТКРЫТЬ НАСТРОЙКИ',
-              onPress: async () => {
-                await notifee.openBatteryOptimizationSettings()
-              },
-            },
-            {
-              text: 'ПОЗЖЕ',
-              style: 'cancel',
-            },
-          ]
-        )
-      }
-    } catch (error) {
-      console.error('Failed to show emulator info dialog:', error)
-    }
+    // Убрали алерт - пользователь может настроить в экране настроек уведомлений
+    return
   }
 
   /**

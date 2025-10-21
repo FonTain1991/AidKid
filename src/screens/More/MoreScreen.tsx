@@ -5,7 +5,7 @@ import { FONT_SIZE } from '@/shared/config/constants/font'
 import { SafeAreaView } from '@/shared/ui/SafeAreaView'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert } from 'react-native'
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert, Linking } from 'react-native'
 import { displayName } from '../../../app.json'
 import DeviceInfo from 'react-native-device-info'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -44,6 +44,21 @@ export function MoreScreen() {
     )
   }
 
+  const handleSupport = async () => {
+    const telegramUrl = 'https://t.me/+ZppyHhxkvdgxMDMy'
+    try {
+      const canOpen = await Linking.canOpenURL(telegramUrl)
+      if (canOpen) {
+        await Linking.openURL(telegramUrl)
+      } else {
+        Alert.alert('Ошибка', 'Не удалось открыть Telegram')
+      }
+    } catch (error) {
+      console.error('Failed to open Telegram:', error)
+      Alert.alert('Ошибка', 'Не удалось открыть ссылку')
+    }
+  }
+
   const menuItems = [
     {
       title: 'Список покупок',
@@ -68,6 +83,12 @@ export function MoreScreen() {
       onPress: () => {
         navigation.navigate('NotificationSettings')
       },
+    },
+    {
+      title: 'Поддержка',
+      description: 'Задать вопрос или сообщить о проблеме',
+      icon: '💬',
+      onPress: handleSupport,
     },
     {
       title: 'О приложении',
