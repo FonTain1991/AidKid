@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "464124582533",
+    "project_id": "aidkit-dcfe7",
+    "storage_bucket": "aidkit-dcfe7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:464124582533:android:d8a103c335003615b7e7ec",
+        "android_client_info": {
+          "package_name": "com.aidkit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "464124582533-7kp53mqp3635nu52f544cv98mggv6tuu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aidkit",
+            "certificate_hash": "1264121dca46987494bbe9bf4194f4a419bc87f0"
+          }
+        },
+        {
+          "client_id": "464124582533-94u0fbpqduo2vrjus6j3buctbb8go2ci.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aidkit",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "464124582533-2ctqatjjbk7h1lgu4d1facpe017p167j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBVVwesS7XHMVJs1ZzAvh4peidUP4AV22w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "464124582533-2ctqatjjbk7h1lgu4d1facpe017p167j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

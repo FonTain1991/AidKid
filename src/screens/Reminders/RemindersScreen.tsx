@@ -39,10 +39,12 @@ export function RemindersScreen() {
 
       // Загружаем все запланированные уведомления
       const notifications = await notificationService.getTriggerNotifications()
+      console.log(`RemindersScreen: Got ${notifications.length} notifications from Notifee`)
 
       // Загружаем данные о лекарствах
       await databaseService.init()
       const medicines = await databaseService.getMedicines()
+      console.log(`RemindersScreen: Got ${medicines.length} medicines from DB`)
       const medicinesMap = new Map(medicines.map(m => [m.id, m]))
 
       // Группируем уведомления по лекарствам
@@ -52,10 +54,14 @@ export function RemindersScreen() {
         const { notification } = item
         const data = notification.data as any
 
+        console.log(`Notification: id=${notification.id}, type=${data?.type}, data=`, data)
+
         // Пропускаем не-напоминания (например, уведомления о сроке годности)
         if (data?.type !== 'reminder') {
+          console.log(`  Skipping: not a reminder (type=${data?.type})`)
           continue
         }
+        console.log('  Processing reminder notification')
 
         // Парсим medicineIds (новый формат) или используем medicineId (старый формат)
         let medicineIds: string[] = []
@@ -73,11 +79,14 @@ export function RemindersScreen() {
         }
 
         // Получаем названия всех лекарств для этого напоминания
+        console.log(`  Looking for medicines with IDs: ${medicineIds.join(', ')}`)
         const medicines = medicineIds
           .map(id => medicinesMap.get(id))
           .filter(m => m !== undefined) as Medicine[]
 
+        console.log(`  Found ${medicines.length} medicines`)
         if (medicines.length === 0) {
+          console.log('  Skipping: no medicines found for these IDs')
           continue
         }
 
@@ -122,6 +131,8 @@ export function RemindersScreen() {
       })
 
       const remindersArray = Array.from(groupedReminders.values())
+      console.log(`RemindersScreen: Total grouped reminders: ${remindersArray.length}`)
+
       // Сортируем по ближайшему уведомлению
       remindersArray.sort((a, b) => {
         if (!a.nextNotification) {

@@ -85,6 +85,14 @@ export function MoreScreen() {
       },
     },
     {
+      title: 'Резервное копирование',
+      description: 'Синхронизация и экспорт данных',
+      icon: '💾',
+      onPress: () => {
+        navigation.navigate('Backup')
+      },
+    },
+    {
       title: 'Поддержка',
       description: 'Задать вопрос или сообщить о проблеме',
       icon: '💬',
@@ -96,14 +104,6 @@ export function MoreScreen() {
       icon: '💡',
       onPress: handleShowOnboarding,
     },
-    // {
-    //   title: 'Резервное копирование',
-    //   description: 'Синхронизация и экспорт данных',
-    //   icon: '💾',
-    //   onPress: () => {
-    //     console.log('Navigate to backup settings')
-    //   },
-    // }
   ]
 
   return (

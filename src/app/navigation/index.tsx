@@ -18,6 +18,7 @@ import { FamilyMembersScreen } from '@/screens/FamilyMembers'
 import { BarcodeScannerScreen } from '@/screens/BarcodeScanner'
 import { ShoppingListScreen } from '@/screens/ShoppingList'
 import { AddShoppingItemScreen } from '@/screens/AddShoppingItem'
+import { BackupScreen } from '@/screens/Backup'
 import { useDatabase, notificationService } from '@/shared/lib'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { useTheme } from '../providers/theme'
@@ -236,6 +237,14 @@ export function AppNavigator() {
         options={{
           title: 'Добавить товар',
           headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name='Backup'
+        component={BackupScreen}
+        options={{
+          title: 'Резервное копирование',
+          headerShown: true,
         }}
       />
     </Stack.Navigator>

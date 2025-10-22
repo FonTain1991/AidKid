@@ -35,4 +35,5 @@ export type RootStackParamList = {
   BarcodeScanner: undefined
   ShoppingList: undefined
   AddShoppingItem: undefined
+  Backup: undefined
 }

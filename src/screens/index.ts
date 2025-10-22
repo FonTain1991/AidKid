@@ -1,4 +1,5 @@
 export { AddReminderScreen } from './AddReminder'
+export { BackupScreen } from './Backup'
 export { ExpiringMedicinesScreen } from './ExpiringMedicines'
 export { FamilyMembersScreen } from './FamilyMembers'
 export { BarcodeScannerScreen } from './BarcodeScanner'
