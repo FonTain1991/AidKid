@@ -9,14 +9,19 @@ import { kitApi } from '@/entities/kit/api'
 import { useKitListState } from '@/features/kit-list'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, View } from 'react-native'
+import { canCreateKit, formatLimitMessage } from '@/shared/lib'
+import type { RootStackParamList } from '@/app/navigation/types'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 
 interface RouteParams {
   kitId?: string
   mode: 'create' | 'edit'
 }
 
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>
+
 export const KitScreen = () => {
-  const navigation = useNavigation()
+  const navigation = useNavigation<NavigationProp>()
   const route = useRoute()
   const { mode, kitId } = (route.params as RouteParams) || { mode: 'create' }
   const { colors } = useTheme()
@@ -59,6 +64,31 @@ export const KitScreen = () => {
   const handleSubmit = async (data: KitFormData) => {
     try {
       if (mode === 'create') {
+        // Проверка лимита для бесплатной версии
+        const limitCheck = await canCreateKit()
+        
+        if (!limitCheck.allowed) {
+          Alert.alert(
+            'Достигнут лимит 🚫',
+            formatLimitMessage(limitCheck),
+            [
+              {
+                text: 'Отмена',
+                style: 'cancel',
+              },
+              {
+                text: 'Оформить Premium 💎',
+                onPress: () => {
+                  navigation.navigate('Subscription')
+                },
+                style: 'default',
+              },
+            ],
+            { cancelable: true }
+          )
+          return
+        }
+
         // Создать новый kit в базе данных
         const newKit = await kitApi.createKitFromForm(data)
 

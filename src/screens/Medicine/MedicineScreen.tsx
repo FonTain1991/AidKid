@@ -8,7 +8,10 @@ import { useNavigationBarColor, useRoute, useScreenProperties } from '@/shared/h
 import { BackButton } from '@/shared/ui'
 import { useTheme } from '@/app/providers/theme'
 import { medicineService } from '@/entities/medicine'
-import { scheduleMedicineExpiryNotifications, cancelMedicineNotifications } from '@/shared/lib'
+import { scheduleMedicineExpiryNotifications, cancelMedicineNotifications, canCreateMedicine, formatLimitMessage } from '@/shared/lib'
+import type { RootStackParamList } from '@/app/navigation/types'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { Alert } from 'react-native'
 
 interface RouteParams {
   medicineId?: string
@@ -18,8 +21,10 @@ interface RouteParams {
   initialDescription?: string
 }
 
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>
+
 export const MedicineScreen = () => {
-  const navigation = useNavigation()
+  const navigation = useNavigation<NavigationProp>()
   const route = useRoute()
   const params = (route.params as RouteParams) || {}
   // Если route.name === 'AddMedicine', то это создание
@@ -109,6 +114,31 @@ export const MedicineScreen = () => {
       }
 
       if (mode === 'create') {
+        // Проверка лимита для бесплатной версии
+        const limitCheck = await canCreateMedicine()
+        
+        if (!limitCheck.allowed) {
+          Alert.alert(
+            'Достигнут лимит 🚫',
+            formatLimitMessage(limitCheck),
+            [
+              {
+                text: 'Отмена',
+                style: 'cancel',
+              },
+              {
+                text: 'Оформить Premium 💎',
+                onPress: () => {
+                  navigation.navigate('Subscription')
+                },
+                style: 'default',
+              },
+            ],
+            { cancelable: true }
+          )
+          return
+        }
+
         // Создаем новое лекарство
         const medicine = await medicineService.createMedicine({
           name: data.name,

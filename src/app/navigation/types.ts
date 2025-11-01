@@ -36,4 +36,5 @@ export type RootStackParamList = {
   ShoppingList: undefined
   AddShoppingItem: undefined
   Backup: undefined
+  Subscription: undefined
 }

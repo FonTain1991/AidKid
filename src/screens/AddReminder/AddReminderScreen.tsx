@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RootStackParamList } from '@/app/navigation/types'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import { generateReactKey } from '@/shared/lib/helpers'
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>
 
@@ -32,6 +33,7 @@ export function AddReminderScreen() {
   const [reminderTimes, setReminderTimes] = useState<Date[]>([new Date(), new Date(), new Date()])
   const [frequency, setFrequency] = useState<'once' | 'daily' | 'weekly'>('daily')
   const [quantity, setQuantity] = useState(1)
+  const [daysCount, setDaysCount] = useState(30) // Количество дней для напоминаний
   const [_isEnabled, _setIsEnabled] = useState(true)
 
   useEffect(() => {
@@ -59,7 +61,6 @@ export function AddReminderScreen() {
   // Инициализируем время по умолчанию для разных приемов
   useEffect(() => {
     const defaultTimes = []
-    const baseTime = new Date()
 
     // Устанавливаем разное время для каждого приема
     // 1-й прием: 09:00, 2-й: 14:00, 3-й: 20:00, и т.д.
@@ -67,7 +68,7 @@ export function AddReminderScreen() {
 
     for (let i = 0; i < 10; i++) {
       const time = new Date()
-      time.setHours(defaultHours[i] || 9 + i * 2, 0, 0, 0)
+      time.setHours(defaultHours[i] || (9 + (i * 2)), 0, 0, 0)
       defaultTimes.push(time)
     }
 
@@ -81,14 +82,15 @@ export function AddReminderScreen() {
     times: Date[]
     frequency: 'once' | 'daily' | 'weekly'
     quantity: number
+    daysCount: number
     familyMemberId?: string
   }) => {
-    const { medicines, reminderId, title, times, frequency, quantity, familyMemberId } = options
+    const { medicines, reminderId, title, times, frequency: reminderFrequency, quantity: reminderQuantity, daysCount: reminderDaysCount, familyMemberId } = options
     const now = new Date()
     const medicineNames = medicines.map(m => m.name).join(', ')
     const medicineIds = medicines.map(m => m.id)
 
-    if (frequency === 'once') {
+    if (reminderFrequency === 'once') {
       // Одноразовое напоминание - всегда 1 уведомление
       const notificationTime = new Date(times[0])
       notificationTime.setFullYear(now.getFullYear())
@@ -100,7 +102,7 @@ export function AddReminderScreen() {
         notificationTime.setDate(notificationTime.getDate() + 1)
       }
 
-      const notificationId = `reminder-once-${reminderId}-${Date.now()}`
+      const notificationId = `reminder-once-${reminderId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
       const scheduled = await notificationService.scheduleNotification(notificationId, {
         title,
@@ -120,12 +122,12 @@ export function AddReminderScreen() {
       if (scheduled) {
         console.log(`Scheduled once reminder for ${notificationTime.toLocaleString('ru-RU')}`)
       }
-    } else if (frequency === 'daily') {
-      // Ежедневные напоминания: создаем quantity уведомлений в день на 30 дней
+    } else if (reminderFrequency === 'daily') {
+      // Ежедневные напоминания: создаем quantity уведомлений в день на указанное количество дней
       let notificationCount = 0
 
-      for (let day = 0; day < 30; day++) {
-        for (let intake = 0; intake < quantity; intake++) {
+      for (let day = 0; day < reminderDaysCount; day++) {
+        for (let intake = 0; intake < reminderQuantity; intake++) {
           const intakeTime = times[intake]
           const notificationTime = new Date(intakeTime)
           notificationTime.setFullYear(now.getFullYear())
@@ -133,32 +135,30 @@ export function AddReminderScreen() {
           notificationTime.setDate(now.getDate() + day)
 
           // Пропускаем уведомления в прошлом
-          if (notificationTime <= now) {
-            continue
-          }
+          if (notificationTime > now) {
+            const intakeNumber = intake + 1
+            const notificationId = `reminder-daily-${reminderId}-day${day}-intake${intake}`
 
-          const intakeNumber = intake + 1
-          const notificationId = `reminder-daily-${reminderId}-day${day}-intake${intake}`
-
-          const scheduled = await notificationService.scheduleNotification(notificationId, {
-            title,
-            body: `Время принять: ${medicineNames} (прием ${intakeNumber} из ${quantity})`,
-            notificationDate: notificationTime,
-            data: {
-              type: 'reminder',
-              reminderId,
-              medicineIds: JSON.stringify(medicineIds),
-              familyMemberId: familyMemberId || '',
-              frequency: 'daily',
-              day: String(day),
-              intake: String(intakeNumber),
-              totalIntakes: String(quantity),
-            },
-            kitId: medicines[0].kitId,
-            critical: false,
-          })
-          if (scheduled) {
-            notificationCount++
+            const scheduled = await notificationService.scheduleNotification(notificationId, {
+              title,
+              body: `Время принять: ${medicineNames} (прием ${intakeNumber} из ${reminderQuantity})`,
+              notificationDate: notificationTime,
+              data: {
+                type: 'reminder',
+                reminderId,
+                medicineIds: JSON.stringify(medicineIds),
+                familyMemberId: familyMemberId || '',
+                frequency: 'daily',
+                day: String(day),
+                intake: String(intakeNumber),
+                totalIntakes: String(reminderQuantity),
+              },
+              kitId: medicines[0].kitId,
+              critical: false,
+            })
+            if (scheduled) {
+              notificationCount++
+            }
           }
         }
       }
@@ -166,45 +166,44 @@ export function AddReminderScreen() {
       if (notificationCount > 0) {
         console.log(`Scheduled ${notificationCount} daily reminders`)
       }
-    } else if (frequency === 'weekly') {
-      // Еженедельные напоминания: создаем quantity уведомлений в неделю на 12 недель
+    } else if (reminderFrequency === 'weekly') {
+      // Еженедельные напоминания: создаем quantity уведомлений в неделю на указанное количество недель
       let notificationCount = 0
+      const weeksCount = Math.ceil(reminderDaysCount / 7)
 
-      for (let week = 0; week < 12; week++) {
-        for (let intake = 0; intake < quantity; intake++) {
+      for (let week = 0; week < weeksCount; week++) {
+        for (let intake = 0; intake < reminderQuantity; intake++) {
           const intakeTime = times[intake]
           const notificationTime = new Date(intakeTime)
           notificationTime.setFullYear(now.getFullYear())
           notificationTime.setMonth(now.getMonth())
           // Распределяем приемы равномерно в течение недели
-          notificationTime.setDate(now.getDate() + (week * 7) + Math.floor((intake * 7) / quantity))
+          notificationTime.setDate(now.getDate() + (week * 7) + Math.floor((intake * 7) / reminderQuantity))
 
           // Пропускаем уведомления в прошлом
-          if (notificationTime <= now) {
-            continue
+          if (notificationTime > now) {
+            const intakeNumber = intake + 1
+            const notificationId = `reminder-weekly-${reminderId}-week${week}-intake${intake}`
+
+            await notificationService.scheduleNotification(notificationId, {
+              title,
+              body: `Время принять: ${medicineNames} (прием ${intakeNumber} из ${reminderQuantity} в неделю)`,
+              notificationDate: notificationTime,
+              data: {
+                type: 'reminder',
+                reminderId,
+                medicineIds: JSON.stringify(medicineIds),
+                familyMemberId: familyMemberId || '',
+                frequency: 'weekly',
+                week: String(week),
+                intake: String(intakeNumber),
+                totalIntakes: String(reminderQuantity),
+              },
+              kitId: medicines[0].kitId,
+              critical: false,
+            })
+            notificationCount++
           }
-
-          const intakeNumber = intake + 1
-          const notificationId = `reminder-weekly-${reminderId}-week${week}-intake${intake}`
-
-          await notificationService.scheduleNotification(notificationId, {
-            title,
-            body: `Время принять: ${medicineNames} (прием ${intakeNumber} из ${quantity} в неделю)`,
-            notificationDate: notificationTime,
-            data: {
-              type: 'reminder',
-              reminderId,
-              medicineIds: JSON.stringify(medicineIds),
-              familyMemberId: familyMemberId || '',
-              frequency: 'weekly',
-              week: String(week),
-              intake: String(intakeNumber),
-              totalIntakes: String(quantity),
-            },
-            kitId: medicines[0].kitId,
-            critical: false,
-          })
-          notificationCount++
         }
       }
 
@@ -264,7 +263,7 @@ export function AddReminderScreen() {
       })
 
       // Создаем записи приемов на ближайшие дни
-      const daysToCreate = frequency === 'once' ? 1 : frequency === 'daily' ? 30 : 84 // 12 недель
+      const daysToCreate = frequency === 'once' ? 1 : frequency === 'daily' ? daysCount : Math.ceil(daysCount / 7) * 7 // Для еженедельных - округляем до недель
 
       for (let day = 0; day < daysToCreate; day++) {
         const date = new Date()
@@ -293,6 +292,7 @@ export function AddReminderScreen() {
         times: timesToUse,
         frequency,
         quantity: frequency === 'once' ? 1 : quantity,
+        daysCount: frequency === 'once' ? 1 : daysCount,
         familyMemberId: selectedFamilyMember?.id
       })
 
@@ -307,6 +307,7 @@ export function AddReminderScreen() {
         message += `Время: ${timeStr}`
       } else {
         message += `Приемов в ${frequency === 'daily' ? 'день' : 'неделю'}: ${quantity}\n`
+        message += `Количество дней: ${daysCount}\n`
         message += 'Время приемов:\n'
         for (let i = 0; i < quantity; i++) {
           const timeStr = reminderTimes[i].toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
@@ -473,28 +474,56 @@ export function AddReminderScreen() {
               </View>
 
               {frequency !== 'once' && (
-                <View style={styles.inputContainer}>
-                  <Text style={[styles.inputLabel, { color: colors.text }]}>Количество приемов</Text>
-                  <View style={styles.quantityContainer}>
-                    <TouchableOpacity
-                      style={[styles.quantityButton, { borderColor: colors.border }]}
-                      onPress={() => setQuantity(Math.max(1, quantity - 1))}
-                    >
-                      <Text style={[styles.quantityButtonText, { color: colors.text }]}>−</Text>
-                    </TouchableOpacity>
+                <>
+                  <View style={styles.inputContainer}>
+                    <Text style={[styles.inputLabel, { color: colors.text }]}>Количество приемов</Text>
+                    <View style={styles.quantityContainer}>
+                      <TouchableOpacity
+                        style={[styles.quantityButton, { borderColor: colors.border }]}
+                        onPress={() => setQuantity(Math.max(1, quantity - 1))}
+                      >
+                        <Text style={[styles.quantityButtonText, { color: colors.text }]}>−</Text>
+                      </TouchableOpacity>
 
-                    <View style={[styles.quantityDisplay, { borderColor: colors.border }]}>
-                      <Text style={[styles.quantityText, { color: colors.text }]}>{quantity}</Text>
+                      <View style={[styles.quantityDisplay, { borderColor: colors.border }]}>
+                        <Text style={[styles.quantityText, { color: colors.text }]}>{quantity}</Text>
+                      </View>
+
+                      <TouchableOpacity
+                        style={[styles.quantityButton, { borderColor: colors.border }]}
+                        onPress={() => setQuantity(Math.min(10, quantity + 1))}
+                      >
+                        <Text style={[styles.quantityButtonText, { color: colors.text }]}>+</Text>
+                      </TouchableOpacity>
                     </View>
-
-                    <TouchableOpacity
-                      style={[styles.quantityButton, { borderColor: colors.border }]}
-                      onPress={() => setQuantity(Math.min(10, quantity + 1))}
-                    >
-                      <Text style={[styles.quantityButtonText, { color: colors.text }]}>+</Text>
-                    </TouchableOpacity>
                   </View>
-                </View>
+
+                  <View style={styles.inputContainer}>
+                    <Text style={[styles.inputLabel, { color: colors.text }]}>Количество дней</Text>
+                    <Text style={[styles.inputSubLabel, { color: colors.textSecondary }]}>
+                      На сколько дней создавать напоминания
+                    </Text>
+                    <View style={styles.quantityContainer}>
+                      <TouchableOpacity
+                        style={[styles.quantityButton, { borderColor: colors.border }]}
+                        onPress={() => setDaysCount(Math.max(1, daysCount - 1))}
+                      >
+                        <Text style={[styles.quantityButtonText, { color: colors.text }]}>−</Text>
+                      </TouchableOpacity>
+
+                      <View style={[styles.quantityDisplay, { borderColor: colors.border }]}>
+                        <Text style={[styles.quantityText, { color: colors.text }]}>{daysCount}</Text>
+                      </View>
+
+                      <TouchableOpacity
+                        style={[styles.quantityButton, { borderColor: colors.border }]}
+                        onPress={() => setDaysCount(Math.min(365, daysCount + 1))}
+                      >
+                        <Text style={[styles.quantityButtonText, { color: colors.text }]}>+</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </>
               )}
 
               {frequency === 'once' ? (
@@ -510,11 +539,12 @@ export function AddReminderScreen() {
                 <View style={styles.inputContainer}>
                   <Text style={[styles.inputLabel, { color: colors.text }]}>Время приемов</Text>
                   {Array.from({ length: quantity }).map((_, index) => (
-                    <View key={index} style={styles.timePickerContainer}>
+                    <View key={generateReactKey(`time-picker-${index}`)} style={styles.timePickerContainer}>
                       <Text style={[styles.timePickerLabel, { color: colors.text }]}>
                         {index + 1}. Прием
                       </Text>
                       <DatePicker
+                        fieldName='Выберите время'
                         value={reminderTimes[index]}
                         onChange={newTime => {
                           const newTimes = [...reminderTimes]
@@ -545,8 +575,8 @@ export function AddReminderScreen() {
           <Text style={[styles.infoTitle, { color: colors.text }]}>О напоминаниях</Text>
           <Text style={[styles.infoText, { color: colors.textSecondary }]}>
             • Напоминания будут приходить в указанное время{'\n'}
-            • Для повторяющихся напоминаний можно указать количество{'\n'}
-            • Ежедневные напоминания повторяются каждый день{'\n'}
+            • Для повторяющихся напоминаний можно указать количество приемов и дней{'\n'}
+            • Ежедневные напоминания повторяются каждый день на указанное количество дней{'\n'}
             • Еженедельные напоминания повторяются каждую неделю{'\n'}
             • Можно отключить или изменить в любой момент
           </Text>
@@ -557,5 +587,4 @@ export function AddReminderScreen() {
 }
 
 // Styles теперь в useAddReminderStyles hook
-
 

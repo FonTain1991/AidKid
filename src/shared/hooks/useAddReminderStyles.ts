@@ -243,6 +243,11 @@ export const useAddReminderStyles = () => {
       marginBottom: SPACING.sm,
       color: colors.text,
     },
+    inputSubLabel: {
+      fontSize: FONT_SIZE.sm,
+      marginBottom: SPACING.sm,
+      color: colors.textSecondary,
+    },
     textInput: {
       borderWidth: 1,
       borderRadius: 8,

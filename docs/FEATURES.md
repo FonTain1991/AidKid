@@ -362,7 +362,7 @@
 
 ## 📈 Метрики проекта
 
-- **Экранов**: 21 (добавлены ShoppingList, AddShoppingItem, Onboarding, WaterTracker)
+- **Экранов**: 23 (Home, Intake, More, Splash, Kit, KitDetails, Medicine, Today, QuickIntake, History, Statistics, Reminders, AddReminder, ExpiringMedicines, LowStockMedicines, NotificationSettings, FamilyMembers, FamilyAccess, BarcodeScanner, Backup, ShoppingList, AddShoppingItem, Onboarding)
 - **UI компонентов**: 31+ (добавлены ShoppingReminderModal, OnboardingScreen, WaterProgress, QuickAddButtons, CustomAmountModal, WaterWidget)
 - **Хуков**: 11+ (добавлен useWaterTracker)
 - **Сервисов**: 4 основных

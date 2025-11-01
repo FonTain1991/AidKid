@@ -19,6 +19,7 @@ import { BarcodeScannerScreen } from '@/screens/BarcodeScanner'
 import { ShoppingListScreen } from '@/screens/ShoppingList'
 import { AddShoppingItemScreen } from '@/screens/AddShoppingItem'
 import { BackupScreen } from '@/screens/Backup'
+import { SubscriptionScreen } from '@/screens/Subscription'
 import { useDatabase, notificationService } from '@/shared/lib'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { useTheme } from '../providers/theme'
@@ -244,6 +245,14 @@ export function AppNavigator() {
         component={BackupScreen}
         options={{
           title: 'Резервное копирование',
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name='Subscription'
+        component={SubscriptionScreen}
+        options={{
+          title: 'Премиум подписка',
           headerShown: true,
         }}
       />

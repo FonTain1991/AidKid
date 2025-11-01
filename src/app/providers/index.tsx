@@ -4,7 +4,7 @@ import { ComponentType, useEffect } from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { ThemeProvider, useTheme } from './theme'
-import { notificationService, databaseService } from '@/shared/lib'
+import { notificationService, databaseService, subscriptionService } from '@/shared/lib'
 import { StatusBar } from 'react-native'
 
 export function withProviders<T extends object>(Component: ComponentType<T>) {
@@ -12,9 +12,18 @@ export function withProviders<T extends object>(Component: ComponentType<T>) {
     const { colors } = useTheme()
 
     useEffect(() => {
-      // Инициализация уведомлений и создание каналов для существующих аптечек
-      const initializeNotifications = async () => {
+      const initializeServices = async () => {
         try {
+          // Инициализация RevenueCat (подписки)
+          // Делаем в первую очередь, так как не требует зависимостей
+          await subscriptionService.initialize()
+        } catch (error) {
+          console.error('Failed to initialize subscriptions:', error)
+          // Не критично, приложение продолжит работать без подписок
+        }
+
+        try {
+          // Инициализация уведомлений и создание каналов для существующих аптечек
           await notificationService.init()
 
           // Создаем каналы для всех существующих аптечек
@@ -32,7 +41,7 @@ export function withProviders<T extends object>(Component: ComponentType<T>) {
         }
       }
 
-      initializeNotifications()
+      initializeServices()
     }, [])
 
     return (

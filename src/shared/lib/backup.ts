@@ -285,7 +285,7 @@ class BackupService {
             notificationTime.setDate(notificationTime.getDate() + 1) // Всегда завтра
             notificationTime.setHours(hours, minutes, 0, 0)
 
-            const notificationId = `reminder-once-${reminder.id}-${Date.now()}`
+            const notificationId = `reminder-once-${reminder.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
             await notificationService.scheduleNotification(notificationId, {
               title: reminder.title,
               body: `Время принять: ${medicineNames}`,

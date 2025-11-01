@@ -555,7 +555,7 @@ class NotificationService {
     const testDate = new Date()
     testDate.setSeconds(testDate.getSeconds() + 5)
 
-    const notificationId = `test-notification-${Date.now()}`
+    const notificationId = `test-notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
     console.log('🔍 Scheduling test notification:', {
       notificationId,
@@ -611,7 +611,7 @@ class NotificationService {
     const testDate = new Date()
     testDate.setSeconds(testDate.getSeconds() + 3)
 
-    const notificationId = `test-critical-${Date.now()}`
+    const notificationId = `test-critical-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
     console.log('🔍 Scheduling critical test notification:', {
       notificationId,

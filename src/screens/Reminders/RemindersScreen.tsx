@@ -10,6 +10,7 @@ import { Medicine } from '@/entities/medicine/model/types'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RootStackParamList } from '@/app/navigation/types'
+import { generateReactKey } from '@/shared/lib/helpers'
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>
 
@@ -37,101 +38,96 @@ export function RemindersScreen() {
         setIsLoading(true)
       }
 
-      // Загружаем все запланированные уведомления
-      const notifications = await notificationService.getTriggerNotifications()
-      console.log(`RemindersScreen: Got ${notifications.length} notifications from Notifee`)
+      // Загружаем напоминания из базы данных
+      await databaseService.init()
+      const dbReminders = await databaseService.getReminders()
+      console.log(`RemindersScreen: Got ${dbReminders.length} reminders from DB`)
 
       // Загружаем данные о лекарствах
-      await databaseService.init()
       const medicines = await databaseService.getMedicines()
       console.log(`RemindersScreen: Got ${medicines.length} medicines from DB`)
       const medicinesMap = new Map(medicines.map(m => [m.id, m]))
 
-      // Группируем уведомления по лекарствам
-      const groupedReminders = new Map<string, ReminderGroup>()
+      // Загружаем все запланированные уведомления для получения информации о времени
+      const notifications = await notificationService.getTriggerNotifications()
+      console.log(`RemindersScreen: Got ${notifications.length} notifications from Notifee`)
 
+      // Создаем карту уведомлений по reminderId
+      const notificationsMap = new Map<string, any[]>()
       for (const item of notifications) {
-        const { notification } = item
-        const data = notification.data as any
-
-        console.log(`Notification: id=${notification.id}, type=${data?.type}, data=`, data)
-
-        // Пропускаем не-напоминания (например, уведомления о сроке годности)
-        if (data?.type !== 'reminder') {
-          console.log(`  Skipping: not a reminder (type=${data?.type})`)
-          continue
-        }
-        console.log('  Processing reminder notification')
-
-        // Парсим medicineIds (новый формат) или используем medicineId (старый формат)
-        let medicineIds: string[] = []
-        if (data.medicineIds) {
-          try {
-            medicineIds = JSON.parse(data.medicineIds)
-          } catch (error) {
-            console.error('Failed to parse medicineIds:', error)
-            continue
+        const data = item.notification.data as any
+        if (data?.type === 'reminder' && data?.reminderId) {
+          if (!notificationsMap.has(data.reminderId)) {
+            notificationsMap.set(data.reminderId, [])
           }
-        } else if (data.medicineId) {
-          medicineIds = [data.medicineId]
-        } else {
-          continue
-        }
-
-        // Получаем названия всех лекарств для этого напоминания
-        console.log(`  Looking for medicines with IDs: ${medicineIds.join(', ')}`)
-        const medicines = medicineIds
-          .map(id => medicinesMap.get(id))
-          .filter(m => m !== undefined) as Medicine[]
-
-        console.log(`  Found ${medicines.length} medicines`)
-        if (medicines.length === 0) {
-          console.log('  Skipping: no medicines found for these IDs')
-          continue
-        }
-
-        // Используем первый medicineId как ключ группировки для напоминания
-        const groupKey = medicineIds.join('-')
-        const medicineName = medicines.map(m => m.name).join(', ')
-
-        const trigger = item.trigger as any
-        const notificationTime = trigger?.timestamp ? new Date(trigger.timestamp) : null
-
-        if (!groupedReminders.has(groupKey)) {
-          groupedReminders.set(groupKey, {
-            medicineId: groupKey,
-            medicineName,
-            frequency: data.frequency || 'daily',
-            times: [],
-            totalCount: 0,
-            nextNotification: notificationTime,
-          })
-        }
-
-        const group = groupedReminders.get(groupKey)!
-        group.totalCount++
-
-        // Обновляем ближайшее уведомление
-        if (notificationTime && (!group.nextNotification || notificationTime < group.nextNotification)) {
-          group.nextNotification = notificationTime
-        }
-
-        // Собираем уникальные времена
-        if (notificationTime) {
-          const timeStr = notificationTime.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
-          if (!group.times.includes(timeStr)) {
-            group.times.push(timeStr)
-          }
+          notificationsMap.get(data.reminderId)!.push(item)
         }
       }
 
-      // Сортируем времена
-      groupedReminders.forEach(group => {
-        group.times.sort()
-      })
+      // Преобразуем напоминания из БД в формат для отображения
+      const remindersArray: ReminderGroup[] = []
 
-      const remindersArray = Array.from(groupedReminders.values())
-      console.log(`RemindersScreen: Total grouped reminders: ${remindersArray.length}`)
+      for (const dbReminder of dbReminders) {
+        console.log(`Processing reminder from DB: id=${dbReminder.id}, title=${dbReminder.title}`)
+
+        // Получаем названия лекарств
+        const medicines = dbReminder.medicineIds
+          .map((id: string) => medicinesMap.get(id))
+          .filter((m: Medicine | undefined) => m !== undefined) as Medicine[]
+
+        if (medicines.length === 0) {
+          console.log(`  Skipping: no medicines found for reminder ${dbReminder.id}`)
+          continue
+        }
+
+        const medicineName = medicines.map(m => m.name).join(', ')
+        const groupKey = dbReminder.medicineIds.join('-')
+
+        // Парсим времена из JSON
+        let times: string[] = []
+        try {
+          const timeData = JSON.parse(dbReminder.time)
+          if (Array.isArray(timeData)) {
+            times = timeData.map((t: any) => {
+              const hour = String(t.hour).padStart(2, '0')
+              const minute = String(t.minute).padStart(2, '0')
+              return `${hour}:${minute}`
+            })
+          }
+        } catch (error) {
+          console.error('Failed to parse reminder times:', error)
+          // Fallback: используем время по умолчанию
+          times = ['09:00']
+        }
+
+        // Получаем информацию о ближайшем уведомлении
+        const reminderNotifications = notificationsMap.get(dbReminder.id) || []
+        let nextNotification: Date | null = null
+        let totalCount = 0
+
+        for (const item of reminderNotifications) {
+          const trigger = item.trigger as any
+          const notificationTime = trigger?.timestamp ? new Date(trigger.timestamp) : null
+
+          if (notificationTime) {
+            totalCount++
+            if (!nextNotification || notificationTime < nextNotification) {
+              nextNotification = notificationTime
+            }
+          }
+        }
+
+        remindersArray.push({
+          medicineId: groupKey,
+          medicineName,
+          frequency: dbReminder.frequency,
+          times,
+          totalCount,
+          nextNotification,
+        })
+      }
+
+      console.log(`RemindersScreen: Total reminders from DB: ${remindersArray.length}`)
 
       // Сортируем по ближайшему уведомлению
       remindersArray.sort((a, b) => {
@@ -179,33 +175,46 @@ export function RemindersScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
+              // Находим напоминание в списке
+              const reminder = reminders.find(r => r.medicineId === medicineId)
+              if (!reminder) {
+                Alert.alert('Ошибка', 'Напоминание не найдено')
+                return
+              }
+
               // Получаем все уведомления
               const notifications = await notificationService.getTriggerNotifications()
 
-              // Удаляем все уведомления для этого лекарства/группы
+              // Удаляем все уведомления для этого напоминания
               for (const item of notifications) {
                 const data = item.notification.data as any
-                if (data?.type === 'reminder') {
-                  // Проверяем новый формат (medicineIds)
-                  if (data.medicineIds) {
-                    try {
-                      const medicineIds = JSON.parse(data.medicineIds)
-                      const groupKey = medicineIds.join('-')
-                      if (groupKey === medicineId) {
-                        if (item.notification.id) {
-                          await notificationService.cancelNotification(item.notification.id)
-                        }
-                      }
-                    } catch (error) {
-                      console.error('Failed to parse medicineIds:', error)
-                    }
-                  }
-                  // Проверяем старый формат (medicineId)
-                  else if (data?.medicineId === medicineId) {
+                if (data?.type === 'reminder' && data?.reminderId) {
+                  // Находим reminderId по medicineId (нужно найти в БД)
+                  const dbReminders = await databaseService.getReminders()
+                  const dbReminder = dbReminders.find(r => {
+                    const groupKey = r.medicineIds.join('-')
+                    return groupKey === medicineId
+                  })
+
+                  if (dbReminder && data.reminderId === dbReminder.id) {
                     if (item.notification.id) {
                       await notificationService.cancelNotification(item.notification.id)
                     }
                   }
+                }
+              }
+
+              // Удаляем напоминание из базы данных
+              if (reminder) {
+                const dbReminders = await databaseService.getReminders()
+                const dbReminder = dbReminders.find(r => {
+                  const groupKey = r.medicineIds.join('-')
+                  return groupKey === medicineId
+                })
+
+                if (dbReminder) {
+                  // Деактивируем напоминание в БД
+                  await databaseService.deactivateReminder(dbReminder.id)
                 }
               }
 
@@ -298,9 +307,9 @@ export function RemindersScreen() {
         ) : (
           <>
             <View style={styles.remindersList}>
-              {reminders.map(reminder => (
+              {reminders.map((reminder, index) => (
                 <View
-                  key={reminder.medicineId}
+                  key={generateReactKey(`reminder-${reminder.medicineId}`)}
                   style={[styles.reminderCard, { backgroundColor: 'white', borderColor: colors.border }]}
                 >
                   <View style={styles.reminderHeader}>
@@ -334,7 +343,7 @@ export function RemindersScreen() {
                       <View style={styles.timesList}>
                         {reminder.times.map((time, index) => (
                           <View
-                            key={index}
+                            key={generateReactKey(`time-${reminder.medicineId}-${index}`)}
                             style={[styles.timeChip, { backgroundColor: colors.primary + '15', borderColor: colors.primary }]}
                           >
                             <Text style={[styles.timeChipText, { color: colors.primary }]}>
@@ -386,8 +395,8 @@ export function RemindersScreen() {
             • Напоминания приходят в указанное время{'\n'}
             • Для надежной работы отключите оптимизацию батареи{'\n'}
             • Можно удалить напоминание, нажав на ✕{'\n'}
-            • Ежедневные напоминания планируются на 30 дней{'\n'}
-            • Еженедельные напоминания планируются на 12 недель
+            • Количество дней для напоминаний настраивается при создании{'\n'}
+            • Напоминания сохраняются в базе данных приложения
           </Text>
         </View>
       </ScrollView>

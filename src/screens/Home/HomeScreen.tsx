@@ -8,12 +8,13 @@ import { SafeAreaView } from '@/shared/ui/SafeAreaView'
 import { Separator } from '@/shared/ui'
 import { Alert, TouchableOpacity, Text, View, ScrollView, TextInput, RefreshControl, Image } from 'react-native'
 import Icon from 'react-native-vector-icons/Feather'
-import { databaseService, getMedicinePhotoUri } from '@/shared/lib'
+import { databaseService, getMedicinePhotoUri, getLimitsInfo } from '@/shared/lib'
 import { useState, useEffect } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RootStackParamList } from '@/app/navigation/types'
 import type { Medicine } from '@/entities/medicine/model/types'
+import { LimitIndicator } from '@/shared/ui'
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'BottomTabs'>
 
@@ -46,6 +47,7 @@ export function HomeScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [medicines, setMedicines] = useState<MedicineWithKit[]>([])
   const [kitsWithMedicines, setKitsWithMedicines] = useState<any[]>([])
+  const [limitsInfo, setLimitsInfo] = useState<any>(null)
 
   const loadKitsWithMedicines = async () => {
     try {
@@ -80,6 +82,15 @@ export function HomeScreen() {
       setMedicines(medicinesWithKits)
     } catch (err) {
       console.error('Failed to load medicines:', err)
+    }
+  }
+
+  const loadLimitsInfo = async () => {
+    try {
+      const info = await getLimitsInfo()
+      setLimitsInfo(info)
+    } catch (error) {
+      console.error('Failed to load limits info:', error)
     }
   }
 
@@ -130,6 +141,7 @@ export function HomeScreen() {
   useEffect(() => {
     loadAlerts()
     loadMedicines()
+    loadLimitsInfo()
     if (kits.length > 0) {
       loadKitsWithMedicines()
     }
@@ -141,6 +153,7 @@ export function HomeScreen() {
     await loadAlerts()
     await loadMedicines()
     await loadKitsWithMedicines()
+    await loadLimitsInfo()
     setIsRefreshing(false)
   }
 
@@ -221,8 +234,26 @@ export function HomeScreen() {
           </View>
         )}
 
-        {/* Разделитель между предупреждениями и поиском */}
-        {!hasSearchQuery && (expiringCount > 0 || lowStockCount > 0) && (
+        {/* Индикаторы лимитов - показываем только для бесплатной версии */}
+        {!hasSearchQuery && limitsInfo && !limitsInfo.isPremium && (
+          <View style={[styles.alertsContainer, { marginBottom: 0 }]}>
+            <LimitIndicator
+              limitCheck={limitsInfo.kits}
+              label="Аптечки"
+              showPremiumButton={!limitsInfo.kits.allowed}
+              compact={false}
+            />
+            <LimitIndicator
+              limitCheck={limitsInfo.medicines}
+              label="Лекарства"
+              showPremiumButton={!limitsInfo.medicines.allowed}
+              compact={false}
+            />
+          </View>
+        )}
+
+        {/* Разделитель между предупреждениями/лимитами и поиском */}
+        {!hasSearchQuery && ((expiringCount > 0 || lowStockCount > 0) || (limitsInfo && !limitsInfo.isPremium)) && (
           <View style={styles.separatorContainer}>
             <Separator />
           </View>

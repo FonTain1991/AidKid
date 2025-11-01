@@ -7,6 +7,7 @@ import {
 } from '@/entities/medicine/model/types'
 import { FamilyMember } from '@/entities/family-member/model/types'
 import { DATABASE_CONFIG } from '../config/database'
+import { generateId } from './helpers'
 
 // Конфигурация SQLite
 SQLite.DEBUG = __DEV__
@@ -507,7 +508,7 @@ class DatabaseService {
       throw new Error('Database not initialized')
     }
 
-    const id = Date.now().toString()
+    const id = generateId()
     const now = new Date().toISOString()
 
     const newKit: MedicineKit = {
@@ -649,7 +650,7 @@ class DatabaseService {
       throw new Error('Database not initialized')
     }
 
-    const id = Date.now().toString()
+    const id = generateId()
     const now = new Date().toISOString()
 
     const newMedicine: Medicine = {
@@ -856,7 +857,7 @@ class DatabaseService {
       throw new Error('Database not initialized')
     }
 
-    const id = Date.now().toString()
+    const id = generateId()
     const now = new Date().toISOString()
 
     const newStock: MedicineStock = {
@@ -961,7 +962,7 @@ class DatabaseService {
       throw new Error('Database not initialized')
     }
 
-    const id = Date.now().toString()
+    const id = generateId()
     const now = new Date().toISOString()
 
     const newUsage: MedicineUsage = {
@@ -1095,7 +1096,7 @@ class DatabaseService {
       throw new Error('Database not initialized')
     }
 
-    const id = Date.now().toString()
+    const id = generateId()
     const now = new Date().toISOString()
 
     const newMember: FamilyMember = {
@@ -1241,7 +1242,7 @@ class DatabaseService {
       throw new Error('Database not initialized')
     }
 
-    const id = Date.now().toString()
+    const id = generateId()
     const now = new Date().toISOString()
 
     // Создаем напоминание
@@ -1281,7 +1282,7 @@ class DatabaseService {
       throw new Error('Database not initialized')
     }
 
-    const id = Date.now().toString() + Math.random()
+    const id = generateId() + Math.random()
     const now = new Date().toISOString()
 
     await this.db.executeSql(`
@@ -1289,6 +1290,65 @@ class DatabaseService {
         id, reminder_id, scheduled_date, scheduled_time, is_taken, created_at
       ) VALUES (?, ?, ?, ?, 0, ?)
     `, [id, data.reminderId, data.scheduledDate, data.scheduledTime, now])
+  }
+
+  async getReminders(): Promise<any[]> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    const [results] = await this.db.executeSql(`
+      SELECT 
+        r.id,
+        r.title,
+        r.frequency,
+        r.times_per_day,
+        r.time,
+        r.family_member_id,
+        fm.name as family_member_name,
+        fm.avatar as family_member_avatar,
+        fm.color as family_member_color,
+        GROUP_CONCAT(rm.medicine_id) as medicine_ids
+      FROM reminders r
+      LEFT JOIN family_members fm ON r.family_member_id = fm.id
+      LEFT JOIN reminder_medicines rm ON r.id = rm.reminder_id
+      WHERE r.is_active = 1
+      GROUP BY r.id
+      ORDER BY r.created_at DESC
+    `)
+
+    const reminders = []
+    for (let i = 0; i < results.rows.length; i++) {
+      const row = results.rows.item(i)
+      reminders.push({
+        id: row.id,
+        title: row.title,
+        frequency: row.frequency,
+        timesPerDay: row.times_per_day,
+        time: row.time,
+        familyMemberId: row.family_member_id,
+        familyMemberName: row.family_member_name,
+        familyMemberAvatar: row.family_member_avatar,
+        familyMemberColor: row.family_member_color,
+        medicineIds: row.medicine_ids ? row.medicine_ids.split(',') : []
+      })
+    }
+
+    return reminders
+  }
+
+  async deactivateReminder(reminderId: string): Promise<void> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    await this.db.executeSql(`
+      UPDATE reminders 
+      SET is_active = 0 
+      WHERE id = ?
+    `, [reminderId])
+
+    console.log('SQLite - Deactivated reminder:', reminderId)
   }
 
   async getTodayReminderIntakes(): Promise<any[]> {
@@ -1406,7 +1466,7 @@ class DatabaseService {
       throw new Error('Database not initialized')
     }
 
-    const id = Date.now().toString()
+    const id = generateId()
     const now = new Date().toISOString()
 
     await this.db.executeSql(`

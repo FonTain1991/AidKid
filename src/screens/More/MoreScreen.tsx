@@ -61,6 +61,14 @@ export function MoreScreen() {
 
   const menuItems = [
     {
+      title: 'Премиум подписка',
+      description: 'Откройте все возможности приложения',
+      icon: '💎',
+      onPress: () => {
+        navigation.navigate('Subscription')
+      },
+    },
+    {
       title: 'Список покупок',
       description: 'Список лекарств для покупки',
       icon: '🛒',
