@@ -1,6 +1,6 @@
-import { Alert, ScrollView, StyleSheet, Text, View, ActivityIndicator } from 'react-native'
-import { useEffect, useState } from 'react'
-import { useNavigation } from '@react-navigation/native'
+import { Alert, ScrollView, StyleSheet, Text, View, ActivityIndicator, Linking, Platform } from 'react-native'
+import { useEffect, useState, useCallback } from 'react'
+import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RootStackParamList } from '@/app/navigation/types'
 import { useTheme } from '@/app/providers/theme'
@@ -33,6 +33,30 @@ export function SubscriptionScreen() {
 
   // Логирование для отладки
   const [retryCount, setRetryCount] = useState(0)
+
+  // Проверяем детальный статус для отображения информации об отмене
+  const [subscriptionStatus, setSubscriptionStatus] = useState<any>(null)
+
+  // Обновляем статус подписки при возвращении на экран
+  useFocusEffect(useCallback(() => {
+    refreshStatus()
+    // Загружаем детальный статус для проверки отмены
+    const loadStatus = async () => {
+      const status = await subscriptionService.getSubscriptionStatus()
+      setSubscriptionStatus(status)
+    }
+    loadStatus()
+  }, [refreshStatus]))
+
+  useEffect(() => {
+    if (isPremium) {
+      const loadStatus = async () => {
+        const status = await subscriptionService.getSubscriptionStatus()
+        setSubscriptionStatus(status)
+      }
+      loadStatus()
+    }
+  }, [isPremium])
 
   useEffect(() => {
     if (offerings && offerings.availablePackages.length > 0) {
@@ -115,6 +139,29 @@ export function SubscriptionScreen() {
     }
   }
 
+  const handleManageSubscription = async () => {
+    try {
+      // Открываем страницу управления подпиской в Google Play
+      if (Platform.OS === 'android') {
+        const url = 'https://play.google.com/store/account/subscriptions'
+        const canOpen = await Linking.canOpenURL(url)
+        if (canOpen) {
+          await Linking.openURL(url)
+        } else {
+          // Альтернативный способ - открыть через package name
+          const packageUrl = 'market://details?id=com.aidkit'
+          await Linking.openURL(packageUrl)
+        }
+      }
+    } catch (err) {
+      console.error('Error opening subscription management:', err)
+      Alert.alert(
+        'Не удалось открыть управление подпиской',
+        'Пожалуйста, откройте Google Play → Профиль → Платежи и подписки → Подписки вручную.'
+      )
+    }
+  }
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -122,19 +169,18 @@ export function SubscriptionScreen() {
     },
     content: {
       flex: 1,
-      padding: SPACING.lg,
+      paddingHorizontal: SPACING.lg,
     },
     header: {
       alignItems: 'center',
       marginBottom: SPACING.xl,
-      paddingTop: SPACING.md,
     },
     premiumIcon: {
       fontSize: 64,
       marginBottom: SPACING.md,
     },
     title: {
-      fontSize: FONT_SIZE.xxl,
+      fontSize: FONT_SIZE.heading,
       fontFamily: 'Roboto-Bold',
       color: colors.text,
       marginBottom: SPACING.xs,
@@ -161,7 +207,7 @@ export function SubscriptionScreen() {
       fontFamily: 'Roboto-Medium',
     },
     featuresContainer: {
-      backgroundColor: colors.surface,
+      backgroundColor: colors.card,
       borderRadius: 16,
       padding: SPACING.lg,
       marginBottom: SPACING.xl,
@@ -198,7 +244,7 @@ export function SubscriptionScreen() {
       marginBottom: SPACING.lg,
     },
     packageCard: {
-      backgroundColor: colors.surface,
+      backgroundColor: colors.card,
       borderRadius: 16,
       padding: SPACING.lg,
       borderWidth: 2,
@@ -301,6 +347,55 @@ export function SubscriptionScreen() {
       lineHeight: 18,
       paddingHorizontal: SPACING.md,
     },
+    manageSection: {
+      marginTop: SPACING.xl,
+      paddingHorizontal: SPACING.md,
+      alignItems: 'center',
+    },
+    manageButton: {
+      marginBottom: SPACING.sm,
+      width: '100%',
+    },
+    manageHint: {
+      fontSize: FONT_SIZE.sm,
+      textAlign: 'center',
+      lineHeight: 18,
+      paddingHorizontal: SPACING.md,
+    },
+    refundInfoSection: {
+      marginTop: SPACING.xl,
+      paddingHorizontal: SPACING.lg,
+      paddingVertical: SPACING.md,
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      marginHorizontal: SPACING.md,
+    },
+    refundTitle: {
+      fontSize: FONT_SIZE.md,
+      fontWeight: '600',
+      marginBottom: SPACING.sm,
+    },
+    refundText: {
+      fontSize: FONT_SIZE.sm,
+      lineHeight: 20,
+    },
+    canceledWarning: {
+      marginTop: SPACING.md,
+      padding: SPACING.md,
+      backgroundColor: colors.error + '15',
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.error + '40',
+    },
+    canceledTitle: {
+      fontSize: FONT_SIZE.md,
+      fontWeight: '600',
+      marginBottom: SPACING.sm,
+    },
+    canceledText: {
+      fontSize: FONT_SIZE.sm,
+      lineHeight: 20,
+    },
   })
 
   if (isLoading && !offerings) {
@@ -317,6 +412,9 @@ export function SubscriptionScreen() {
   }
 
   if (isPremium) {
+    const isCanceled = subscriptionStatus?.isCanceled
+    const expirationDate = subscriptionStatus?.expirationDate
+
     return (
       <SafeAreaView style={styles.container}>
         <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: SPACING.xl }}>
@@ -325,8 +423,97 @@ export function SubscriptionScreen() {
               <Text style={styles.premiumBadgeText}>💎 Premium</Text>
             </View>
             <Text style={styles.title}>Спасибо за поддержку! 🎉</Text>
-            <Text style={styles.subtitle}>
-              Ваша премиум подписка активна. Вы имеете доступ ко всем функциям приложения.
+            {isCanceled && expirationDate ? (
+              <View style={styles.canceledWarning}>
+                <Text style={[styles.canceledTitle, { color: colors.error }]}>
+                  ⚠️ Подписка отменена
+                </Text>
+                <Text style={[styles.canceledText, { color: colors.textSecondary }]}>
+                  Ваша подписка была отменена, но она продолжит действовать до{' '}
+                  {new Intl.DateTimeFormat('ru-RU', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  }).format(expirationDate)}.
+                  {'\n\n'}
+                  После этой даты премиум функции станут недоступны.
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.subtitle}>
+                Ваша премиум подписка активна. Вы имеете доступ ко всем функциям приложения.
+              </Text>
+            )}
+          </View>
+
+          {/* Features list for premium users */}
+          <View style={styles.featuresContainer}>
+            <Text style={styles.featuresTitle}>Ваши премиум функции:</Text>
+            <View style={styles.featuresGrid}>
+              <View style={styles.featureItem}>
+                <Text style={styles.featureIcon}>✓</Text>
+                <Text style={styles.featureText}>Неограниченные аптечки</Text>
+              </View>
+              <View style={styles.featureItem}>
+                <Text style={styles.featureIcon}>✓</Text>
+                <Text style={styles.featureText}>Неограниченные лекарства</Text>
+              </View>
+              <View style={styles.featureItem}>
+                <Text style={styles.featureIcon}>✓</Text>
+                <Text style={styles.featureText}>Облачное резервное копирование</Text>
+              </View>
+              <View style={styles.featureItem}>
+                <Text style={styles.featureIcon}>✓</Text>
+                <Text style={styles.featureText}>Семейный доступ</Text>
+              </View>
+              <View style={styles.featureItem}>
+                <Text style={styles.featureIcon}>✓</Text>
+                <Text style={styles.featureText}>Расширенная статистика</Text>
+              </View>
+              <View style={styles.featureItem}>
+                <Text style={styles.featureIcon}>✓</Text>
+                <Text style={styles.featureText}>Экспорт данных</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.manageSection}>
+            <Button
+              title='Управление подпиской'
+              onPress={handleManageSubscription}
+              variant='outline'
+              style={styles.manageButton}
+            />
+            <Button
+              title='🔄 Обновить статус'
+              onPress={async () => {
+                await refreshStatus()
+                // Получаем актуальный статус после обновления
+                const currentStatus = await subscriptionService.isPremium()
+                Alert.alert(
+                  'Статус обновлен',
+                  currentStatus
+                    ? 'Ваша премиум подписка активна'
+                    : 'Премиум подписка не активна. Если вы только что оформили подписку, подождите несколько секунд и обновите снова.'
+                )
+              }}
+              variant='outline'
+              style={[styles.manageButton, { marginTop: SPACING.sm }]}
+            />
+            <Text style={[styles.manageHint, { color: colors.textSecondary }]}>
+              Вы можете отменить подписку или изменить её параметры в Google Play
+            </Text>
+          </View>
+
+          <View style={styles.refundInfoSection}>
+            <Text style={[styles.refundTitle, { color: colors.text }]}>
+              💰 Политика возврата средств
+            </Text>
+            <Text style={[styles.refundText, { color: colors.textSecondary }]}>
+              Подписку можно отменить в любое время. После отмены подписка продолжит действовать до конца оплаченного периода, и вы сохраните доступ ко всем премиум функциям до этой даты.
+            </Text>
+            <Text style={[styles.refundText, { color: colors.textSecondary, marginTop: SPACING.sm }]}>
+              <Text style={{ fontWeight: '600' }}>Полный возврат средств</Text> возможен в течение 48 часов после покупки через Google Play → Подписки → Запросить возврат.
             </Text>
           </View>
         </ScrollView>
@@ -510,6 +697,8 @@ export function SubscriptionScreen() {
         <Text style={styles.disclaimer}>
           Подписка автоматически продлевается, если не отменена за 24 часа до окончания периода.
           {'\n'}Вы можете отменить подписку в любое время в настройках Google Play.
+          {'\n\n'}
+          <Text style={{ fontWeight: '600' }}>Политика возврата:</Text> Полный возврат средств возможен в течение 48 часов после покупки через Google Play.
         </Text>
       </ScrollView>
     </SafeAreaView>

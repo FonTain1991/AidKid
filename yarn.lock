@@ -4213,6 +4213,11 @@ getenv@^2.0.0:
   resolved "https://registry.yarnpkg.com/getenv/-/getenv-2.0.0.tgz#b1698c7b0f29588f4577d06c42c73a5b475c69e0"
   integrity sha512-VilgtJj/ALgGY77fiLam5iD336eSWi96Q15JSAG1zi8NRBysm3LXKdGnHb4m5cuyxvOLQQKWpBZAT6ni4FI2iQ==
 
+gifted-charts-core@0.1.66:
+  version "0.1.66"
+  resolved "https://registry.yarnpkg.com/gifted-charts-core/-/gifted-charts-core-0.1.66.tgz#738a16b013bd472329eb12e7c288c71821c584ce"
+  integrity sha512-qbfgxjrInrWpnomvrjVARF76uPj3JllKySxMgslQRKIe0ehIuD58mRY5qP3iFzD96ngPcxsTy5M0cFbXqykJdA==
+
 github-from-package@0.0.0:
   version "0.0.0"
   resolved "https://registry.yarnpkg.com/github-from-package/-/github-from-package-0.0.0.tgz#97fb5d96bfde8973313f20e8288ef9a167fa64ce"
@@ -6390,6 +6395,13 @@ react-native-gesture-handler@^2.28.0:
     hoist-non-react-statics "^3.3.0"
     invariant "^2.2.4"
 
+react-native-gifted-charts@^1.4.64:
+  version "1.4.64"
+  resolved "https://registry.yarnpkg.com/react-native-gifted-charts/-/react-native-gifted-charts-1.4.64.tgz#405860ca3f0f3e24e2b24ea5a38b4ecd6c60131a"
+  integrity sha512-jbr6RZ/61skhC7z5BKAu4e5jsWgVnmjU5UoVW3DO9rcqDpeqdIQzNoqmazjuHa7NvDjfKNey6FdblFTkvnBHdQ==
+  dependencies:
+    gifted-charts-core "0.1.66"
+
 react-native-image-picker@^8.2.1:
   version "8.2.1"
   resolved "https://registry.yarnpkg.com/react-native-image-picker/-/react-native-image-picker-8.2.1.tgz#1ac7826563cbaa5d5298d9f2acc53c69805e5393"
@@ -6412,6 +6424,11 @@ react-native-keyboard-aware-scroll-view@^0.9.5:
   dependencies:
     prop-types "^15.6.2"
     react-native-iphone-x-helper "^1.0.3"
+
+react-native-linear-gradient@^2.8.3:
+  version "2.8.3"
+  resolved "https://registry.yarnpkg.com/react-native-linear-gradient/-/react-native-linear-gradient-2.8.3.tgz#9a116649f86d74747304ee13db325e20b21e564f"
+  integrity sha512-KflAXZcEg54PXkLyflaSZQ3PJp4uC4whM7nT/Uot9m0e/qxFV3p6uor1983D1YOBJbJN7rrWdqIjq0T42jOJyA==
 
 react-native-permissions@^5.4.2:
   version "5.4.2"

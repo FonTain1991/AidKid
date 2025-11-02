@@ -116,7 +116,7 @@ export const MedicineScreen = () => {
       if (mode === 'create') {
         // Проверка лимита для бесплатной версии
         const limitCheck = await canCreateMedicine()
-        
+
         if (!limitCheck.allowed) {
           Alert.alert(
             'Достигнут лимит 🚫',

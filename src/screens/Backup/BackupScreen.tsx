@@ -16,6 +16,12 @@ import { FONT_SIZE } from '@/shared/config/constants/font'
 import { backupService } from '@/shared/lib/backup'
 import { googleDriveService, DriveFile } from '@/shared/lib/googleDrive'
 import Share from 'react-native-share'
+import { useSubscription } from '@/shared/hooks/useSubscription'
+import { useNavigation, useFocusEffect } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import type { RootStackParamList } from '@/app/navigation/types'
+import { Button } from '@/shared/ui/Button'
+import { useCallback } from 'react'
 
 // Web Client ID для Google Drive API (из google-services.json)
 const WEB_CLIENT_ID = '464124582533-2ctqatjjbk7h1lgu4d1facpe017p167j.apps.googleusercontent.com'
@@ -27,14 +33,25 @@ interface LocalBackup {
   size: number
 }
 
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>
+
 export function BackupScreen() {
   const { colors } = useTheme()
+  const navigation = useNavigation<NavigationProp>()
+  const { isPremium, isLoading: subscriptionLoading, refreshStatus } = useSubscription()
   const [loading, setLoading] = useState(false)
   const [localBackups, setLocalBackups] = useState<LocalBackup[]>([])
   const [driveBackups, setDriveBackups] = useState<DriveFile[]>([])
   const [isSignedIn, setIsSignedIn] = useState(false)
   const [userEmail, setUserEmail] = useState<string>('')
   const [isOnline, setIsOnline] = useState(true)
+
+  // Обновляем статус подписки при возвращении на экран
+  useFocusEffect(
+    useCallback(() => {
+      refreshStatus()
+    }, [refreshStatus])
+  )
 
   useEffect(() => {
     loadData()
@@ -304,6 +321,71 @@ export function BackupScreen() {
       return `${(bytes / 1024).toFixed(1)} КБ`
     }
     return `${(bytes / (1024 * 1024)).toFixed(1)} МБ`
+  }
+
+  // Показываем экран подписки, если пользователь не премиум
+  if (subscriptionLoading) {
+    return (
+      <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size='large' color={colors.primary} />
+        </View>
+      </SafeAreaView>
+    )
+  }
+
+  if (!isPremium) {
+    return (
+      <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+          <View style={styles.premiumRequiredContainer}>
+            <Text style={styles.premiumIcon}>💎</Text>
+            <Text style={[styles.premiumTitle, { color: colors.text }]}>
+              Требуется премиум подписка
+            </Text>
+            <Text style={[styles.premiumDescription, { color: colors.textSecondary }]}>
+              Резервное копирование доступно только для премиум пользователей.{'\n\n'}
+              Оформите подписку, чтобы получить доступ к резервному копированию и синхронизации данных в Google Drive, а также другим премиум функциям.
+            </Text>
+            
+            <View style={styles.featuresList}>
+              <View style={styles.featureItem}>
+                <Text style={styles.featureIcon}>✓</Text>
+                <Text style={[styles.featureText, { color: colors.text }]}>
+                  Облачное резервное копирование
+                </Text>
+              </View>
+              <View style={styles.featureItem}>
+                <Text style={styles.featureIcon}>✓</Text>
+                <Text style={[styles.featureText, { color: colors.text }]}>
+                  Синхронизация между устройствами
+                </Text>
+              </View>
+              <View style={styles.featureItem}>
+                <Text style={styles.featureIcon}>✓</Text>
+                <Text style={[styles.featureText, { color: colors.text }]}>
+                  Неограниченные аптечки и лекарства
+                </Text>
+              </View>
+              <View style={styles.featureItem}>
+                <Text style={styles.featureIcon}>✓</Text>
+                <Text style={[styles.featureText, { color: colors.text }]}>
+                  Семейный доступ
+                </Text>
+              </View>
+            </View>
+
+            <Button
+              title='Оформить подписку'
+              onPress={() => navigation.navigate('Subscription')}
+              variant='primary'
+              size='large'
+              style={styles.subscribeButton}
+            />
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    )
   }
 
   return (
@@ -593,6 +675,52 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  premiumRequiredContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.xl,
+    minHeight: 400,
+  },
+  premiumIcon: {
+    fontSize: 64,
+    marginBottom: SPACING.md,
+  },
+  premiumTitle: {
+    fontSize: FONT_SIZE.xxl,
+    fontWeight: 'bold',
+    marginBottom: SPACING.md,
+    textAlign: 'center',
+  },
+  premiumDescription: {
+    fontSize: FONT_SIZE.md,
+    lineHeight: 24,
+    textAlign: 'center',
+    marginBottom: SPACING.xl,
+  },
+  featuresList: {
+    width: '100%',
+    marginBottom: SPACING.xl,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+    paddingHorizontal: SPACING.md,
+  },
+  featureIcon: {
+    fontSize: 18,
+    marginRight: SPACING.sm,
+    color: '#4CAF50',
+  },
+  featureText: {
+    fontSize: FONT_SIZE.md,
+    flex: 1,
+  },
+  subscribeButton: {
+    marginTop: SPACING.md,
+    width: '100%',
   },
 })
 

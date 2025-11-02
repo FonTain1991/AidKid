@@ -20,6 +20,8 @@ export interface SubscriptionStatus {
   isInitialized: boolean
   customerInfo: CustomerInfo | null
   expirationDate: Date | null
+  willRenew?: boolean
+  isCanceled?: boolean
 }
 
 class SubscriptionService {
@@ -92,6 +94,7 @@ class SubscriptionService {
 
   /**
    * Проверка статуса премиум подписки
+   * Подписка остается активной до конца оплаченного периода, даже если отменена
    */
   async isPremium(): Promise<boolean> {
     try {
@@ -105,7 +108,28 @@ class SubscriptionService {
       }
 
       const customerInfo = await this.getCustomerInfo()
-      return customerInfo.entitlements.active[PREMIUM_ENTITLEMENT_ID] !== undefined
+      const entitlement = customerInfo.entitlements.active[PREMIUM_ENTITLEMENT_ID]
+      
+      // Если entitlement не существует - нет премиум
+      if (!entitlement) {
+        return false
+      }
+
+      // Проверяем, не истекла ли подписка
+      const expirationDate = entitlement.expirationDate 
+        ? new Date(entitlement.expirationDate)
+        : null
+      
+      const now = new Date()
+      
+      // Подписка активна если дата окончания еще не наступила
+      // Даже если подписка отменена, доступ остается до конца оплаченного периода
+      if (expirationDate && expirationDate > now) {
+        return true // Доступ до конца оплаченного периода
+      }
+      
+      // Подписка истекла
+      return false
     } catch (error) {
       console.error('Error checking premium status:', error)
       return false
@@ -133,13 +157,45 @@ class SubscriptionService {
       const customerInfo = await this.getCustomerInfo()
       const entitlement = customerInfo.entitlements.active[PREMIUM_ENTITLEMENT_ID]
 
+      // Логирование для диагностики
+      if (entitlement) {
+        console.log('📊 Subscription Status:', {
+          identifier: entitlement.identifier,
+          expirationDate: entitlement.expirationDate,
+          productIdentifier: entitlement.productIdentifier,
+          isActive: entitlement.isActive,
+          willRenew: entitlement.willRenew,
+          unsubscribeDetectedAt: entitlement.unsubscribeDetectedAt,
+        })
+      } else {
+        console.log('📊 No active subscription found')
+        // Проверяем все entitlement для диагностики
+        console.log('📊 All entitlements:', Object.keys(customerInfo.entitlements.active))
+      }
+
+      const willRenew = entitlement?.willRenew ?? true
+      const isCanceled = entitlement?.unsubscribeDetectedAt !== undefined && 
+                         entitlement?.unsubscribeDetectedAt !== null
+      
+      // Проверяем, не истекла ли подписка (даже если отменена, доступ до конца периода)
+      const expirationDate = entitlement?.expirationDate
+        ? new Date(entitlement.expirationDate)
+        : null
+      const now = new Date()
+      
+      const isPremium = entitlement !== undefined && 
+                        expirationDate !== null &&
+                        expirationDate > now
+
       return {
-        isPremium: entitlement !== undefined,
+        isPremium,
         isInitialized: this.isInitialized,
         customerInfo,
         expirationDate: entitlement?.expirationDate
           ? new Date(entitlement.expirationDate)
           : null,
+        willRenew,
+        isCanceled,
       }
     } catch (error) {
       console.error('Error getting subscription status:', error)
@@ -148,6 +204,8 @@ class SubscriptionService {
         isInitialized: this.isInitialized,
         customerInfo: null,
         expirationDate: null,
+        willRenew: false,
+        isCanceled: false,
       }
     }
   }

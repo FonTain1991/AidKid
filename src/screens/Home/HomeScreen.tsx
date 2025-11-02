@@ -236,16 +236,16 @@ export function HomeScreen() {
 
         {/* Индикаторы лимитов - показываем только для бесплатной версии */}
         {!hasSearchQuery && limitsInfo && !limitsInfo.isPremium && (
-          <View style={[styles.alertsContainer, { marginBottom: 0 }]}>
+          <View style={[styles.alertsContainer, { gap: 16 }]}>
             <LimitIndicator
               limitCheck={limitsInfo.kits}
-              label="Аптечки"
+              label='Аптечки'
               showPremiumButton={!limitsInfo.kits.allowed}
               compact={false}
             />
             <LimitIndicator
               limitCheck={limitsInfo.medicines}
-              label="Лекарства"
+              label='Лекарства'
               showPremiumButton={!limitsInfo.medicines.allowed}
               compact={false}
             />
