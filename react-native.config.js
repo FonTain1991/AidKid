@@ -7,6 +7,6 @@ module.exports = {
     },
   },
   assets: [
-    './src/shared/assets/fonts'
+    './src/assets/fonts'
   ]
 }
