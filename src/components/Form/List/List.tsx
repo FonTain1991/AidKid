@@ -1,25 +1,26 @@
+import SVGChecked from '@/assets/svg/Checked.svg'
 import { BottomSheet, BottomSheetRef } from '@/components/BottomSheet'
 import { Separator } from '@/components/Separator'
+import { Text } from '@/components/Text'
 import { HEIGHT, IS_ANDROID, SPACING } from '@/constants'
 import { useEvent } from '@/hooks'
 import { useTheme } from '@/providers/theme'
-import SVGChecked from '@/assets/svg/Checked.svg'
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet'
 import { memo, useMemo, useRef } from 'react'
-import { Keyboard, Pressable, Text, View } from 'react-native'
+import { Keyboard, Pressable, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ModalSafeAreaView } from '../../../../src copy/shared/ui/ModalSafeAreaView'
 import { ListButton } from '../ListButton'
 import { useListStyles } from './useListStyles'
-
 interface ListProps {
   value?: any
   onChange?: (value: any) => void
   options: { label: string, subtitle?: string, value: string | number }[]
   fieldName?: string
+  error?: string | null | undefined
 }
 
-export const List = memo(({ value, onChange, options, fieldName }: ListProps) => {
+export const List = memo(({ value, onChange, options, fieldName, error }: ListProps) => {
   const { styles } = useListStyles()
   const { colors } = useTheme()
   const bottomSheetRef = useRef<BottomSheetRef>(null)
@@ -51,6 +52,7 @@ export const List = memo(({ value, onChange, options, fieldName }: ListProps) =>
         fieldName={fieldName}
         value={curValue?.label}
         onPress={onOpen}
+        error={error}
       />
       <BottomSheet
         ref={bottomSheetRef}

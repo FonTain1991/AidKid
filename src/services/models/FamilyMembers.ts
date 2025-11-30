@@ -1,7 +1,7 @@
 import { BaseModel } from './BaseModel'
 
 export interface FamilyMember {
-  id?: string
+  id?: number
   name: string
   avatar?: string
   color?: string
@@ -11,33 +11,28 @@ export interface FamilyMember {
 
 // CRUD операции для членов семьи
 export class FamilyMembersModel extends BaseModel {
-  async createFamilyMember(member: Omit<FamilyMember, 'id' | 'createdAt' | 'updatedAt'>): Promise<FamilyMember> {
+  async createFamilyMember(data: Omit<FamilyMember, 'id' | 'createdAt' | 'updatedAt'>): Promise<FamilyMember | null> {
     if (!this.db) {
       throw new Error('Database not initialized')
     }
 
-    const newMember: FamilyMember = {
-      ...member,
-      createdAt: new Date().getTime(),
-      updatedAt: new Date().getTime()
-    }
-
     const [result] = await this.db.executeSql(`
       INSERT INTO family_members (
-        name, avatar, color, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?)
+        id, name, avatar, color, createdAt, updatedAt
+      ) VALUES (?, ?, ?, ?, ?, ?)
     `, [
-      newMember.name,
-      newMember.avatar || null,
-      newMember.color || null,
-      newMember.createdAt,
-      newMember.updatedAt
+      null,
+      data.name,
+      data.avatar || null,
+      data.color || null,
+      new Date().getTime(),
+      new Date().getTime()
     ])
 
-    return newMember
+    return await this.getFamilyMemberById(result.insertId)
   }
 
-  async getFamilyMembers(): Promise<FamilyMember[]> {
+  async getAll(): Promise<FamilyMember[]> {
     if (!this.db) {
       throw new Error('Database not initialized')
     }
@@ -54,8 +49,8 @@ export class FamilyMembersModel extends BaseModel {
         name: row.name,
         avatar: row.avatar,
         color: row.color,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
       }
       members.push(member)
     }
@@ -63,7 +58,7 @@ export class FamilyMembersModel extends BaseModel {
     return members
   }
 
-  async getFamilyMemberById(id: string): Promise<FamilyMember | null> {
+  async getFamilyMemberById(id: number): Promise<FamilyMember | null> {
     if (!this.db) {
       throw new Error('Database not initialized')
     }
@@ -82,12 +77,12 @@ export class FamilyMembersModel extends BaseModel {
       name: row.name,
       avatar: row.avatar,
       color: row.color,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
     }
   }
 
-  async updateFamilyMember(id: string, updates: Partial<FamilyMember>): Promise<void> {
+  async updateFamilyMember(id: number, updates: Partial<FamilyMember>): Promise<void> {
     if (!this.db) {
       throw new Error('Database not initialized')
     }
@@ -109,7 +104,7 @@ export class FamilyMembersModel extends BaseModel {
     }
 
     updateFields.push('updated_at = ?')
-    updateValues.push(new Date().toISOString())
+    updateValues.push(new Date().getTime())
     updateValues.push(id)
 
     await this.db.executeSql(`
@@ -119,7 +114,7 @@ export class FamilyMembersModel extends BaseModel {
     console.log('SQLite - Updated family member:', id)
   }
 
-  async deleteFamilyMember(id: string): Promise<void> {
+  async deleteFamilyMember(id: number): Promise<void> {
     if (!this.db) {
       throw new Error('Database not initialized')
     }

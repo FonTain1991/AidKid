@@ -1,10 +1,12 @@
 import { SPACING, WIDTH } from '@/constants'
 import { FONT_SIZE, FONT_WEIGHT } from '@/constants/font'
-import { useEvent, useFamilyMembers } from '@/hooks'
+import { useEvent } from '@/hooks'
 import { FamilyMember } from '@/services/models'
+import { useAppStore } from '@/store'
 import { useFocusEffect } from '@react-navigation/native'
 import { useMemo, useRef } from 'react'
-import { Animated, NativeScrollEvent, NativeSyntheticEvent, Pressable, Text, View } from 'react-native'
+import { Animated, NativeScrollEvent, NativeSyntheticEvent, Pressable, View } from 'react-native'
+import { Text } from '../Text'
 
 type SpacerItem = {
   key: string
@@ -70,12 +72,11 @@ const Item = ({ item, index, scrollX }: { item: CarouselItem, index: number, scr
 }
 
 export function FamilyMemberCarousel() {
-  const { familyMembers, isLoading, error, refetch } = useFamilyMembers()
+  const { familyMembers } = useAppStore(state => state)
   const listRef = useRef<Animated.FlatList<CarouselItem> | null>(null)
   const scrollX = useRef(new Animated.Value(lastCarouselOffset)).current
 
   const handleFocus = useEvent(() => {
-    refetch()
     requestAnimationFrame(() => {
       const offset = lastCarouselOffset
       scrollX.setValue(offset)
@@ -96,14 +97,6 @@ export function FamilyMemberCarousel() {
   const handleMomentumEnd = useEvent((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     lastCarouselOffset = event.nativeEvent.contentOffset.x
   })
-
-  if (isLoading) {
-    return <Text>Loading...</Text>
-  }
-
-  if (error) {
-    return <Text>Error: {error.message}</Text>
-  }
 
   if (familyMembers.length === 0) {
     return <Text>No family members found</Text>

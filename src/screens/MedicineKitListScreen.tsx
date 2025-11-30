@@ -1,39 +1,46 @@
-import { FloatingActionButton } from '@/components/FloatingActionButton'
-import { Background, Flex, SafeAreaView } from '@/components/Layout'
-import { useMyNavigation, useNavigationBarColor, useScreenProperties } from '@/hooks'
-import { Text } from 'react-native'
+import { FloatingButton } from '@/components/FloatingButton'
+import { Background, Flex, PaddingHorizontal, SafeAreaView } from '@/components/Layout'
+import { MedicineKitList } from '@/components/MedicineKitList'
+import { MedicineLowQuantity } from '@/components/MedicineLowQuantity'
+import { SPACING } from '@/constants'
+import { useNavigationBarColor, useScreenProperties } from '@/hooks'
+import { ScrollView, StyleSheet } from 'react-native'
 
 export function MedicineKitListScreen() {
-  const { navigate } = useMyNavigation()
-
   useScreenProperties({
     navigationOptions: {
-      headerShown: false,
+      headerShown: true,
       title: 'Аптечки'
     },
   })
 
   useNavigationBarColor()
 
-  const handleAddMedicineKit = () => {
-    navigate('medicineKit', {
-      medicineKitId: undefined
-    })
-  }
 
   return (
-    <SafeAreaView edges={['top']}>
+    <SafeAreaView edges={[]}>
       <Background>
         <Flex>
-          <Text>Аптечки</Text>
-          <FloatingActionButton items={[
-            { letter: 'Аптечка', onPress: handleAddMedicineKit },
-            { letter: 'Лекарство', onPress: () => { } },
-            { letter: 'Штрих-код', onPress: () => { } }
-          ]} />
+          <ScrollView
+            keyboardShouldPersistTaps='handled'
+            nestedScrollEnabled
+            contentContainerStyle={styles.contentContainer}
+          >
+            <PaddingHorizontal>
+              <MedicineLowQuantity />
+            </PaddingHorizontal>
+            <MedicineKitList />
+          </ScrollView>
+          <FloatingButton />
         </Flex>
       </Background>
     </SafeAreaView>
   )
 }
 
+const styles = StyleSheet.create({
+  contentContainer: {
+    gap: SPACING.md,
+    paddingVertical: SPACING.md,
+  }
+})

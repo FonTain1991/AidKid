@@ -1,60 +1,30 @@
-import { MedicineKit, CreateKitData } from '@/services/models'
+import { CreateKitData } from '@/services/models'
 import { kitModel } from '@/services/models/KitModel'
-import { useEffect, useState } from 'react'
+import { useAppStore } from '@/store'
+import { useState } from 'react'
 import { useEvent } from './useEvent'
 
 type CreateMedicineKitPayload = CreateKitData
-type UseMedicineKitCreateReturn = [
-  (data: CreateMedicineKitPayload) => Promise<MedicineKit | undefined>,
-  {
-    isLoading: boolean
-    error: Error | null
-  }
-]
 
-const medicineKitCache: MedicineKit[] = []
 export function useMedicineKit() {
-  const [medicineKit, setMedicineKit] = useState<MedicineKit[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const {
+    setMedicineKits,
+    addMedicineKit,
+    updateMedicineKit: updateMedicineKitStore,
+    deleteMedicineKit: deleteMedicineKitStore
+  } = useAppStore(state => state)
+
   const [error, setError] = useState<Error | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
-  const getMedicineKit = useEvent(async (resetCache: boolean = false) => {
-    setIsLoading(true)
-    setError(null)
-
-    if (medicineKitCache.length && !resetCache) {
-      setMedicineKit(medicineKitCache)
-      return
-    }
-
+  const getAllMedicineKits = useEvent(async () => {
     try {
       const kits = await kitModel.getAll()
-      setMedicineKit(kits)
-      medicineKitCache.splice(0, medicineKitCache.length, ...kits)
+      setMedicineKits(kits)
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch medicine kit'))
-    } finally {
-      setIsLoading(false)
+      console.error(err instanceof Error ? err : new Error('Failed to fetch medicine kit'))
     }
   })
-
-  useEffect(() => {
-    getMedicineKit()
-  }, [getMedicineKit])
-
-  return {
-    medicineKit,
-    isLoading,
-    error,
-    refetch() {
-      getMedicineKit(true)
-    }
-  }
-}
-
-export function useMedicineKitCreate(): UseMedicineKitCreateReturn {
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
 
   const createMedicineKit = useEvent(async (data: CreateMedicineKitPayload) => {
     setIsLoading(true)
@@ -62,7 +32,10 @@ export function useMedicineKitCreate(): UseMedicineKitCreateReturn {
 
     try {
       const kit = await kitModel.create(data)
-      medicineKitCache.push(kit)
+      if (!kit) {
+        throw new Error('Failed to create medicine kit')
+      }
+      addMedicineKit(kit)
       return kit
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to create medicine kit'))
@@ -71,11 +44,43 @@ export function useMedicineKitCreate(): UseMedicineKitCreateReturn {
     }
   })
 
-  return [
+  type UpdateMedicineKitPayload = Partial<CreateKitData> & { id: number }
+  const updateMedicineKit = useEvent(async (data: UpdateMedicineKitPayload) => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const kit = await kitModel.update(data.id, data)
+      updateMedicineKitStore(kit)
+      return kit
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to create medicine kit'))
+    } finally {
+      setIsLoading(false)
+    }
+  })
+
+  const deleteMedicineKit = useEvent(async (id: number) => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      await kitModel.delete(id)
+      deleteMedicineKitStore(id)
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to delete medicine kit'))
+    } finally {
+      setIsLoading(false)
+    }
+  })
+
+
+  return {
+    getAllMedicineKits,
     createMedicineKit,
-    {
-      isLoading,
-      error,
-    },
-  ]
+    updateMedicineKit,
+    deleteMedicineKit,
+    isLoading,
+    error,
+  }
 }

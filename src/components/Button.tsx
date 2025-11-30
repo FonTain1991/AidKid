@@ -1,8 +1,9 @@
 import React from 'react'
-import { Pressable, StyleSheet, Text, View, ActivityIndicator, StyleProp, TextStyle, ViewStyle } from 'react-native'
+import { Pressable, StyleSheet, View, ActivityIndicator, StyleProp, TextStyle, ViewStyle } from 'react-native'
 import { FONT_FAMILY, FONT_SIZE } from '@/constants/font'
 import { SPACING } from '@/constants'
 import { useTheme } from '@/providers/theme'
+import { Text } from './Text'
 
 interface ButtonProps {
   title: string

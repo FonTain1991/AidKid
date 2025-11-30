@@ -52,7 +52,7 @@ const FloatingActionButtonItem = ({ isExpanded, index, buttonLetter, onPress }: 
       }]}
       onPress={onPress}
     >
-      <Animated.Text style={[styles.content, { color: colors.text }]}>{buttonLetter}</Animated.Text>
+      <Animated.Text style={[styles.content, { color: colors.headerColor }]}>{buttonLetter}</Animated.Text>
     </AnimatedPressable>
   )
 }
@@ -93,9 +93,7 @@ export function FloatingActionButton({ items }: FloatingActionButtonProps) {
     }
   })
 
-  const itemRevers = useMemo(() => {
-    return items.reverse()
-  }, [items])
+  const itemRevers = useMemo(() => items.reverse(), [items])
 
   return (
     <View style={{

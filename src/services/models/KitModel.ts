@@ -1,57 +1,46 @@
 import { BaseModel } from './BaseModel'
-import { generateId } from '../utils'
 
 export interface MedicineKit {
-  id: string
+  id?: number | null
   name: string
   description?: string
   color: string
-  parent_id?: string
-  createdAt: Date
-  updatedAt: Date
+  parentId?: string | null
+  createdAt?: number
+  updatedAt?: number
 }
 
 export interface CreateKitData {
   name: string
   description?: string
   color: string
-  parent_id?: string
+  parentId?: string | null
 }
 
 export class KitModel extends BaseModel {
-  async create(data: CreateKitData): Promise<MedicineKit> {
+  async create(data: CreateKitData): Promise<MedicineKit | null> {
 
-    const id = generateId()
-    const now = new Date().toISOString()
-
-    const newKit: MedicineKit = {
-      ...data,
-      id,
-      createdAt: new Date(now),
-      updatedAt: new Date(now)
-    }
-
-    await this.db.executeSql(`
+    const [result] = await this.db.executeSql(`
       INSERT INTO medicine_kits (
-        id, name, description, color, parent_id, created_at, updated_at
+        id, name, description, color, parentId, createdAt, updatedAt
       ) VALUES (?, ?, ?, ?, ?, ?, ?)
     `, [
-      newKit.id,
-      newKit.name,
-      newKit.description || null,
-      newKit.color,
-      newKit.parent_id || null,
-      newKit.createdAt.toISOString(),
-      newKit.updatedAt.toISOString()
+      null,
+      data.name,
+      data.description,
+      data.color,
+      data.parentId,
+      new Date().getTime(),
+      new Date().getTime()
     ])
 
-    return newKit
+    return await this.getById(result.insertId.toString())
   }
 
   async getAll(): Promise<MedicineKit[]> {
 
     const [results] = await this.db.executeSql(`
-      SELECT * FROM medicine_kits ORDER BY name ASC
+      SELECT * FROM medicine_kits ORDER BY createdAt ASC
     `)
 
     const kits: MedicineKit[] = []
@@ -62,9 +51,9 @@ export class KitModel extends BaseModel {
         name: row.name,
         description: row.description,
         color: row.color,
-        parent_id: row.parent_id,
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
+        parentId: row.parentId,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
       })
     }
 
@@ -87,38 +76,61 @@ export class KitModel extends BaseModel {
       name: row.name,
       description: row.description,
       color: row.color,
-      parent_id: row.parent_id,
-      createdAt: new Date(row.created_at),
-      updatedAt: new Date(row.updated_at)
+      parentId: row.parentId,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt
     }
   }
 
-  async update(id: string, updates: Partial<CreateKitData>): Promise<void> {
+  async update(id: number, updates: Partial<CreateKitData>): Promise<MedicineKit> {
+    const allowedFields = ['name', 'description', 'color', 'parentId']
+    const updateFields: string[] = []
+    const updateValues: any[] = []
 
-    const allowedFields = ['name', 'description', 'color', 'parent_id']
-    const filteredUpdates = Object.entries(updates)
-      .filter(([key]) => allowedFields.includes(key))
-
-    if (filteredUpdates.length === 0) {
-      return
+    // Собираем только те поля, которые переданы
+    for (const [key, value] of Object.entries(updates)) {
+      if (allowedFields.includes(key) && value !== undefined) {
+        updateFields.push(`${key} = ?`)
+        updateValues.push(value)
+      }
     }
 
-    const setClause = filteredUpdates
-      .map(([key]) => `${key} = ?`)
-      .join(', ')
+    if (updateFields.length === 0) {
+      // Если нет полей для обновления, просто возвращаем текущую запись
+      const existing = await this.getById(id)
+      if (!existing) {
+        throw new Error(`Medicine kit with id ${id} not found`)
+      }
+      return existing
+    }
 
-    const values = filteredUpdates.map(([_key, value]) => value)
-    values.push(new Date().toISOString(), id)
+    // Добавляем updated_at
+    updateFields.push('updatedAt = ?')
+    updateValues.push(Date.now())
 
-    await this.db.executeSql(`
+    // Добавляем id для WHERE
+    updateValues.push(id)
+
+    // UPDATE запрос (react-native-sqlite-storage не поддерживает RETURNING)
+    const [results] = await this.db.executeSql(`
       UPDATE medicine_kits 
-      SET ${setClause}, updated_at = ?
+      SET ${updateFields.join(', ')}
       WHERE id = ?
-    `, values)
+    `, updateValues)
+
+    if (results.rowsAffected === 0) {
+      throw new Error(`Medicine kit with id ${id} not found`)
+    }
+
+    // Получаем обновленные данные отдельным запросом
+    const updated = await this.getById(id)
+    if (!updated) {
+      throw new Error(`Medicine kit with id ${id} not found`)
+    }
+    return updated
   }
 
-  async delete(id: string): Promise<void> {
-
+  async delete(id: number): Promise<void> {
     await this.db.executeSql(`
       DELETE FROM medicine_kits WHERE id = ?
     `, [id])

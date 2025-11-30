@@ -1,13 +1,14 @@
-import { useFamilyMembers, useMyNavigation } from '@/hooks'
+import { useMyNavigation } from '@/hooks'
+import { useAppStore } from '@/store'
 import { useEffect } from 'react'
 import { Alert } from 'react-native'
 
 export const useCheckExistsFamilyMember = () => {
-  const { familyMembers, isLoading } = useFamilyMembers()
+  const { familyMembers } = useAppStore(state => state)
   const { navigate, replace } = useMyNavigation()
 
   useEffect(() => {
-    if (familyMembers.length || !isLoading || (!familyMembers.length && isLoading)) {
+    if (familyMembers.length) {
       return
     }
     Alert.alert(
@@ -31,5 +32,5 @@ export const useCheckExistsFamilyMember = () => {
         }
       ]
     )
-  }, [familyMembers, isLoading, navigate, replace])
+  }, [familyMembers, navigate, replace])
 }

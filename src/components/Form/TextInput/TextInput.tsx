@@ -1,9 +1,11 @@
-import { Pressable, TextInput as RNTextInput, TextInputProps as RNTextInputProps, StyleProp, Text, View, ViewStyle } from 'react-native'
-import { useRef, useState } from 'react'
-import Animated, { useSharedValue, withTiming, useAnimatedStyle, interpolate } from 'react-native-reanimated'
-import { useEvent } from '@/hooks'
+import { Text } from '@/components/Text'
 import { FONT_SIZE } from '@/constants/font'
+import { useEvent } from '@/hooks'
+import { useRef, useState } from 'react'
+import { Pressable, TextInput as RNTextInput, TextInputProps as RNTextInputProps, StyleProp, View, ViewStyle } from 'react-native'
+import Animated, { interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { useTextInputStyles } from './useTextInputStyles'
+
 
 interface TextInputProps extends RNTextInputProps {
   label?: string

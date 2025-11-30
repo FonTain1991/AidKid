@@ -2,7 +2,8 @@ import { SPACING } from '@/constants'
 import { FONT_SIZE, FONT_WEIGHT } from '@/constants/font'
 import { useTheme } from '@/providers/theme'
 import { memo, useEffect, useState } from 'react'
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { Text } from '../Text'
 
 const AVATAR_OPTIONS = ['👤', '👨', '👩', '👦', '👧', '👶', '🧑', '👴', '👵', '🧒']
 interface AvatarProps {

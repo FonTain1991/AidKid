@@ -15,7 +15,8 @@ export const LIGHT_COLORS = {
   placeholder: '#FFCCCB',
   inputBackground: '#FFF5F7',
   headerBackground: pink,
-  headerColor: '#FFFFFF'
+  headerColor: '#FFFFFF',
+  link: '#007AFF'
 }
 
 export type ThemeColors = Record<keyof typeof LIGHT_COLORS, string>

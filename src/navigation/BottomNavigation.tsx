@@ -1,6 +1,6 @@
 import { MedicineKitListScreen, TakingMedicationsScreen } from '@/screens'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
-import { Text } from 'react-native'
+import { Text } from '@/components/Text'
 
 
 export type BottomTabList = {
@@ -20,14 +20,14 @@ export function BottomNavigation() {
       <BottomTab.Screen name='takingMedications' component={TakingMedicationsScreen}
         options={{
           tabBarIcon: () => <Text>💊</Text>,
-          tabBarLabel: 'Приём препаратов',
+          tabBarLabel: 'Приём',
         }}
       />
       <BottomTab.Screen
         name='medicineKitList'
         component={MedicineKitListScreen}
         options={{
-          tabBarIcon: () => <Text>💊</Text>,
+          tabBarIcon: () => <Text>🏠</Text>,
           tabBarLabel: 'Аптечки',
         }}
       />

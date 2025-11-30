@@ -2,7 +2,8 @@ import { SPACING, WIDTH } from '@/constants'
 import { FONT_SIZE, FONT_WEIGHT } from '@/constants/font'
 import { useTheme } from '@/providers/theme'
 import { memo, useEffect, useState } from 'react'
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, TouchableOpacity, View } from 'react-native'
+import { Text } from '../Text'
 
 const COLOR_OPTIONS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2']
 interface ColorsProps {

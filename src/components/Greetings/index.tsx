@@ -3,7 +3,9 @@ import { useTheme } from '@/providers/theme'
 import dayjs from 'dayjs'
 import { memo } from 'react'
 import isBetween from 'dayjs/plugin/isBetween'
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
+import { Text } from '../Text'
+
 
 dayjs.extend(isBetween)
 export const Greetings = memo(() => {

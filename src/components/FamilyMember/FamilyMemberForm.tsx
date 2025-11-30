@@ -1,20 +1,19 @@
+import { SPACING } from '@/constants'
+import { useEvent, useMyNavigation } from '@/hooks'
+import { useFamilyMember } from '@/hooks/useFamilyMember'
+import { FamilyMember } from '@/services/models'
 import { memo, useState } from 'react'
 import { ScrollView, StyleSheet } from 'react-native'
+import { Button } from '../Button'
 import { TextInput } from '../Form'
 import { PaddingHorizontal } from '../Layout'
 import { Avatar } from './Avatar'
-import { SPACING } from '@/constants'
 import { Colors } from './Colors'
-import { Button } from '../Button'
-import { FamilyMember } from '@/services/models'
-import { useEvent, useMyNavigation, useRoute } from '@/hooks'
-import { useFamilyMemberCreate } from '@/hooks/useFamilyMembers'
 
 type CreateFamilyMemberPayload = Omit<FamilyMember, 'id' | 'createdAt' | 'updatedAt'>
 
 export const FamilyMemberForm = memo(() => {
-  const [createFamilyMember] = useFamilyMemberCreate()
-  const { params } = useRoute()
+  const { createFamilyMember } = useFamilyMember()
   const { goBack } = useMyNavigation()
 
   const [member, setMember] = useState<CreateFamilyMemberPayload>({
@@ -31,10 +30,8 @@ export const FamilyMemberForm = memo(() => {
       return
     }
 
-    const familyMember = await createFamilyMember(member)
-    if (params?.referer && familyMember) {
-      goBack()
-    }
+    await createFamilyMember(member)
+    goBack()
   })
 
   const onChangeText = useEvent((text: string) => {

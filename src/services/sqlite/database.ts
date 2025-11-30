@@ -47,47 +47,35 @@ class DatabaseService {
     // Таблица аптечек
     await this.db.executeSql(`
       CREATE TABLE IF NOT EXISTS medicine_kits (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         description TEXT,
         color TEXT NOT NULL,
-        parent_id TEXT,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
-        FOREIGN KEY (parent_id) REFERENCES medicine_kits (id) ON DELETE CASCADE
+        parentId INTEGER,
+        createdAt INTEGER NOT NULL,
+        updatedAt INTEGER NOT NULL,
+        FOREIGN KEY (parentId) REFERENCES medicine_kits (id) ON DELETE CASCADE
       )
     `)
 
     // Таблица лекарств
     await this.db.executeSql(`
       CREATE TABLE IF NOT EXISTS medicines (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         description TEXT,
         manufacturer TEXT,
         dosage TEXT,
-        form TEXT NOT NULL,
-        prescription_required BOOLEAN DEFAULT 0,
-        kit_id TEXT NOT NULL,
-        photo_path TEXT,
+        medicineKitId INTEGER NOT NULL,
+        photoPath TEXT,
         barcode TEXT,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
-        FOREIGN KEY (kit_id) REFERENCES medicine_kits (id) ON DELETE CASCADE
-      )
-    `)
-
-    // Таблица запасов лекарств
-    await this.db.executeSql(`
-      CREATE TABLE IF NOT EXISTS medicine_stock (
-        id TEXT PRIMARY KEY,
-        medicine_id TEXT NOT NULL,
-        quantity INTEGER NOT NULL DEFAULT 0,
-        unit TEXT NOT NULL,
-        expiry_date TEXT,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
-        FOREIGN KEY (medicine_id) REFERENCES medicines (id) ON DELETE CASCADE
+        unit TEXT,
+        quantity INTEGER NOT NULL,
+        unitForQuantity TEXT,
+        expirationDate TEXT NOT NULL,
+        createdAt INTEGER NOT NULL,
+        updatedAt INTEGER NOT NULL,
+        FOREIGN KEY (medicineKitId) REFERENCES medicine_kits (id) ON DELETE CASCADE
       )
     `)
 
@@ -98,99 +86,113 @@ class DatabaseService {
         name TEXT NOT NULL,
         avatar TEXT,
         color TEXT,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL
+        createdAt INTEGER NOT NULL,
+        updatedAt INTEGER NOT NULL
       )
     `)
 
-    // Таблица напоминаний
-    await this.db.executeSql(`
-      CREATE TABLE IF NOT EXISTS reminders (
-        id TEXT PRIMARY KEY,
-        family_member_id TEXT,
-        title TEXT NOT NULL,
-        frequency TEXT NOT NULL,
-        times_per_day INTEGER DEFAULT 1,
-        time TEXT NOT NULL,
-        is_active BOOLEAN DEFAULT 1,
-        created_at TEXT NOT NULL,
-        FOREIGN KEY (family_member_id) REFERENCES family_members (id) ON DELETE SET NULL
-      )
-    `)
+    // // Таблица запасов лекарств
+    // await this.db.executeSql(`
+    //   CREATE TABLE IF NOT EXISTS medicine_stock (
+    //     id TEXT PRIMARY KEY,
+    //     medicine_id TEXT NOT NULL,
+    //     quantity INTEGER NOT NULL DEFAULT 0,
+    //     unit TEXT NOT NULL,
+    //     expiry_date TEXT,
+    //     created_at TEXT NOT NULL,
+    //     updated_at TEXT NOT NULL,
+    //     FOREIGN KEY (medicine_id) REFERENCES medicines (id) ON DELETE CASCADE
+    //   )
+    // `)
 
-    // Связующая таблица напоминание <-> лекарства (many-to-many)
-    await this.db.executeSql(`
-      CREATE TABLE IF NOT EXISTS reminder_medicines (
-        id TEXT PRIMARY KEY,
-        reminder_id TEXT NOT NULL,
-        medicine_id TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        FOREIGN KEY (reminder_id) REFERENCES reminders (id) ON DELETE CASCADE,
-        FOREIGN KEY (medicine_id) REFERENCES medicines (id) ON DELETE CASCADE
-      )
-    `)
+    // // Таблица напоминаний
+    // await this.db.executeSql(`
+    //   CREATE TABLE IF NOT EXISTS reminders (
+    //     id TEXT PRIMARY KEY,
+    //     family_member_id TEXT,
+    //     title TEXT NOT NULL,
+    //     frequency TEXT NOT NULL,
+    //     times_per_day INTEGER DEFAULT 1,
+    //     time TEXT NOT NULL,
+    //     is_active BOOLEAN DEFAULT 1,
+    //     created_at TEXT NOT NULL,
+    //     FOREIGN KEY (family_member_id) REFERENCES family_members (id) ON DELETE SET NULL
+    //   )
+    // `)
 
-    // Таблица приемов по напоминаниям
-    await this.db.executeSql(`
-      CREATE TABLE IF NOT EXISTS reminder_intakes (
-        id TEXT PRIMARY KEY,
-        reminder_id TEXT NOT NULL,
-        scheduled_date TEXT NOT NULL,
-        scheduled_time TEXT NOT NULL,
-        is_taken BOOLEAN DEFAULT 0,
-        taken_at TEXT,
-        usage_id TEXT,
-        created_at TEXT NOT NULL,
-        FOREIGN KEY (reminder_id) REFERENCES reminders (id) ON DELETE CASCADE,
-        FOREIGN KEY (usage_id) REFERENCES medicine_usage (id) ON DELETE SET NULL
-      )
-    `)
+    // // Связующая таблица напоминание <-> лекарства (many-to-many)
+    // await this.db.executeSql(`
+    //   CREATE TABLE IF NOT EXISTS reminder_medicines (
+    //     id TEXT PRIMARY KEY,
+    //     reminder_id TEXT NOT NULL,
+    //     medicine_id TEXT NOT NULL,
+    //     created_at TEXT NOT NULL,
+    //     FOREIGN KEY (reminder_id) REFERENCES reminders (id) ON DELETE CASCADE,
+    //     FOREIGN KEY (medicine_id) REFERENCES medicines (id) ON DELETE CASCADE
+    //   )
+    // `)
 
-    // Таблица использования лекарств
-    await this.db.executeSql(`
-      CREATE TABLE IF NOT EXISTS medicine_usage (
-        id TEXT PRIMARY KEY,
-        medicine_id TEXT NOT NULL,
-        family_member_id TEXT,
-        quantity_used INTEGER NOT NULL,
-        usage_date TEXT NOT NULL,
-        notes TEXT,
-        created_at TEXT NOT NULL,
-        FOREIGN KEY (medicine_id) REFERENCES medicines (id) ON DELETE CASCADE,
-        FOREIGN KEY (family_member_id) REFERENCES family_members (id) ON DELETE SET NULL
-      )
-    `)
+    // // Таблица приемов по напоминаниям
+    // await this.db.executeSql(`
+    //   CREATE TABLE IF NOT EXISTS reminder_intakes (
+    //     id TEXT PRIMARY KEY,
+    //     reminder_id TEXT NOT NULL,
+    //     scheduled_date TEXT NOT NULL,
+    //     scheduled_time TEXT NOT NULL,
+    //     is_taken BOOLEAN DEFAULT 0,
+    //     taken_at TEXT,
+    //     usage_id TEXT,
+    //     created_at TEXT NOT NULL,
+    //     FOREIGN KEY (reminder_id) REFERENCES reminders (id) ON DELETE CASCADE,
+    //     FOREIGN KEY (usage_id) REFERENCES medicine_usage (id) ON DELETE SET NULL
+    //   )
+    // `)
 
-    // Справочная таблица форм выпуска
-    await this.db.executeSql(`
-      CREATE TABLE IF NOT EXISTS medicine_forms (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL UNIQUE,
-        icon TEXT
-      )
-    `)
+    // // Таблица использования лекарств
+    // await this.db.executeSql(`
+    //   CREATE TABLE IF NOT EXISTS medicine_usage (
+    //     id TEXT PRIMARY KEY,
+    //     medicine_id TEXT NOT NULL,
+    //     family_member_id TEXT,
+    //     quantity_used INTEGER NOT NULL,
+    //     usage_date TEXT NOT NULL,
+    //     notes TEXT,
+    //     created_at TEXT NOT NULL,
+    //     FOREIGN KEY (medicine_id) REFERENCES medicines (id) ON DELETE CASCADE,
+    //     FOREIGN KEY (family_member_id) REFERENCES family_members (id) ON DELETE SET NULL
+    //   )
+    // `)
 
-    // Справочная таблица единиц измерения
-    await this.db.executeSql(`
-      CREATE TABLE IF NOT EXISTS measurement_units (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL UNIQUE,
-        symbol TEXT NOT NULL
-      )
-    `)
+    // // Справочная таблица форм выпуска
+    // await this.db.executeSql(`
+    //   CREATE TABLE IF NOT EXISTS medicine_forms (
+    //     id TEXT PRIMARY KEY,
+    //     name TEXT NOT NULL UNIQUE,
+    //     icon TEXT
+    //   )
+    // `)
 
-    // Таблица списка покупок
-    await this.db.executeSql(`
-      CREATE TABLE IF NOT EXISTS shopping_list (
-        id TEXT PRIMARY KEY,
-        medicine_name TEXT NOT NULL,
-        description TEXT,
-        is_purchased BOOLEAN DEFAULT 0,
-        reminder_date TEXT,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
-      )
-    `)
+    // // Справочная таблица единиц измерения
+    // await this.db.executeSql(`
+    //   CREATE TABLE IF NOT EXISTS measurement_units (
+    //     id TEXT PRIMARY KEY,
+    //     name TEXT NOT NULL UNIQUE,
+    //     symbol TEXT NOT NULL
+    //   )
+    // `)
+
+    // // Таблица списка покупок
+    // await this.db.executeSql(`
+    //   CREATE TABLE IF NOT EXISTS shopping_list (
+    //     id TEXT PRIMARY KEY,
+    //     medicine_name TEXT NOT NULL,
+    //     description TEXT,
+    //     is_purchased BOOLEAN DEFAULT 0,
+    //     reminder_date TEXT,
+    //     created_at TEXT NOT NULL,
+    //     updated_at TEXT NOT NULL
+    //   )
+    // `)
   }
 
   getDb() {

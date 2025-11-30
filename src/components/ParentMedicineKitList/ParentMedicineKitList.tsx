@@ -1,22 +1,26 @@
-import { useMedicineKit } from '@/hooks/useMedicineKit'
-import React from 'react'
+import { useAppStore } from '@/store'
+import React, { useMemo } from 'react'
 import { List } from '../Form'
 
 interface ParentMedicineKitListProps {
-  value?: string
+  value?: string | null
   onChange: (kitId: string) => void
   fieldName?: string
   excludeKitId?: string // ID категории, которую нужно исключить (для редактирования)
+  error?: string | null | undefined
+  noParent?: boolean
 }
 
 export const ParentMedicineKitList: React.FC<ParentMedicineKitListProps> = ({
   value,
   onChange,
   fieldName = 'Родительская категория',
-  excludeKitId
+  error,
+  excludeKitId,
+  noParent = false
 }) => {
 
-  const { medicineKit, isLoading, error, refetch } = useMedicineKit()
+  const { medicineKits } = useAppStore(state => state)
 
 
   // Проверяем, является ли kit потомком excludeKitId
@@ -35,14 +39,23 @@ export const ParentMedicineKitList: React.FC<ParentMedicineKitListProps> = ({
   // }
 
   // Создаем опции для List компонента
-  const options = [
-    { label: 'Без родителя', value: '', subtitle: 'Корневая категория' },
-    ...medicineKit.map(kit => ({
-      label: kit.name,
-      value: kit.id,
-      subtitle: kit.description
-    }))
-  ]
+  const options = useMemo(() => {
+    if (noParent) {
+      return medicineKits.map(kit => ({
+        label: kit.name,
+        value: kit.id,
+        subtitle: kit.description
+      }))
+    }
+    return [
+      { label: 'Без родителя', value: null, subtitle: 'Корневая категория' },
+      ...medicineKits.map(kit => ({
+        label: kit.name,
+        value: kit.id,
+        subtitle: kit.description
+      }))
+    ]
+  }, [noParent, medicineKits])
 
   return (
     <List
@@ -50,6 +63,7 @@ export const ParentMedicineKitList: React.FC<ParentMedicineKitListProps> = ({
       options={options}
       value={value}
       onChange={onChange}
+      error={error}
     />
   )
 }

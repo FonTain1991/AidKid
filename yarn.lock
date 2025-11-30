@@ -6440,6 +6440,11 @@ react-native-permissions@^5.4.2:
   resolved "https://registry.yarnpkg.com/react-native-permissions/-/react-native-permissions-5.4.2.tgz#206c0e440cff2ce047514995457bd73a9924fd8b"
   integrity sha512-XNMoG1fxrB9q73MLn/ZfTaP7pS8qPu0KWypbeFKVTvoR+JJ3O7uedMOTH/mts9bTG+GKhShOoZ+k0CR63q9jwA==
 
+react-native-prompt-android@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/react-native-prompt-android/-/react-native-prompt-android-1.1.0.tgz#3c5168029075cb9f72549fd5f92403372fb234e9"
+  integrity sha512-4JoyEaT2ZnK9IH+tDFpbTiQBgva8UIFGQf4/Uw/tnEVWBERlVlzcs5B82T9BkeEhEqXhp89JaiSBnLWj30lciw==
+
 react-native-purchases@^9.6.1:
   version "9.6.1"
   resolved "https://registry.yarnpkg.com/react-native-purchases/-/react-native-purchases-9.6.1.tgz#59c1f31a618ce2044e1933731de7d3f6d514d494"

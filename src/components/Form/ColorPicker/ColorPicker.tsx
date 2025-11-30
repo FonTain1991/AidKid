@@ -4,9 +4,10 @@ import { Button } from '@/components/Button'
 import { SPACING } from '@/constants'
 import { BottomSheetView } from '@gorhom/bottom-sheet'
 import React, { useRef } from 'react'
-import { Pressable, StyleProp, Text, TextStyle, View, ViewStyle } from 'react-native'
+import { Pressable, StyleProp, TextStyle, View, ViewStyle } from 'react-native'
 import ReanimatedColorPicker, { OpacitySlider, Panel3, Preview } from 'reanimated-color-picker'
 import { useColorPickerStyles } from './useColorPickerStyles'
+import { Text } from '@/components/Text'
 
 interface ColorPickerProps {
   fieldName?: string

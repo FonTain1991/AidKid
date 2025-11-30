@@ -1,7 +1,7 @@
 import { HomeScreen, IntakeScreen, MoreScreen } from '@/screens'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import React from 'react'
-import { Text } from 'react-native'
+import { Text } from '@/components/Text'
 
 const Tab = createBottomTabNavigator()
 

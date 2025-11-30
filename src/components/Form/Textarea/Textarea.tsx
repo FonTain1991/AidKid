@@ -1,9 +1,10 @@
 import { FONT_SIZE } from '@/constants/font'
 import { useEvent } from '@/hooks'
 import React, { useRef, useState } from 'react'
-import { Pressable, TextInput as RNTextInput, TextInputProps as RNTextInputProps, Text, View } from 'react-native'
+import { Pressable, TextInput as RNTextInput, TextInputProps as RNTextInputProps, View } from 'react-native'
 import Animated, { interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { useTextareaStyles } from './useTextareaStyles'
+import { Text } from '@/components/Text'
 
 interface TextareaProps extends Omit<RNTextInputProps, 'multiline'> {
   label?: string

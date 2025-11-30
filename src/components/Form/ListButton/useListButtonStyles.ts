@@ -59,6 +59,19 @@ export const useListButtonStyles = (value?: string) => {
     pressed: {
       opacity: 0.8,
     },
+    error: {
+      borderColor: colors.error,
+    },
+    errorField: {
+      color: colors.error,
+    },
+    errorText: {
+      marginLeft: SPACING.sm,
+      marginTop: SPACING.xs,
+      fontFamily: FONT_FAMILY.regular,
+      fontSize: FONT_SIZE.xs,
+      color: colors.error,
+    },
   })
 
   return {
