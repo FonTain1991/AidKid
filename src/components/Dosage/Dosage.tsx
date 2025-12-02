@@ -1,14 +1,17 @@
+import { FONT_SIZE } from '@/constants/font'
 import { useEvent } from '@/hooks'
-import { forwardRef, memo, useEffect, useImperativeHandle, useState } from 'react'
+import { forwardRef, useImperativeHandle } from 'react'
 import { Alert, StyleSheet, View } from 'react-native'
 import prompt from 'react-native-prompt-android'
 import { Checkbox } from '../Form'
 import { Text } from '../Text'
-import { FONT_SIZE } from '@/constants/font'
 
 interface DosageProps {
   onChange?: (value: string) => void
   unit: string
+  dosage: string
+  isChecked: boolean
+  quantity: number
 }
 
 export interface DosageRef {
@@ -32,9 +35,7 @@ const getDefaultDosage = (unit?: string): string => {
   return defaultDosages[unit] || ''
 }
 
-export const Dosage = forwardRef(({ onChange, unit }: DosageProps, ref) => {
-  const [isChecked, setIsChecked] = useState(false)
-  const [dosage, setDosage] = useState('')
+export const Dosage = forwardRef(({ onChange, unit, dosage, isChecked, quantity }: DosageProps, ref) => {
 
   const showPrompt = useEvent(() => {
     const defaultDosage = getDefaultDosage(unit)
@@ -44,9 +45,7 @@ export const Dosage = forwardRef(({ onChange, unit }: DosageProps, ref) => {
           if (dosage) {
             return
           }
-          setIsChecked(false)
           onChange?.('')
-          setDosage('')
         }, style: 'cancel'
       },
       {
@@ -61,7 +60,13 @@ export const Dosage = forwardRef(({ onChange, unit }: DosageProps, ref) => {
             return
           }
 
-          setDosage(trimmedDosage)
+          if (Number(trimmedDosage) > quantity) {
+            Alert.alert('Ошибка', `Пожалуйста, введите дозировку меньше либо равную ${quantity}`, [
+              { text: 'OK', onPress: () => showPrompt() }
+            ])
+            return
+          }
+
           onChange?.(trimmedDosage)
         }
       },
@@ -69,9 +74,7 @@ export const Dosage = forwardRef(({ onChange, unit }: DosageProps, ref) => {
     if (dosage) {
       buttons.unshift({
         text: 'Очистить', onPress: () => {
-          setIsChecked(false)
           onChange?.('')
-          setDosage('')
         }, style: 'cancel'
       })
     }
@@ -88,25 +91,18 @@ export const Dosage = forwardRef(({ onChange, unit }: DosageProps, ref) => {
     )
   })
 
-  useEffect(() => {
-    if (isChecked) {
-      showPrompt()
-    }
-  }, [isChecked, showPrompt])
-
   useImperativeHandle(ref, () => ({
     clearDosage: () => {
-      console.log('clearDosage')
-      setIsChecked(false)
       onChange?.('')
-      setDosage('')
     },
   }))
 
   return (
     <View>
-      {!dosage && <Checkbox value={isChecked} onChange={setIsChecked} />}
-      {dosage && <Text onPress={showPrompt} style={styles.text}>Количество:{'\n'}{dosage}</Text>}
+      {!dosage && (
+        <Checkbox value={isChecked} onChange={() => showPrompt()} />
+      )}
+      {dosage && <Text onPress={showPrompt} style={styles.text}>Количество:{'\n'}<Text style={{ textDecorationLine: 'underline' }}>{dosage}</Text></Text>}
     </View>
   )
 })
@@ -114,6 +110,6 @@ export const Dosage = forwardRef(({ onChange, unit }: DosageProps, ref) => {
 const styles = StyleSheet.create({
   text: {
     fontSize: FONT_SIZE.sm,
-    textAlign: 'center',
+    textAlign: 'center'
   },
 })

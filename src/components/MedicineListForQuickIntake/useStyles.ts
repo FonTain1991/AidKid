@@ -72,6 +72,11 @@ export function useStyles() {
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingRight: SPACING.md,
+      },
+      title: {
+        fontFamily: FONT_FAMILY.medium,
+        fontSize: FONT_SIZE.xl,
+        color: colors.text
       }
     })
   }, [colors])

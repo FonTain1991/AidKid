@@ -23,6 +23,8 @@ interface AppStore {
   // Quick Intake
   quickIntakeMedicines: { medicineId: number, dosage: string }[]
   setQuickIntakeMedicines: (quickIntakeMedicines: { medicineId: number, dosage: string }[]) => void
+  isClearedQuickIntakeMedicines: boolean
+  setIsClearedQuickIntakeMedicines: (isClearedQuickIntakeMedicines: boolean) => void
 }
 
 export const useAppStore = create<AppStore>()(set => ({
@@ -61,4 +63,6 @@ export const useAppStore = create<AppStore>()(set => ({
   // Quick Intake
   quickIntakeMedicines: [],
   setQuickIntakeMedicines: quickIntakeMedicines => set(({ quickIntakeMedicines })),
+  isClearedQuickIntakeMedicines: false,
+  setIsClearedQuickIntakeMedicines: isClearedQuickIntakeMedicines => set(({ isClearedQuickIntakeMedicines })),
 }))

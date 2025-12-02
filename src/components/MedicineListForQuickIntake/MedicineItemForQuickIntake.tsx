@@ -5,19 +5,19 @@ import { useEvent } from '@/hooks'
 import { useTheme } from '@/providers/theme'
 import { Medicine, MedicineKit } from '@/services/models'
 import { useAppStore } from '@/store'
-import { memo, useMemo, useRef } from 'react'
-import { Image, Pressable, View } from 'react-native'
+import { memo, useEffect, useMemo, useRef } from 'react'
+import { Image, View } from 'react-native'
 import Icon from 'react-native-vector-icons/Feather'
 import { Dosage } from '../Dosage'
+import { DosageRef } from '../Dosage/Dosage'
+import { Checkbox } from '../Form'
 import { Row } from '../Layout'
 import { Text } from '../Text'
 import { useStyles } from './useStyles'
-import { Checkbox } from '../Form'
-import { DosageRef } from '../Dosage/Dosage'
 
 export const MedicineItemForQuickIntake = memo(({ medicine }: { medicine: Medicine }) => {
   const { colors } = useTheme()
-  const { medicineKits, quickIntakeMedicines, setQuickIntakeMedicines } = useAppStore(state => state)
+  const { medicineKits, quickIntakeMedicines, setQuickIntakeMedicines, isClearedQuickIntakeMedicines } = useAppStore(state => state)
   const dosageRef = useRef<DosageRef>(null)
   const styles = useStyles()
 
@@ -26,8 +26,8 @@ export const MedicineItemForQuickIntake = memo(({ medicine }: { medicine: Medici
   }, [medicineKits, medicine.medicineKitId])
 
   const quickIntakeMedicine = useMemo(() => {
-    return quickIntakeMedicines.find((item: { medicineId: number }) => item.medicineId === medicine.id)
-  }, [quickIntakeMedicines, medicine.id])
+    return quickIntakeMedicines.find((item: { medicineId: number, dosage: string }) => item.medicineId === medicine.id)
+  }, [quickIntakeMedicines, medicine])
 
   const handleChange = useEvent((dosage: string) => {
     if (dosage === '') {
@@ -47,6 +47,12 @@ export const MedicineItemForQuickIntake = memo(({ medicine }: { medicine: Medici
   const clearDosage = useEvent(() => {
     dosageRef.current?.clearDosage()
   })
+
+  useEffect(() => {
+    if (isClearedQuickIntakeMedicines) {
+      clearDosage()
+    }
+  }, [isClearedQuickIntakeMedicines, clearDosage])
 
   const isChecked = !!quickIntakeMedicine
   return (
@@ -84,7 +90,14 @@ export const MedicineItemForQuickIntake = memo(({ medicine }: { medicine: Medici
             </View>
           </Row>
           <View>
-            <Dosage unit={unit?.value ?? ''} onChange={handleChange} ref={dosageRef} />
+            <Dosage
+              unit={unit?.value ?? ''}
+              onChange={handleChange}
+              ref={dosageRef}
+              dosage={quickIntakeMedicine?.dosage ?? ''}
+              isChecked={isChecked}
+              quantity={Number(medicine.quantity)}
+            />
           </View>
         </Row>
       </View>
