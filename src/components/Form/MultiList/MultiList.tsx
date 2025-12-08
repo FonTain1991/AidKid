@@ -11,16 +11,17 @@ import { Keyboard, Pressable, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ModalSafeAreaView } from '../../../../src copy/shared/ui/ModalSafeAreaView'
 import { ListButton } from '../ListButton'
-import { useListStyles } from './useListStyles'
+import { useListStyles } from './useMultiListStyles'
+
 interface ListProps {
-  value?: any
+  value?: string[] | number[]
   onChange?: (value: any) => void
   options: { label: string, subtitle?: string, value: string | number }[]
   fieldName?: string
   error?: string | null | undefined
 }
 
-export const List = memo(({ value, onChange, options, fieldName, error }: ListProps) => {
+export const MultiList = memo(({ value, onChange, options, fieldName, error }: ListProps) => {
   const { styles } = useListStyles()
   const { colors } = useTheme()
   const bottomSheetRef = useRef<BottomSheetRef>(null)
@@ -33,12 +34,16 @@ export const List = memo(({ value, onChange, options, fieldName, error }: ListPr
   })
 
   const handleChange = useEvent((newValue: string) => {
-    onChange?.(newValue)
-    bottomSheetRef.current?.dismiss()
+    if (value?.includes(newValue)) {
+      onChange?.([...value.filter(item => item !== newValue)])
+    } else {
+      onChange?.([...(value || []), newValue])
+    }
+    // bottomSheetRef.current?.dismiss()
   })
 
   const curValue = useMemo(() => {
-    return options.find(item => item.value === value)
+    return options.filter(item => value?.includes(item.value))
   }, [value, options])
 
 
@@ -50,7 +55,7 @@ export const List = memo(({ value, onChange, options, fieldName, error }: ListPr
     <View>
       <ListButton
         fieldName={fieldName}
-        value={curValue?.label}
+        value={curValue?.map(item => item.label).join(', ')}
         onPress={onOpen}
         error={error}
       />
@@ -66,7 +71,7 @@ export const List = memo(({ value, onChange, options, fieldName, error }: ListPr
             keyExtractor={(item: { label: string, subtitle?: string, value: string }) => item.value}
             ItemSeparatorComponent={() => <Separator />}
             renderItem={({ item }: { item: { label: string, subtitle?: string, value: string } }) => {
-              const isSelected = item.value === value
+              const isSelected = value?.includes(item.value)
               return (
                 <Pressable
                   onPress={() => handleChange(item.value)}

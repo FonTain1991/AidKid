@@ -1,23 +1,20 @@
-import { QuickActions } from '@/components/Buttons'
-import { IntakeItemsMenu } from '@/components/Intake'
 import { Flex, SafeAreaView } from '@/components/Layout'
+import { Reminders } from '@/components/Reminders'
 import { useNavigationBarColor, useScreenProperties } from '@/hooks'
 import { UseScreenPropertiesOptions } from '@/hooks/useScreenProperties'
 import { useMemo } from 'react'
 import { ScrollView } from 'react-native'
 
-export function TakingMedicationsScreen() {
+export function RemindersScreen() {
   const options = useMemo<UseScreenPropertiesOptions>(() => ({
     navigationOptions: {
       headerShown: true,
-      title: 'Приём'
+      title: 'Напоминания'
     }
   }), [])
 
-
   useScreenProperties(options)
   useNavigationBarColor()
-
 
   return (
     <SafeAreaView>
@@ -26,10 +23,9 @@ export function TakingMedicationsScreen() {
           nestedScrollEnabled
           keyboardShouldPersistTaps='handled'
         >
-          <QuickActions />
-          <IntakeItemsMenu />
+          <Reminders />
         </ScrollView>
       </Flex>
-    </SafeAreaView>
+    </SafeAreaView >
   )
 }

@@ -1,4 +1,4 @@
-import { FamilyMember, Medicine, MedicineKit } from '@/services/models'
+import { FamilyMember, Medicine, MedicineKit, Reminder, ReminderMedicine } from '@/services/models'
 import { create } from 'zustand'
 
 interface AppStore {
@@ -25,6 +25,18 @@ interface AppStore {
   setQuickIntakeMedicines: (quickIntakeMedicines: { medicineId: number, dosage: string }[]) => void
   isClearedQuickIntakeMedicines: boolean
   setIsClearedQuickIntakeMedicines: (isClearedQuickIntakeMedicines: boolean) => void
+  // Reminders
+  reminders: Reminder[]
+  setReminders: (reminders: Reminder[]) => void
+  addReminder: (reminder: Reminder) => void
+  updateReminder: (reminder: Reminder) => void
+  deleteReminder: (id: number) => void
+  // Reminder Medicines
+  reminderMedicines: ReminderMedicine[]
+  setReminderMedicines: (reminderMedicines: ReminderMedicine[]) => void
+  addReminderMedicine: (reminderMedicine: ReminderMedicine) => void
+  updateReminderMedicine: (reminderMedicine: ReminderMedicine) => void
+  deleteReminderMedicine: (id: number) => void
 }
 
 export const useAppStore = create<AppStore>()(set => ({
@@ -65,4 +77,25 @@ export const useAppStore = create<AppStore>()(set => ({
   setQuickIntakeMedicines: quickIntakeMedicines => set(({ quickIntakeMedicines })),
   isClearedQuickIntakeMedicines: false,
   setIsClearedQuickIntakeMedicines: isClearedQuickIntakeMedicines => set(({ isClearedQuickIntakeMedicines })),
+
+  // Reminders
+  reminders: [],
+  setReminders: reminders => set(({ reminders })),
+  addReminder: reminder => set(({ reminders }) => ({ reminders: [...reminders, reminder] })),
+  updateReminder: (data: Reminder) => set(({ reminders }) => ({
+    reminders: reminders.map(reminder => (reminder.id === data.id ? data : reminder))
+  })),
+  deleteReminder: id => set(({ reminders }) => ({
+    reminders: reminders.filter(reminder => reminder.id !== id)
+  })),
+  // Reminder Medicines
+  reminderMedicines: [],
+  setReminderMedicines: reminderMedicines => set(({ reminderMedicines })),
+  addReminderMedicine: reminderMedicine => set(({ reminderMedicines }) => ({ reminderMedicines: [...reminderMedicines, reminderMedicine] })),
+  updateReminderMedicine: (data: ReminderMedicine) => set(({ reminderMedicines }) => ({
+    reminderMedicines: reminderMedicines.map(reminderMedicine => (reminderMedicine.id === data.id ? data : reminderMedicine))
+  })),
+  deleteReminderMedicine: id => set(({ reminderMedicines }) => ({
+    reminderMedicines: reminderMedicines.filter(reminderMedicine => reminderMedicine.id !== id)
+  }))
 }))

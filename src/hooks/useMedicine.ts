@@ -19,7 +19,6 @@ export function useMedicine() {
   const getAllMedicines = useEvent(async () => {
     try {
       const medicines = await medicineModel.getAll()
-      console.log('medicines', medicines)
       setMedicines(medicines)
     } catch (err) {
       console.error(err instanceof Error ? err : new Error('Failed to fetch medicines'))

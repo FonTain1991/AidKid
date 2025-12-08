@@ -36,7 +36,6 @@ const getDefaultDosage = (unit?: string): string => {
 }
 
 export const Dosage = forwardRef(({ onChange, unit, dosage, isChecked, quantity }: DosageProps, ref) => {
-
   const showPrompt = useEvent(() => {
     const defaultDosage = getDefaultDosage(unit)
     const buttons = [

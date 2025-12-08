@@ -3,19 +3,28 @@ import { FONT_SIZE } from '@/constants/font'
 import { useEvent, useMyNavigation } from '@/hooks'
 import { useTheme } from '@/providers/theme'
 import { Medicine } from '@/services/models'
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { Image, Pressable, View } from 'react-native'
 import Icon from 'react-native-vector-icons/Feather'
 import { Row } from '../Layout'
 import { Text } from '../Text'
 import { useStyles } from './useStyles'
 import { getMedicinePhotoUri } from '@/helpers'
+import { useAppStore } from '@/store'
 
-export const MedicineItem = memo(({ medicine }: { medicine: Medicine }) => {
+export const MedicineItem = memo(({ medicine, showKit = true }: { medicine: Medicine, showKit?: boolean }) => {
   const { colors } = useTheme()
   const { navigate } = useMyNavigation()
+  const { medicineKits } = useAppStore(state => state)
 
   const styles = useStyles()
+
+  const medicineKit = useMemo(() => {
+    if (!showKit) {
+      return null
+    }
+    return medicineKits.find((kit: MedicineKit) => kit.id === medicine.medicineKitId)
+  }, [medicineKits, medicine.medicineKitId, showKit])
 
   const handlePress = useEvent(() => {
     navigate('medicine', {
@@ -28,6 +37,13 @@ export const MedicineItem = memo(({ medicine }: { medicine: Medicine }) => {
       style={({ pressed }) => [styles.container, { opacity: pressed ? 0.7 : 1 }]}
       onPress={handlePress}
     >
+      {showKit && (
+        <View style={[styles.medicineKitTag, {
+          backgroundColor: medicineKit?.color
+        }]}>
+          <Text style={styles.medicineKitTagName}>{medicineKit?.name}</Text>
+        </View>
+      )}
       <Row between>
         <Row style={{ gap: SPACING.md }}>
           <View style={styles.icon} >

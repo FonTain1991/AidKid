@@ -1,22 +1,22 @@
 
-const pink = '#E91E63'
+const green = '#3A944E'
 
 export const LIGHT_COLORS = {
   background: '#FFFFFF',
-  text: '#2C1F22',
-  primary: '#E91E63',
-  secondary: '#F48FB1',
-  border: '#FCE4EC',
+  text: '#1F2E22',
+  primary: '#3A944E',
+  secondary: '#66BB6A',
+  border: '#E8F5E9',
   card: '#FFFFFF',
   error: '#D32F2F',
   success: '#4CAF50',
   warning: '#FF9800',
-  muted: '#BCAAA4',
-  placeholder: '#FFCCCB',
-  inputBackground: '#FFF5F7',
-  headerBackground: pink,
+  muted: '#90A495',
+  placeholder: '#C8E6C9',
+  inputBackground: '#F1F8F4',
+  headerBackground: green,
   headerColor: '#FFFFFF',
-  link: '#007AFF'
+  link: '#2E7D32'
 }
 
 export type ThemeColors = Record<keyof typeof LIGHT_COLORS, string>

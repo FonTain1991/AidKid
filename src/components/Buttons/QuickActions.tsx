@@ -52,7 +52,7 @@ export function QuickActions() {
       icon: '➕',
       color: colors.secondary,
       onPress: () => {
-        navigate('AddReminder')
+        navigate('addReminder')
       },
     },
   ], [colors, navigate])

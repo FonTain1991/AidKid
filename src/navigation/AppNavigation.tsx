@@ -1,6 +1,6 @@
 import { useEvent } from '@/hooks'
 import { notificationService } from '@/lib'
-import { BarcodeScannerScreen, FamilyMemberScreen, MedicineKitScreen, MedicineListScreen, MedicineScreen, OnboardingScreen, QuickIntakeScreen } from '@/screens'
+import { AddReminderScreen, BarcodeScannerScreen, FamilyMemberScreen, MedicineKitScreen, MedicineListScreen, MedicineScreen, NotificationSettingsScreen, OnboardingScreen, QuickIntakeScreen, RemindersScreen } from '@/screens'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
 import { CompositeNavigationProp, NavigatorScreenParams } from '@react-navigation/native'
@@ -28,6 +28,8 @@ export type MainList = {
   } | undefined;
   barcodeScanner: undefined
   quickIntake: undefined
+  notificationSettings: undefined
+  reminders: undefined
 }
 
 export type SplashList = {
@@ -104,6 +106,9 @@ export function AppNavigation() {
       <MainStack.Screen name='medicine' component={MedicineScreen} />
       <MainStack.Screen name='barcodeScanner' component={BarcodeScannerScreen} />
       <MainStack.Screen name='quickIntake' component={QuickIntakeScreen} />
+      <MainStack.Screen name='notificationSettings' component={NotificationSettingsScreen} />
+      <MainStack.Screen name='addReminder' component={AddReminderScreen} />
+      <MainStack.Screen name='reminders' component={RemindersScreen} />
     </MainStack.Navigator>
   )
 }

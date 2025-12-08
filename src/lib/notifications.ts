@@ -184,24 +184,68 @@ class NotificationService {
   ): Promise<boolean> {
     const { title, body, notificationDate, data, medicineKitId, critical = false } = options
 
+    console.log('🔔 scheduleNotification called:', {
+      notificationId,
+      medicineKitId,
+      notificationDate: notificationDate.toLocaleString('ru-RU'),
+      data
+    })
+
+    // Инициализируем сервис (создаем каналы)
+    await this.init()
+
     const hasPermission = await this.checkPermission()
     if (!hasPermission) {
+      console.error('❌ No notification permission')
       return false
     }
+    console.log('✅ Notification permission granted')
 
     const canSchedule = await this.canScheduleExactAlarms()
     if (!canSchedule) {
-      console.warn('No SCHEDULE_EXACT_ALARM permission - notifications may not work when app is closed')
+      console.warn('⚠️ No SCHEDULE_EXACT_ALARM permission - notifications may not work when app is closed')
+    } else {
+      console.log('✅ SCHEDULE_EXACT_ALARM permission granted')
     }
 
     const now = new Date()
     if (notificationDate <= now) {
+      console.error('❌ Notification date is in the past:', {
+        notificationDate: notificationDate.toLocaleString('ru-RU'),
+        now: now.toLocaleString('ru-RU')
+      })
       return false
     }
 
     const channelId = this.getKitChannelId(medicineKitId)
+    console.log('📢 Using channel:', channelId)
+
+    // Создаем канал, если его нет (для Android)
+    if (Platform.OS === 'android') {
+      try {
+        await notifee.createChannel({
+          id: channelId,
+          name: `Аптечка ${medicineKitId}`,
+          description: `Уведомления о лекарствах из аптечки ${medicineKitId}`,
+          importance: AndroidImportance.HIGH,
+          sound: 'default',
+          vibration: true,
+          lightColor: '#3A944E',
+        })
+        console.log('✅ Channel created/verified:', channelId)
+      } catch (error) {
+        console.warn('⚠️ Channel creation warning (may already exist):', error)
+      }
+    }
 
     try {
+      const triggerTimestamp = notificationDate.getTime()
+      console.log('📅 Creating trigger notification:', {
+        notificationId,
+        triggerTimestamp,
+        triggerDate: new Date(triggerTimestamp).toLocaleString('ru-RU')
+      })
+
       await notifee.createTriggerNotification(
         {
           id: notificationId,
@@ -225,16 +269,47 @@ class NotificationService {
         },
         {
           type: TriggerType.TIMESTAMP,
-          timestamp: notificationDate.getTime(),
+          timestamp: triggerTimestamp,
           alarmManager: {
             allowWhileIdle: true,
           },
         }
       )
 
+      console.log('✅ Notification created successfully:', {
+        notificationId,
+        scheduledFor: notificationDate.toLocaleString('ru-RU'),
+        timestamp: triggerTimestamp
+      })
+
+      // Проверяем, что уведомление действительно запланировано
+      setTimeout(async () => {
+        try {
+          const notifications = await this.getTriggerNotifications()
+          const found = notifications.find(n => n.notification.id === notificationId)
+          if (found) {
+            const trigger = found.trigger as any
+            console.log('✅ Verified notification in system:', {
+              id: found.notification.id,
+              scheduledTime: trigger?.timestamp ? new Date(trigger.timestamp).toLocaleString('ru-RU') : 'N/A',
+              data: found.notification.data
+            })
+          } else {
+            console.error('❌ Notification NOT found in system after creation!', notificationId)
+            console.log('All scheduled notifications:', notifications.map(n => ({
+              id: n.notification.id,
+              title: n.notification.title,
+              data: n.notification.data
+            })))
+          }
+        } catch (error) {
+          console.error('❌ Error verifying notification:', error)
+        }
+      }, 500)
+
       return true
     } catch (error) {
-      console.error('Failed to schedule notification:', error)
+      console.error('❌ Failed to schedule notification:', error)
       return false
     }
   }

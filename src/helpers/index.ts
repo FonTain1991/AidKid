@@ -199,3 +199,13 @@ export function getMedicinePhotoUri(photoPath?: string): string | null {
   return photoPath
 }
 
+export const generateReactKey = (prefix: string = 'key'): string => {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+}
+
+export const getValuesForList = (items: any[]) => {
+  return items.map(item => ({
+    label: item.name,
+    value: item.id
+  }))
+}

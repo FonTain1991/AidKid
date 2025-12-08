@@ -40,7 +40,20 @@ export function useStyles() {
         borderRadius: RADIUS.md,
         justifyContent: 'center',
         alignItems: 'center'
-      }
+      },
+      medicineKitTag: {
+        position: 'absolute',
+        top: -12,
+        right: SPACING.md,
+        paddingHorizontal: SPACING.sm,
+        paddingVertical: SPACING.xs,
+        borderRadius: RADIUS.md,
+      },
+      medicineKitTagName: {
+        fontFamily: FONT_FAMILY.medium,
+        fontSize: FONT_SIZE.sm,
+        color: colors.headerColor
+      },
     })
   }, [colors])
 }

@@ -46,7 +46,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     <>
       <ListButton
         fieldName={fieldName}
-        value={value ? dayjs(+value).format('DD.MM.YYYY') : undefined}
+        value={value ? dayjs(+value).format(mode === 'time' ? 'HH:mm' : 'DD.MM.YYYY') : undefined}
         onPress={handlePress}
         disabled={disabled}
         showArrow={false}
