@@ -1,5 +1,5 @@
 
-import { FREQUENCY_OPTIONS } from '@/constants'
+import { FREQUENCY_OPTIONS, SPACING } from '@/constants'
 import { getValuesForList } from '@/helpers'
 import { useMyNavigation, useReminder, useReminderMedicine } from '@/hooks'
 import { useEvent } from '@/hooks/useEvent'
@@ -15,6 +15,7 @@ import { DatePicker } from '../Form/DatePicker'
 import { PaddingHorizontal } from '../Layout'
 import { Text } from '../Text'
 import { useStyles } from './useStyles'
+import { AboutScreen } from '../AboutScreen'
 
 interface ReminderFormType {
   selectedMedicineIds: number[]
@@ -470,16 +471,11 @@ export const AddReminder = memo(() => {
           onPress={handleCreateReminder}
         />
       </PaddingHorizontal >
-      <View style={styles.infoSection}>
-        <Text style={styles.infoTitle}>О напоминаниях</Text>
-        <Text style={styles.infoText}>
-          • Напоминания будут приходить в указанное время{'\n'}
-          • Для повторяющихся напоминаний можно указать количество приемов и дней{'\n'}
-          • Ежедневные напоминания повторяются каждый день на указанное количество дней{'\n'}
-          • Еженедельные напоминания повторяются каждую неделю{'\n'}
-          • Можно отключить или изменить в любой момент
-        </Text>
-      </View>
+      <AboutScreen
+        title='О напоминаниях'
+        text={'• Напоминания будут приходить в указанное время\n• Для повторяющихся напоминаний можно указать количество приемов и дней\n• Ежедневные напоминания повторяются каждый день на указанное количество дней\n• Еженедельные напоминания повторяются каждую неделю\n• Можно отключить или изменить в любой момент'}
+        style={{ marginTop: SPACING.md }}
+      />
     </>
   )
 })

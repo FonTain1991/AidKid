@@ -82,7 +82,7 @@ export class FamilyMembersModel extends BaseModel {
     }
   }
 
-  async updateFamilyMember(id: number, updates: Partial<FamilyMember>): Promise<void> {
+  async updateFamilyMember(id: number, updates: Partial<FamilyMember>): Promise<FamilyMember | null> {
     if (!this.db) {
       throw new Error('Database not initialized')
     }
@@ -103,15 +103,20 @@ export class FamilyMembersModel extends BaseModel {
       updateValues.push(updates.color)
     }
 
-    updateFields.push('updated_at = ?')
+    updateFields.push('updatedAt = ?')
     updateValues.push(new Date().getTime())
     updateValues.push(id)
 
     await this.db.executeSql(`
       UPDATE family_members SET ${updateFields.join(', ')} WHERE id = ?
-    `, updateValues)
+    `, updateValues).catch(err => {
+      console.error('SQLite - Error updating family member:', err)
+      return null
+    })
 
     console.log('SQLite - Updated family member:', id)
+
+    return await this.getFamilyMemberById(id)
   }
 
   async deleteFamilyMember(id: number): Promise<void> {

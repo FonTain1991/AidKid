@@ -20,8 +20,8 @@ export const Avatar = memo(({ onChange, value }: AvatarProps) => {
   }
 
   useEffect(() => {
-    onChange?.(AVATAR_OPTIONS[0])
-  }, [])
+    setSelectedAvatar(value || AVATAR_OPTIONS[0])
+  }, [value])
 
   return (
     <View>

@@ -1,8 +1,8 @@
 import { SPACING } from '@/constants'
-import { useEvent, useMyNavigation } from '@/hooks'
+import { useEvent, useMyNavigation, useRoute } from '@/hooks'
 import { useFamilyMember } from '@/hooks/useFamilyMember'
 import { FamilyMember } from '@/services/models'
-import { memo, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { ScrollView, StyleSheet } from 'react-native'
 import { Button } from '../Button'
 import { TextInput } from '../Form'
@@ -13,7 +13,8 @@ import { Colors } from './Colors'
 type CreateFamilyMemberPayload = Omit<FamilyMember, 'id' | 'createdAt' | 'updatedAt'>
 
 export const FamilyMemberForm = memo(() => {
-  const { createFamilyMember } = useFamilyMember()
+  const { params } = useRoute()
+  const { createFamilyMember, getFamilyMemberById, updateFamilyMember } = useFamilyMember()
   const { goBack } = useMyNavigation()
 
   const [member, setMember] = useState<CreateFamilyMemberPayload>({
@@ -30,7 +31,11 @@ export const FamilyMemberForm = memo(() => {
       return
     }
 
-    await createFamilyMember(member)
+    if (params?.familyMemberId) {
+      await updateFamilyMember({ id: params.familyMemberId, ...member })
+    } else {
+      await createFamilyMember(member)
+    }
     goBack()
   })
 
@@ -39,8 +44,21 @@ export const FamilyMemberForm = memo(() => {
     setError(null)
   })
 
+  useEffect(() => {
+    if (params?.familyMemberId) {
+      getFamilyMemberById(params.familyMemberId).then(result => {
+        setMember({
+          name: result?.name || '',
+          avatar: result?.avatar || '',
+          color: result?.color || '',
+        })
+      })
+    }
+  }, [getFamilyMemberById, params])
+
   return (
     <ScrollView
+      keyboardShouldPersistTaps='always'
       contentContainerStyle={styles.form}
       nestedScrollEnabled
     >
@@ -56,7 +74,7 @@ export const FamilyMemberForm = memo(() => {
       <Colors onChange={color => setMember({ ...member, color })} value={member.color} />
       <PaddingHorizontal>
         <Button
-          title='Добавить'
+          title={params?.familyMemberId ? 'Сохранить' : 'Добавить'}
           onPress={onSubmit}
         />
       </PaddingHorizontal>

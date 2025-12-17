@@ -118,5 +118,26 @@ export const useStyles = () => {
       fontWeight: FONT_WEIGHT.bold,
       color: colors.text,
     },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingVertical: SPACING.xxl,
+      paddingHorizontal: SPACING.lg,
+    },
+    emptyIcon: {
+      fontSize: FONT_SIZE.heading * 3,
+      marginBottom: SPACING.md,
+    },
+    emptyTitle: {
+      fontSize: FONT_SIZE.xl,
+      fontWeight: '600',
+      marginBottom: SPACING.sm,
+    },
+    emptyText: {
+      fontSize: FONT_SIZE.md,
+      textAlign: 'center',
+      marginBottom: SPACING.xl,
+    },
   })
 }

@@ -15,7 +15,7 @@ export const IntakeItemsMenu = memo(() => {
       icon: '📅',
       count: 0,
       onPress: () => {
-        navigate('Today')
+        navigate('today')
       },
     },
     {

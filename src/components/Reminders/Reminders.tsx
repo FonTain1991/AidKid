@@ -1,13 +1,14 @@
 import { getFrequencyIcon, getFrequencyText } from '@/constants'
-import { useReminder, useReminderMedicine } from '@/hooks'
+import { useMyNavigation, useReminder, useReminderMedicine } from '@/hooks'
 import { notificationService } from '@/lib'
 import { Reminder } from '@/services/models'
 import { useAppStore } from '@/store'
 import { memo, useEffect, useMemo, useState } from 'react'
-import { Alert, TouchableOpacity, View } from 'react-native'
+import { Alert, Pressable, TouchableOpacity, View } from 'react-native'
 import { PaddingHorizontal } from '../Layout'
 import { Text } from '../Text'
 import { useStyles } from './useStyles'
+import { Button } from '../Button'
 
 interface ReminderList extends Reminder {
   medicineNames: string
@@ -15,6 +16,7 @@ interface ReminderList extends Reminder {
   nextNotification: Date | null
 }
 export const Reminders = memo(() => {
+  const { navigate } = useMyNavigation()
   const { reminders, reminderMedicines, medicines } = useAppStore(state => state)
   const { deleteReminder } = useReminder()
   const { deleteReminderMedicine } = useReminderMedicine()
@@ -134,6 +136,24 @@ export const Reminders = memo(() => {
   }
 
   const styles = useStyles()
+
+  if (!dataSource.length) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyIcon}>⏰</Text>
+        <Text style={styles.emptyTitle}>
+          Нет активных напоминаний
+        </Text>
+        <Text style={styles.emptyText}>
+          Создайте напоминание о приеме лекарств
+        </Text>
+        <Button
+          title='Добавить напоминание'
+          onPress={() => navigate('addReminder')}
+        />
+      </View>
+    )
+  }
 
   return (
     <>

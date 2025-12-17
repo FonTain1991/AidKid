@@ -366,22 +366,6 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 0
   },
-  emptyContainer: {
-    alignItems: 'center',
-    paddingVertical: 60
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 8
-  },
-  emptyText: {
-    fontSize: 14,
-    textAlign: 'center'
-  }
+ 
 })
 

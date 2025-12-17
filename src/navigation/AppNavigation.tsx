@@ -1,6 +1,6 @@
 import { useEvent } from '@/hooks'
 import { notificationService } from '@/lib'
-import { AddReminderScreen, BarcodeScannerScreen, FamilyMemberScreen, MedicineKitScreen, MedicineListScreen, MedicineScreen, NotificationSettingsScreen, OnboardingScreen, QuickIntakeScreen, RemindersScreen } from '@/screens'
+import { AddReminderScreen, AddShoppingItemScreen, BarcodeScannerScreen, FamilyMemberScreen, FamilyMembersScreen, MedicineKitScreen, MedicineListScreen, MedicineScreen, NotificationSettingsScreen, OnboardingScreen, QuickIntakeScreen, RemindersScreen, ShoppingListScreen, TodayScreen } from '@/screens'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
 import { CompositeNavigationProp, NavigatorScreenParams } from '@react-navigation/native'
@@ -25,11 +25,17 @@ export type MainList = {
   onboarding: undefined;
   medicine: {
     medicineId?: number
+    medicineName?: string
   } | undefined;
   barcodeScanner: undefined
   quickIntake: undefined
   notificationSettings: undefined
   reminders: undefined
+  addReminder: undefined
+  today: undefined
+  shoppingList: undefined
+  addShoppingItem: undefined
+  familyMembers: undefined
 }
 
 export type SplashList = {
@@ -109,6 +115,10 @@ export function AppNavigation() {
       <MainStack.Screen name='notificationSettings' component={NotificationSettingsScreen} />
       <MainStack.Screen name='addReminder' component={AddReminderScreen} />
       <MainStack.Screen name='reminders' component={RemindersScreen} />
+      <MainStack.Screen name='today' component={TodayScreen} />
+      <MainStack.Screen name='shoppingList' component={ShoppingListScreen} />
+      <MainStack.Screen name='addShoppingItem' component={AddShoppingItemScreen} />
+      <MainStack.Screen name='familyMembers' component={FamilyMembersScreen} />
     </MainStack.Navigator>
   )
 }

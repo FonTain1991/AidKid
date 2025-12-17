@@ -20,8 +20,8 @@ export const Colors = memo(({ onChange, value }: ColorsProps) => {
   }
 
   useEffect(() => {
-    onChange?.(COLOR_OPTIONS[0])
-  }, [])
+    setSelectedColor(value || COLOR_OPTIONS[0])
+  }, [value])
 
   return (
     <View>

@@ -1,4 +1,4 @@
-import { FamilyMember, Medicine, MedicineKit, Reminder, ReminderMedicine } from '@/services/models'
+import { FamilyMember, Medicine, MedicineKit, Reminder, ReminderMedicine, ShoppingList } from '@/services/models'
 import { create } from 'zustand'
 
 interface AppStore {
@@ -37,6 +37,12 @@ interface AppStore {
   addReminderMedicine: (reminderMedicine: ReminderMedicine) => void
   updateReminderMedicine: (reminderMedicine: ReminderMedicine) => void
   deleteReminderMedicine: (id: number) => void
+  // Shopping List
+  shoppingList: ShoppingList[]
+  setShoppingList: (shoppingList: ShoppingList[]) => void
+  addShoppingList: (shoppingList: ShoppingList) => void
+  updateShoppingList: (shoppingList: ShoppingList) => void
+  deleteShoppingList: (id: number) => void
 }
 
 export const useAppStore = create<AppStore>()(set => ({
@@ -97,5 +103,15 @@ export const useAppStore = create<AppStore>()(set => ({
   })),
   deleteReminderMedicine: id => set(({ reminderMedicines }) => ({
     reminderMedicines: reminderMedicines.filter(reminderMedicine => reminderMedicine.id !== id)
+  })),
+  // Shopping List
+  shoppingList: [],
+  setShoppingList: shoppingList => set(({ shoppingList })),
+  addShoppingList: (data: ShoppingList) => set(({ shoppingList }) => ({ shoppingList: [data, ...shoppingList] })),
+  updateShoppingList: (data: ShoppingList) => set(({ shoppingList }) => ({
+    shoppingList: shoppingList.map(item => (item.id === data.id ? data : item))
+  })),
+  deleteShoppingList: id => set(({ shoppingList }) => ({
+    shoppingList: shoppingList.filter(item => item.id !== id)
   }))
 }))

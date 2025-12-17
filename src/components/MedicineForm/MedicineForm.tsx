@@ -144,6 +144,12 @@ export const MedicineForm = memo(() => {
     }
   }, [params?.medicineId, medicines])
 
+  useEffect(() => {
+    if (params?.medicineName) {
+      setMedicine({ ...medicine, name: params.medicineName })
+    }
+  }, [params?.medicineName])
+
   // Обработка результата сканирования штрих-кода при возврате
   useEffect(() => {
     if (params?.scannedBarcode) {

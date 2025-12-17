@@ -6,6 +6,7 @@ import { useMedicine } from './useMedicine'
 import { useMedicineKit } from './useMedicineKit'
 import { useReminder } from './useReminder'
 import { useReminderMedicine } from './useReminderMedicine'
+import { useShoppingList } from './useShoppingList'
 
 export function useAppInit() {
   const { getAllFamilyMembers } = useFamilyMember()
@@ -13,6 +14,7 @@ export function useAppInit() {
   const { getAllMedicines } = useMedicine()
   const { getAllReminders } = useReminder()
   const { getAllReminderMedicines } = useReminderMedicine()
+  const { getAllShoppingList } = useShoppingList()
 
   useEffect(() => {
     const init = async () => {
@@ -28,7 +30,8 @@ export function useAppInit() {
           getAllMedicineKits(),
           getAllMedicines(),
           getAllReminders(),
-          getAllReminderMedicines()
+          getAllReminderMedicines(),
+          getAllShoppingList()
         ])
       } catch (error) {
         console.error('Failed to initialize app:', error)
@@ -40,6 +43,7 @@ export function useAppInit() {
     getAllMedicineKits,
     getAllMedicines,
     getAllReminders,
-    getAllReminderMedicines
+    getAllReminderMedicines,
+    getAllShoppingList
   ])
 }

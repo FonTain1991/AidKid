@@ -75,12 +75,17 @@ export function useFamilyMember() {
     }
   })
 
+  const getFamilyMemberById = useEvent(async (id: number) => {
+    return await familyMembersModel.getFamilyMemberById(id)
+  })
+
 
   return {
     getAllFamilyMembers,
     createFamilyMember,
     updateFamilyMember,
     deleteFamilyMember,
+    getFamilyMemberById,
     isLoading,
     error,
   }

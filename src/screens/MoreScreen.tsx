@@ -80,7 +80,7 @@ export function MoreScreen() {
       description: 'Список лекарств для покупки',
       icon: '🛒',
       onPress: () => {
-        navigate('ShoppingList')
+        navigate('shoppingList')
       },
     },
     {
@@ -88,7 +88,7 @@ export function MoreScreen() {
       description: 'Управление членами семьи',
       icon: '👨‍👩‍👧‍👦',
       onPress: () => {
-        navigate('familyMember')
+        navigate('familyMembers')
       },
     },
     {
