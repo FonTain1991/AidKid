@@ -43,6 +43,18 @@ interface AppStore {
   addShoppingList: (shoppingList: ShoppingList) => void
   updateShoppingList: (shoppingList: ShoppingList) => void
   deleteShoppingList: (id: number) => void
+  // Google Drive
+  googleDrive: {
+    isSignedIn: boolean
+    setIsSignedIn: (isSignedIn: boolean) => void
+    isRefetching: boolean
+    setIsRefetching: (isRefetching: boolean) => void
+  }
+  // Local Backups
+  localBackups: {
+    isRefetching: boolean
+    setIsRefetching: (isRefetching: boolean) => void
+  }
 }
 
 export const useAppStore = create<AppStore>()(set => ({
@@ -94,6 +106,7 @@ export const useAppStore = create<AppStore>()(set => ({
   deleteReminder: id => set(({ reminders }) => ({
     reminders: reminders.filter(reminder => reminder.id !== id)
   })),
+
   // Reminder Medicines
   reminderMedicines: [],
   setReminderMedicines: reminderMedicines => set(({ reminderMedicines })),
@@ -104,6 +117,7 @@ export const useAppStore = create<AppStore>()(set => ({
   deleteReminderMedicine: id => set(({ reminderMedicines }) => ({
     reminderMedicines: reminderMedicines.filter(reminderMedicine => reminderMedicine.id !== id)
   })),
+
   // Shopping List
   shoppingList: [],
   setShoppingList: shoppingList => set(({ shoppingList })),
@@ -113,5 +127,18 @@ export const useAppStore = create<AppStore>()(set => ({
   })),
   deleteShoppingList: id => set(({ shoppingList }) => ({
     shoppingList: shoppingList.filter(item => item.id !== id)
-  }))
+  })),
+
+  // Google Drive
+  googleDrive: {
+    isSignedIn: false,
+    setIsSignedIn: isSignedIn => set(({ googleDrive }) => ({ googleDrive: { ...googleDrive, isSignedIn } })),
+    isRefetching: false,
+    setIsRefetching: isRefetching => set(({ googleDrive }) => ({ googleDrive: { ...googleDrive, isRefetching } })),
+  },
+  // Local Backups
+  localBackups: {
+    isRefetching: false,
+    setIsRefetching: isRefetching => set(({ localBackups }) => ({ localBackups: { ...localBackups, isRefetching } })),
+  }
 }))

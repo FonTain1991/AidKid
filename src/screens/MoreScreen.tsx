@@ -104,7 +104,7 @@ export function MoreScreen() {
       description: 'Синхронизация и экспорт данных',
       icon: '💾',
       onPress: () => {
-        navigate('Backup')
+        navigate('backup')
       },
     },
     {

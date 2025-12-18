@@ -8,7 +8,7 @@ interface FlexProps {
 
 export function PaddingHorizontal({ children, style }: FlexProps) {
   return (
-    <View style={[style, { paddingHorizontal: SPACING.md }]}>
+    <View style={[{ paddingHorizontal: SPACING.md }, style]}>
       {children}
     </View>
   )
