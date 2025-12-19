@@ -105,6 +105,7 @@ export function MoreScreen() {
       description: 'Синхронизация и экспорт данных',
       icon: '💾',
       onPress: () => {
+        console.log('isPremium', isPremium)
         if (isPremium) {
           navigate('backup')
           return

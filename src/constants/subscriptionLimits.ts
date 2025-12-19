@@ -7,13 +7,13 @@ export const FREE_LIMITS = {
   MAX_KITS: 1,
   
   /** Максимальное количество лекарств */
-  MAX_MEDICINES: 20,
+  MAX_MEDICINES: 10,
   
   /** Максимальное количество активных напоминаний */
-  MAX_REMINDERS: 5,
+  MAX_REMINDERS: 3,
   
   /** Максимальное количество товаров в списке покупок */
-  MAX_SHOPPING_ITEMS: 10,
+  MAX_SHOPPING_ITEMS: 3,
   
   /** Максимальное количество фото на одно лекарство */
   MAX_PHOTOS_PER_MEDICINE: 3,
@@ -22,7 +22,7 @@ export const FREE_LIMITS = {
   MAX_BARCODE_SCANS_PER_DAY: 10,
   
   /** Количество дней истории приема (только последние N дней) */
-  HISTORY_DAYS: 30,
+  HISTORY_DAYS: 7,
 } as const
 
 export type FreeLimitKey = keyof typeof FREE_LIMITS

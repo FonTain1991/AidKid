@@ -1,9 +1,11 @@
 /**
  * Хук для работы с подпиской
+ * Использует store для хранения состояния
  */
 
 import { subscriptionService, SubscriptionStatus } from '@/lib'
-import { useEffect, useState, useCallback } from 'react'
+import { useAppStore } from '@/store'
+import { useEvent } from '@/hooks/useEvent'
 import type { PurchasesOffering, PurchasesPackage, CustomerInfo } from 'react-native-purchases'
 
 export interface UseSubscriptionReturn {
@@ -37,22 +39,20 @@ export interface UseSubscriptionReturn {
 }
 
 export function useSubscription(): UseSubscriptionReturn {
-  const [isPremium, setIsPremium] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
-  const [status, setStatus] = useState<SubscriptionStatus | null>(null)
-  const [offerings, setOfferings] = useState<PurchasesOffering | null>(null)
+  const subscription = useAppStore(state => state.subscription)
+  const {
+    setIsPremium,
+    setIsLoading,
+    setError,
+    setStatus,
+    setOfferings,
+  } = useAppStore(state => state.subscription)
 
-  /**
-   * Обновление статуса подписки
-   */
-  const refreshStatus = useCallback(async () => {
+  const refreshStatus = useEvent(async () => {
     try {
       setIsLoading(true)
       setError(null)
-
       const subscriptionStatus = await subscriptionService.getSubscriptionStatus()
-
       setStatus(subscriptionStatus)
       setIsPremium(subscriptionStatus.isPremium)
     } catch (err) {
@@ -62,12 +62,9 @@ export function useSubscription(): UseSubscriptionReturn {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  })
 
-  /**
-   * Загрузка предложений
-   */
-  const loadOfferings = useCallback(async () => {
+  const loadOfferings = useEvent(async () => {
     try {
       setError(null)
       const currentOfferings = await subscriptionService.getOfferings()
@@ -77,58 +74,40 @@ export function useSubscription(): UseSubscriptionReturn {
       setError(error)
       console.error('Error loading offerings:', error)
     }
-  }, [])
+  })
 
-  /**
-   * Покупка подписки
-   */
-  const purchasePackage = useCallback(async (pkg: PurchasesPackage): Promise<CustomerInfo> => {
+  const purchasePackage = useEvent(async (pkg: PurchasesPackage): Promise<CustomerInfo> => {
     try {
       setError(null)
       const customerInfo = await subscriptionService.purchasePackage(pkg)
-
-      // Обновляем статус после покупки
       await refreshStatus()
-
       return customerInfo
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Unknown error')
       setError(error)
       throw error
     }
-  }, [refreshStatus])
+  })
 
-  /**
-   * Восстановление покупок
-   */
-  const restorePurchases = useCallback(async (): Promise<CustomerInfo> => {
+  const restorePurchases = useEvent(async (): Promise<CustomerInfo> => {
     try {
       setError(null)
       const customerInfo = await subscriptionService.restorePurchases()
-
-      // Обновляем статус после восстановления
       await refreshStatus()
-
       return customerInfo
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Unknown error')
       setError(error)
       throw error
     }
-  }, [refreshStatus])
-
-  // Загрузка статуса при монтировании компонента
-  useEffect(() => {
-    refreshStatus()
-    loadOfferings()
-  }, [refreshStatus, loadOfferings])
+  })
 
   return {
-    isPremium,
-    isLoading,
-    error,
-    status,
-    offerings,
+    isPremium: subscription.isPremium,
+    isLoading: subscription.isLoading,
+    error: subscription.error,
+    status: subscription.status,
+    offerings: subscription.offerings,
     refreshStatus,
     loadOfferings,
     purchasePackage,

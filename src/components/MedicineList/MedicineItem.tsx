@@ -1,11 +1,12 @@
-import { SPACING } from '@/constants'
+import { SPACING, UNITS } from '@/constants'
 import { FONT_SIZE } from '@/constants/font'
 import { useEvent, useMyNavigation } from '@/hooks'
 import { useTheme } from '@/providers/theme'
-import { Medicine } from '@/services/models'
+import { Medicine, MedicineKit } from '@/services/models'
 import { memo, useMemo } from 'react'
 import { Image, Pressable, View } from 'react-native'
 import Icon from 'react-native-vector-icons/Feather'
+import dayjs from 'dayjs'
 import { Row } from '../Layout'
 import { Text } from '../Text'
 import { useStyles } from './useStyles'
@@ -31,6 +32,10 @@ export const MedicineItem = memo(({ medicine, showKit = true }: { medicine: Medi
       medicineId: Number(medicine.id)
     })
   })
+
+  const unit = useMemo(() => {
+    return UNITS.find((item: any) => item.value === medicine.unitForQuantity)
+  }, [medicine.unitForQuantity])
 
   return (
     <Pressable
@@ -60,8 +65,20 @@ export const MedicineItem = memo(({ medicine, showKit = true }: { medicine: Medi
               </View>
             )}
           </View>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.name}>{medicine.name}</Text>
+            <View style={styles.infoRow}>
+              {medicine.quantity !== null && medicine.quantity !== undefined && (
+                <Text style={[styles.infoText, { color: colors.muted }]}>
+                  📦 {medicine.quantity} {unit?.shortLabel || 'шт.'}
+                </Text>
+              )}
+              {medicine.expirationDate && (
+                <Text style={[styles.infoText, { color: colors.muted }]}>
+                  ⏰ {dayjs(+medicine.expirationDate).format('DD.MM.YYYY')}
+                </Text>
+              )}
+            </View>
           </View>
         </Row>
         <Icon name='edit' size={FONT_SIZE.heading} color={colors.muted} />

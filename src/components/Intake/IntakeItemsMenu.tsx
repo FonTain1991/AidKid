@@ -33,7 +33,7 @@ export const IntakeItemsMenu = memo(() => {
       icon: '📋',
       count: 0,
       onPress: () => {
-        navigate('History')
+        navigate('history')
       },
     },
     {
@@ -42,7 +42,7 @@ export const IntakeItemsMenu = memo(() => {
       icon: '📊',
       count: 0,
       onPress: () => {
-        navigate('Statistics')
+        navigate('statistics')
       },
     }
   ], [navigate])

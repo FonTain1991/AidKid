@@ -1,6 +1,7 @@
 import { useEvent } from '@/hooks'
 import { useMedicine } from '@/hooks/useMedicine'
 import { useAppStore } from '@/store'
+import { medicineUsageModel } from '@/services/models'
 import { memo } from 'react'
 import { Alert } from 'react-native'
 import { Button } from '../Button'
@@ -19,12 +20,26 @@ export const QuickIntakeButton = memo(() => {
     if (!quickIntakeMedicines?.length) {
       return
     }
+    
+    // Обновляем количество лекарств и создаем записи о приеме
     await Promise.all(quickIntakeMedicines.map(async medicine => {
-      return await updateMedicine({
+      const medicineData = medicines.find(m => m.id === medicine.medicineId)
+      const quantityUsed = Number(medicine.dosage) || 1
+      
+      // Обновляем количество
+      await updateMedicine({
         id: medicine.medicineId,
-        quantity: Number(medicines.find(m => m.id === medicine.medicineId)?.quantity) - Number(medicine.dosage)
+        quantity: Number(medicineData?.quantity || 0) - quantityUsed
+      })
+      
+      // Создаем запись о приеме
+      await medicineUsageModel.create({
+        medicineId: medicine.medicineId,
+        quantityUsed,
+        usageDate: new Date().toISOString(),
       })
     }))
+    
     setIsClearedQuickIntakeMedicines(true)
     setQuickIntakeMedicines([])
     Alert.alert(

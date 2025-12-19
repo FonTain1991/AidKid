@@ -1,4 +1,6 @@
 import { FamilyMember, Medicine, MedicineKit, Reminder, ReminderMedicine, ShoppingList } from '@/services/models'
+import { SubscriptionStatus } from '@/lib'
+import type { PurchasesOffering } from 'react-native-purchases'
 import { create } from 'zustand'
 
 interface AppStore {
@@ -54,6 +56,19 @@ interface AppStore {
   localBackups: {
     isRefetching: boolean
     setIsRefetching: (isRefetching: boolean) => void
+  }
+  // Subscription
+  subscription: {
+    isPremium: boolean
+    setIsPremium: (isPremium: boolean) => void
+    isLoading: boolean
+    setIsLoading: (isLoading: boolean) => void
+    error: Error | null
+    setError: (error: Error | null) => void
+    status: SubscriptionStatus | null
+    setStatus: (status: SubscriptionStatus | null) => void
+    offerings: PurchasesOffering | null
+    setOfferings: (offerings: PurchasesOffering | null) => void
   }
 }
 
@@ -140,5 +155,18 @@ export const useAppStore = create<AppStore>()(set => ({
   localBackups: {
     isRefetching: false,
     setIsRefetching: isRefetching => set(({ localBackups }) => ({ localBackups: { ...localBackups, isRefetching } })),
+  },
+  // Subscription
+  subscription: {
+    isPremium: false,
+    setIsPremium: isPremium => set(({ subscription }) => ({ subscription: { ...subscription, isPremium } })),
+    isLoading: true,
+    setIsLoading: isLoading => set(({ subscription }) => ({ subscription: { ...subscription, isLoading } })),
+    error: null,
+    setError: error => set(({ subscription }) => ({ subscription: { ...subscription, error } })),
+    status: null,
+    setStatus: status => set(({ subscription }) => ({ subscription: { ...subscription, status } })),
+    offerings: null,
+    setOfferings: offerings => set(({ subscription }) => ({ subscription: { ...subscription, offerings } })),
   }
 }))

@@ -5,3 +5,4 @@ export { medicineModel, type Medicine, type CreateMedicineData } from './Medicin
 export { reminderModel, type Reminder, type CreateReminderData } from './ReminderModel'
 export { reminderMedicineModel, type ReminderMedicine, type CreateReminderMedicineData } from './ReminderMedicineModel'
 export { shoppingListModel, type ShoppingList, type CreateShoppingListData } from './ShoppingListModel'
+export { medicineUsageModel, type MedicineUsage, type CreateMedicineUsageData } from './MedicineUsageModel'

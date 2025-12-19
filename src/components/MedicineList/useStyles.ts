@@ -26,7 +26,17 @@ export function useStyles() {
       name: {
         fontFamily: FONT_FAMILY.medium,
         fontSize: FONT_SIZE.xl,
-        color: colors.text
+        color: colors.text,
+        marginBottom: SPACING.xs / 2,
+      },
+      infoRow: {
+        flexDirection: 'row',
+        gap: SPACING.md,
+        flexWrap: 'wrap',
+      },
+      infoText: {
+        fontFamily: FONT_FAMILY.regular,
+        fontSize: FONT_SIZE.sm,
       },
       medicinesCount: {
         fontFamily: FONT_FAMILY.regular,
