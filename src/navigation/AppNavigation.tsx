@@ -1,6 +1,6 @@
 import { useEvent } from '@/hooks'
 import { notificationService } from '@/lib'
-import { AddReminderScreen, AddShoppingItemScreen, BackupScreen, BarcodeScannerScreen, FamilyMemberScreen, FamilyMembersScreen, MedicineKitScreen, MedicineListScreen, MedicineScreen, NotificationSettingsScreen, OnboardingScreen, QuickIntakeScreen, RemindersScreen, ShoppingListScreen, TodayScreen } from '@/screens'
+import { AddReminderScreen, AddShoppingItemScreen, BackupScreen, BarcodeScannerScreen, FamilyMemberScreen, FamilyMembersScreen, MedicineKitScreen, MedicineListScreen, MedicineScreen, NotificationSettingsScreen, OnboardingScreen, QuickIntakeScreen, RemindersScreen, ShoppingListScreen, SubscribeScreen, SubscriptionScreen, TodayScreen } from '@/screens'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
 import { CompositeNavigationProp, NavigatorScreenParams } from '@react-navigation/native'
@@ -37,6 +37,8 @@ export type MainList = {
   addShoppingItem: undefined
   familyMembers: undefined
   backup: undefined
+  subscription: undefined
+  subscribe: undefined
 }
 
 export type SplashList = {
@@ -121,6 +123,8 @@ export function AppNavigation() {
       <MainStack.Screen name='addShoppingItem' component={AddShoppingItemScreen} />
       <MainStack.Screen name='familyMembers' component={FamilyMembersScreen} />
       <MainStack.Screen name='backup' component={BackupScreen} />
+      <MainStack.Screen name='subscription' component={SubscriptionScreen} />
+      <MainStack.Screen name='subscribe' component={SubscribeScreen} />
     </MainStack.Navigator>
   )
 }

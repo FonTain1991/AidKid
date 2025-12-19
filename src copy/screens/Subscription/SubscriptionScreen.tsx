@@ -101,7 +101,7 @@ export function SubscriptionScreen() {
         ]
       )
     } catch (err: any) {
-      if (err.message === 'Purchase cancelled by user') {
+      if (err.message === 'Покупка отменена пользователем') {
         return
       }
       Alert.alert('Ошибка', 'Не удалось оформить подписку. Попробуйте еще раз.')

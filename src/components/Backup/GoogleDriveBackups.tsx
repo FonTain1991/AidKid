@@ -1,3 +1,4 @@
+import { SPACING } from '@/constants'
 import { useEvent } from '@/hooks'
 import { backupService, DriveFile, googleDriveService } from '@/lib'
 import { useTheme } from '@/providers/theme'
@@ -5,10 +6,9 @@ import { useAppStore } from '@/store'
 import NetInfo from '@react-native-community/netinfo'
 import { memo, useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, Pressable, View } from 'react-native'
+import { Row } from '../Layout'
 import { Text } from '../Text'
 import { useStyles } from './hooks'
-import { Row } from '../Layout'
-import { SPACING } from '@/constants'
 
 const WEB_CLIENT_ID = '464124582533-2ctqatjjbk7h1lgu4d1facpe017p167j.apps.googleusercontent.com'
 

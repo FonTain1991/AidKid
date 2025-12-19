@@ -4,7 +4,6 @@ import { useTheme } from '@/providers/theme'
 import { useAppStore } from '@/store'
 import { memo, useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, Pressable, View } from 'react-native'
-import Share from 'react-native-share'
 import { Text } from '../Text'
 import { useStyles } from './hooks'
 
@@ -91,20 +90,41 @@ export const LocalBackups = memo(() => {
     ])
   })
 
-  const handleShareBackup = useEvent(async (backup: LocalBackup) => {
-    try {
-      await Share.open({
-        url: `file://${backup.path}`,
-        type: 'application/zip',
-        title: 'Поделиться резервной копией',
-      })
-    } catch (error: any) {
-      console.log(error)
-      if (error.message !== 'User did not share') {
-        Alert.alert('Ошибка', 'Не удалось поделиться файлом')
-      }
-    }
-  })
+  // const handleShareBackup = useEvent(async (backup: LocalBackup) => {
+  //   try {
+  //     // Проверяем, что путь не пустой
+  //     if (!backup.path) {
+  //       Alert.alert('Ошибка', 'Путь к файлу не указан')
+  //       return
+  //     }
+
+  //     // Проверяем, что файл существует
+  //     const fileExists = await RNFS.exists(backup.path)
+  //     if (!fileExists) {
+  //       Alert.alert('Ошибка', 'Файл не найден')
+  //       return
+  //     }
+
+  //     // Убираем file:// префикс, если он есть
+  //     const cleanPath = backup.path.replace(/^file:\/\//, '')
+
+  //     // Для Android используем filepath, для iOS - url с file://
+  //     const shareOptions: any = {
+  //       type: 'application/zip',
+  //       title: 'Поделиться резервной копией',
+  //       url: cleanPath,
+  //     }
+
+  //     // shareOptions.filepath = cleanPath
+
+  //     await Share.open(shareOptions)
+  //   } catch (error: any) {
+  //     console.log(error)
+  //     if (error.message !== 'User did not share') {
+  //       Alert.alert('Ошибка', 'Не удалось поделиться файлом')
+  //     }
+  //   }
+  // })
 
   const handleRestoreBackup = useEvent((backup: LocalBackup) => {
     Alert.alert(
@@ -160,7 +180,7 @@ export const LocalBackups = memo(() => {
         localBackups.setIsRefetching(false)
       })
     }
-  }, [localBackups.isRefetching, loadData])
+  }, [localBackups.isRefetching, localBackups, loadData])
 
   return (
     <>
@@ -200,12 +220,12 @@ export const LocalBackups = memo(() => {
                 >
                   <Text style={styles.actionButtonText}>Восстановить</Text>
                 </Pressable>
-                <Pressable
+                {/* <Pressable
                   style={[styles.actionButton, { backgroundColor: colors.primary }]}
                   onPress={() => handleShareBackup(backup)}
                 >
                   <Text style={styles.actionButtonText}>Поделиться</Text>
-                </Pressable>
+                </Pressable> */}
                 {googleDrive.isSignedIn && (
                   <Pressable
                     style={[styles.actionButton, { backgroundColor: '#4285F4' }]}

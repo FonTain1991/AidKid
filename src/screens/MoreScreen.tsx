@@ -9,10 +9,12 @@ import { useMemo } from 'react'
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import DeviceInfo from 'react-native-device-info'
 import { displayName } from '../../app.json'
+import { useSubscription } from '@/components/Subscription/hooks/useSubscription'
 
 export function MoreScreen() {
   const { colors } = useTheme()
   const { navigate } = useMyNavigation()
+  const { isPremium } = useSubscription()
 
   useScreenProperties({
     navigationOptions: {
@@ -22,7 +24,6 @@ export function MoreScreen() {
   })
 
   useNavigationBarColor()
-
   const handleShowOnboarding = useEvent(() => {
     Alert.alert(
       'Показать знакомство',
@@ -72,7 +73,7 @@ export function MoreScreen() {
       description: 'Откройте все возможности приложения',
       icon: '💎',
       onPress: () => {
-        navigate('Subscription')
+        navigate('subscription')
       },
     },
     {
@@ -104,7 +105,11 @@ export function MoreScreen() {
       description: 'Синхронизация и экспорт данных',
       icon: '💾',
       onPress: () => {
-        navigate('backup')
+        if (isPremium) {
+          navigate('backup')
+          return
+        }
+        navigate('subscribe')
       },
     },
     {
