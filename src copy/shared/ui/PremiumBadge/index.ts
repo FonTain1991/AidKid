@@ -1,2 +1,0 @@
-export { PremiumBadge } from './PremiumBadge'
-

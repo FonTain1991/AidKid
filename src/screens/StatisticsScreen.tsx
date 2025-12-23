@@ -164,10 +164,88 @@ export function StatisticsScreen() {
     })
   }, [usageHistory, medicines, medicineKits, familyMembers])
 
+  // Фильтруем историю по выбранному периоду для премиум статистики
+  const filteredHistoryForPremium = useMemo(() => {
+    if (!isPremium) {
+      return []
+    }
+
+    const now = dayjs()
+    let startDate: dayjs.Dayjs
+
+    if (selectedPeriod === 'week') {
+      // Последние 7 дней
+      startDate = now.subtract(7, 'day').startOf('day')
+    } else if (selectedPeriod === 'month') {
+      // Последние 30 дней
+      startDate = now.subtract(30, 'day').startOf('day')
+    } else {
+      // Для "все время" не фильтруем, возвращаем все
+      return usageHistory
+    }
+
+    const filtered = usageHistory.filter(usage => {
+      const usageDate = dayjs(usage.usageDate).startOf('day')
+      return usageDate.isAfter(startDate) || usageDate.isSame(startDate, 'day')
+    })
+
+    return filtered
+  }, [isPremium, usageHistory, selectedPeriod])
+
+  // Статистика по дням (график приема по дням)
+  const dayStats = useMemo(() => {
+    if (!isPremium || filteredHistoryForPremium.length === 0) {
+      return []
+    }
+
+    const now = dayjs()
+    let daysCount = 7
+    let dateFormat = 'DD.MM'
+
+    if (selectedPeriod === 'month') {
+      daysCount = 30
+    } else if (selectedPeriod === 'all') {
+      // Для "все время" берем все дни из истории
+      if (filteredHistoryForPremium.length === 0) {
+        return []
+      }
+      const firstDate = dayjs(filteredHistoryForPremium[filteredHistoryForPremium.length - 1].usageDate).startOf('day')
+      const lastDate = dayjs(filteredHistoryForPremium[0].usageDate).startOf('day')
+      daysCount = lastDate.diff(firstDate, 'day') + 1
+      dateFormat = daysCount > 30 ? 'DD.MM' : 'DD.MM'
+    }
+
+    // Создаем объект для подсчета приемов по дням
+    const days: Record<string, number> = {}
+    
+    // Инициализируем все дни нулями
+    for (let i = 0; i < daysCount; i++) {
+      const date = now.subtract(i, 'day').startOf('day')
+      const key = date.format('YYYY-MM-DD')
+      days[key] = 0
+    }
+
+    // Подсчитываем приемы
+    filteredHistoryForPremium.forEach(usage => {
+      const dateKey = dayjs(usage.usageDate).startOf('day').format('YYYY-MM-DD')
+      if (days[dateKey] !== undefined) {
+        days[dateKey]++
+      }
+    })
+
+    // Преобразуем в массив и сортируем по дате (от старых к новым)
+    return Object.entries(days)
+      .map(([dateKey, count]) => ({
+        date: dateKey,
+        count,
+        label: dayjs(dateKey).format(dateFormat),
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+  }, [isPremium, filteredHistoryForPremium, selectedPeriod])
 
   // Статистика по часам (премиум)
   const hourStats = useMemo(() => {
-    if (!isPremium || usageHistory.length === 0) {
+    if (!isPremium || filteredHistoryForPremium.length === 0) {
       return []
     }
 
@@ -176,7 +254,7 @@ export function StatisticsScreen() {
       hours[i] = 0
     }
 
-    usageHistory.forEach(usage => {
+    filteredHistoryForPremium.forEach(usage => {
       const hour = dayjs(usage.usageDate).hour()
       hours[hour] = (hours[hour] || 0) + 1
     })
@@ -185,11 +263,11 @@ export function StatisticsScreen() {
       hour: Number(hour),
       count,
     }))
-  }, [isPremium, usageHistory])
+  }, [isPremium, filteredHistoryForPremium])
 
   // Статистика по дням недели (премиум)
   const weekdayStats = useMemo(() => {
-    if (!isPremium || usageHistory.length === 0) {
+    if (!isPremium || filteredHistoryForPremium.length === 0) {
       return []
     }
 
@@ -200,7 +278,7 @@ export function StatisticsScreen() {
       weekdays[i] = 0
     }
 
-    usageHistory.forEach(usage => {
+    filteredHistoryForPremium.forEach(usage => {
       const weekday = dayjs(usage.usageDate).day()
       weekdays[weekday] = (weekdays[weekday] || 0) + 1
     })
@@ -210,16 +288,16 @@ export function StatisticsScreen() {
       name: weekdayNames[Number(weekday)],
       count,
     }))
-  }, [isPremium, usageHistory])
+  }, [isPremium, filteredHistoryForPremium])
 
   // Статистика по аптечкам (премиум)
   const kitStats = useMemo(() => {
-    if (!isPremium || usageHistory.length === 0) {
+    if (!isPremium || filteredHistoryForPremium.length === 0) {
       return []
     }
 
     const kits: Record<number, number> = {}
-    usageHistory.forEach(usage => {
+    filteredHistoryForPremium.forEach(usage => {
       const medicine = medicines.find(m => m.id === usage.medicineId)
       if (medicine?.medicineKitId) {
         kits[medicine.medicineKitId] = (kits[medicine.medicineKitId] || 0) + 1
@@ -239,16 +317,16 @@ export function StatisticsScreen() {
         }
       })
       .sort((a, b) => b.count - a.count)
-  }, [isPremium, usageHistory, medicines, medicineKits])
+  }, [isPremium, filteredHistoryForPremium, medicines, medicineKits])
 
   // Топ лекарств (премиум)
   const topMedicines = useMemo(() => {
-    if (!isPremium || usageHistory.length === 0) {
+    if (!isPremium || filteredHistoryForPremium.length === 0) {
       return []
     }
 
     const medicineCounts: Record<number, number> = {}
-    usageHistory.forEach(usage => {
+    filteredHistoryForPremium.forEach(usage => {
       medicineCounts[usage.medicineId] = (medicineCounts[usage.medicineId] || 0) + 1
     })
 
@@ -263,7 +341,7 @@ export function StatisticsScreen() {
       })
       .sort((a, b) => b.count - a.count)
       .slice(0, 5)
-  }, [isPremium, usageHistory, medicines])
+  }, [isPremium, filteredHistoryForPremium, medicines])
 
   const statCards = useMemo(() => [
     {
@@ -876,6 +954,37 @@ const styles = StyleSheet.create({
   },
   historyQuantity: {
     fontSize: FONT_SIZE.md,
+    fontWeight: '600',
+  },
+  dayStatsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'flex-end',
+    minHeight: 150,
+    paddingVertical: SPACING.md,
+  },
+  dayStatItem: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: 2,
+  },
+  dayStatBar: {
+    width: '100%',
+    height: 100,
+    justifyContent: 'flex-end',
+    marginBottom: SPACING.xs,
+  },
+  dayStatBarFill: {
+    width: '100%',
+    borderRadius: SPACING.xs / 2,
+    minHeight: 2,
+  },
+  dayStatLabel: {
+    fontSize: FONT_SIZE.xs,
+    marginBottom: SPACING.xs / 2,
+  },
+  dayStatValue: {
+    fontSize: FONT_SIZE.xs,
     fontWeight: '600',
   },
 })

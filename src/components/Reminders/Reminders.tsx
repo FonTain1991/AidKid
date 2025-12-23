@@ -4,7 +4,7 @@ import { notificationService } from '@/lib'
 import { Reminder } from '@/services/models'
 import { useAppStore } from '@/store'
 import { memo, useEffect, useMemo, useState } from 'react'
-import { Alert, Pressable, TouchableOpacity, View } from 'react-native'
+import { Alert, TouchableOpacity, View } from 'react-native'
 import { PaddingHorizontal } from '../Layout'
 import { Text } from '../Text'
 import { useStyles } from './useStyles'
@@ -188,6 +188,11 @@ export const Reminders = memo(() => {
               </View>
 
               <View style={styles.reminderDetails}>
+                {reminder.description && (
+                  <Text style={styles.reminderDescription}>
+                    {reminder.description}
+                  </Text>
+                )}
                 <View style={styles.reminderTimesContainer}>
                   <Text style={styles.reminderTimesLabel}>
                     Время приемов:
@@ -199,7 +204,7 @@ export const Reminders = memo(() => {
                         style={styles.timeChip}
                       >
                         <Text style={styles.timeChipText}>
-                          {val.hour}:{val.minute}
+                          {String(val.hour).padStart(2, '0')}:{String(val.minute).padStart(2, '0')}
                         </Text>
                       </View>
                     ))}

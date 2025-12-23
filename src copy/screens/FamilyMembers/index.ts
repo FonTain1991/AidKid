@@ -1,2 +1,0 @@
-export { FamilyMembersScreen } from './FamilyMembersScreen'
-

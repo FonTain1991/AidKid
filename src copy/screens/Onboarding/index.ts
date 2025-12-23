@@ -1,2 +1,0 @@
-export { OnboardingScreen } from './OnboardingScreen'
-

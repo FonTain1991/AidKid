@@ -1,2 +1,0 @@
-export { SubscriptionScreen } from './SubscriptionScreen'
-

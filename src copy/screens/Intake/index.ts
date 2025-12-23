@@ -1,1 +1,0 @@
-export { IntakeScreen } from './IntakeScreen'

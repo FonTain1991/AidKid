@@ -1,1 +1,0 @@
-export { LIGHT_COLORS } from './light'

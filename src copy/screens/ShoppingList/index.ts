@@ -1,2 +1,0 @@
-export { ShoppingListScreen } from './ShoppingListScreen'
-

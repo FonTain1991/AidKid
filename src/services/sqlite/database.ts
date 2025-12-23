@@ -102,6 +102,8 @@ class DatabaseService {
         time TEXT NOT NULL,
         isActive BOOLEAN DEFAULT 1,
         createdAt TEXT NOT NULL,
+        description TEXT,
+        dosage TEXT,
         FOREIGN KEY (familyMemberId) REFERENCES family_members (id) ON DELETE SET NULL
       )
     `)
@@ -116,22 +118,6 @@ class DatabaseService {
         FOREIGN KEY (medicineId) REFERENCES medicines (id) ON DELETE CASCADE
       )
     `)
-
-    // // Таблица приемов по напоминаниям
-    // await this.db.executeSql(`
-    //   CREATE TABLE IF NOT EXISTS reminder_intakes (
-    //     id TEXT PRIMARY KEY,
-    //     reminder_id TEXT NOT NULL,
-    //     scheduled_date TEXT NOT NULL,
-    //     scheduled_time TEXT NOT NULL,
-    //     is_taken BOOLEAN DEFAULT 0,
-    //     taken_at TEXT,
-    //     usage_id TEXT,
-    //     created_at TEXT NOT NULL,
-    //     FOREIGN KEY (reminder_id) REFERENCES reminders (id) ON DELETE CASCADE,
-    //     FOREIGN KEY (usage_id) REFERENCES medicine_usage (id) ON DELETE SET NULL
-    //   )
-    // `)
 
     // Таблица использования лекарств
     await this.db.executeSql(`

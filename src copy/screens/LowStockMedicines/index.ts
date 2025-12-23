@@ -1,2 +1,0 @@
-export { LowStockMedicinesScreen } from './LowStockMedicinesScreen'
-

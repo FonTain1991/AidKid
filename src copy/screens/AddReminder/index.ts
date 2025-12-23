@@ -1,2 +1,0 @@
-export { AddReminderScreen } from './AddReminderScreen'
-

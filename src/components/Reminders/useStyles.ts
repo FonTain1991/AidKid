@@ -139,5 +139,9 @@ export const useStyles = () => {
       textAlign: 'center',
       marginBottom: SPACING.xl,
     },
+    reminderDescription: {
+      fontSize: FONT_SIZE.sm,
+      color: colors.muted
+    },
   })
 }

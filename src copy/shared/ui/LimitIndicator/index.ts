@@ -1,2 +1,0 @@
-export { LimitIndicator } from './LimitIndicator'
-

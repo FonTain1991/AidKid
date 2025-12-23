@@ -1,2 +1,0 @@
-export { BackupScreen } from './BackupScreen'
-

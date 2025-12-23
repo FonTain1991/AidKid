@@ -1,1 +1,0 @@
-export { medicineService } from './medicineService'

@@ -8,8 +8,11 @@ export interface Reminder {
   timesPerDay: number
   time: string
   isActive: boolean
+  dosage: string
   createdAt?: number
   updatedAt?: number
+  description?: string
+  dosage?: string
 }
 
 export interface CreateReminderData {
@@ -19,6 +22,8 @@ export interface CreateReminderData {
   timesPerDay: number
   time: string
   isActive: boolean
+  description?: string
+  dosage: string
 }
 
 class ReminderModel extends BaseModel {
@@ -29,8 +34,8 @@ class ReminderModel extends BaseModel {
 
     const [result] = await this.db.executeSql(`
       INSERT INTO reminders (
-        id, familyMemberId, title, frequency, timesPerDay, time, isActive, createdAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        id, familyMemberId, title, frequency, timesPerDay, time, isActive, description, createdAt, dosage
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       null,
       data.familyMemberId,
@@ -39,7 +44,9 @@ class ReminderModel extends BaseModel {
       data.timesPerDay,
       data.time,
       data.isActive,
-      Date.now()
+      data.description,
+      Date.now(),
+      data.dosage
     ]).catch(err => {
       console.error(err)
       throw err
@@ -68,7 +75,9 @@ class ReminderModel extends BaseModel {
         time: row.time,
         isActive: row.isActive,
         createdAt: row.createdAt,
-        updatedAt: row.updatedAt
+        updatedAt: row.updatedAt,
+        description: row.description,
+        dosage: row.dosage
       })
     }
 
@@ -98,7 +107,9 @@ class ReminderModel extends BaseModel {
       time: row.time,
       isActive: row.isActive,
       createdAt: row.createdAt,
-      updatedAt: row.updatedAt
+      updatedAt: row.updatedAt,
+      description: row.description,
+      dosage: row.dosage
     }
   }
 
@@ -107,7 +118,7 @@ class ReminderModel extends BaseModel {
       throw new Error('Database not initialized')
     }
 
-    const allowedFields = ['familyMemberId', 'title', 'frequency', 'timesPerDay', 'time', 'isActive']
+    const allowedFields = ['familyMemberId', 'title', 'frequency', 'timesPerDay', 'time', 'isActive', 'description', 'dosage']
     const updateFields: string[] = []
     const updateValues: any[] = []
 

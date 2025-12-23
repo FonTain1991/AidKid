@@ -1,2 +1,0 @@
-export { MedicinePicker } from './MedicinePicker'
-

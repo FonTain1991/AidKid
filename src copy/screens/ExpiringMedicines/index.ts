@@ -1,2 +1,0 @@
-export { ExpiringMedicinesScreen } from './ExpiringMedicinesScreen'
-

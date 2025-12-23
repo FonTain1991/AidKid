@@ -1,2 +1,0 @@
-export { StatisticsScreen } from './StatisticsScreen'
-
