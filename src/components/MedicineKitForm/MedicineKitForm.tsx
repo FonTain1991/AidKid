@@ -1,11 +1,10 @@
 import { SPACING } from '@/constants'
-import { useEvent, useRoute } from '@/hooks'
+import { useEvent, useRoute, useMyNavigation } from '@/hooks'
 import { useMedicineKit } from '@/hooks/useMedicineKit'
 import { MedicineKit } from '@/services/models'
 import { useAppStore } from '@/store'
-import { useNavigation } from '@react-navigation/native'
 import { memo, useEffect, useState } from 'react'
-import { ScrollView } from 'react-native'
+import { Alert, ScrollView } from 'react-native'
 import { Button } from '../Button'
 import { ColorPicker, Textarea, TextInput } from '../Form'
 import { Padding } from '../Layout'
@@ -20,7 +19,7 @@ const INITIAL_MEDICINE_KIT: MedicineKit = {
 
 export const MedicineKitForm = memo(() => {
   const { params } = useRoute()
-  const { goBack } = useNavigation()
+  const navigation = useMyNavigation()
   const { medicineKits } = useAppStore(state => state)
 
   const { createMedicineKit, updateMedicineKit } = useMedicineKit()
@@ -51,17 +50,31 @@ export const MedicineKitForm = memo(() => {
       return
     }
     setErrorName(null)
-    if (params?.medicineKitId) {
-      await updateMedicineKit({
-        id: params?.medicineKitId,
-        ...medicineKit,
-      })
-    } else {
-      await createMedicineKit(medicineKit)
-      setMedicineKit(INITIAL_MEDICINE_KIT)
+    try {
+      if (params?.medicineKitId) {
+        await updateMedicineKit({
+          id: params?.medicineKitId,
+          ...medicineKit,
+        })
+      } else {
+        await createMedicineKit(medicineKit)
+        setMedicineKit(INITIAL_MEDICINE_KIT)
+      }
+      navigation.goBack()
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Не удалось создать аптечку'
+      Alert.alert(
+        'Лимит достигнут',
+        errorMessage,
+        [
+          { text: 'Отмена', style: 'cancel' },
+          {
+            text: 'Оформить Premium',
+            onPress: () => navigation.navigate('subscription'),
+          },
+        ]
+      )
     }
-
-    goBack()
   })
 
   useEffect(() => {

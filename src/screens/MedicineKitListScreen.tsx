@@ -10,6 +10,7 @@ import { useEvent, useNavigationBarColor, useScreenProperties } from '@/hooks'
 import { getLimitsInfo } from '@/lib'
 import { useTheme } from '@/providers/theme'
 import { useAppStore } from '@/store'
+import { useFocusEffect } from '@react-navigation/native'
 import { useEffect, useState } from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
 
@@ -17,7 +18,7 @@ export function MedicineKitListScreen() {
   const { colors } = useTheme()
   const [searchText, setSearchText] = useState('')
   const [limitsInfo, setLimitsInfo] = useState<any>(null)
-  const { medicineKits } = useAppStore(state => state)
+  const { medicineKits, medicines } = useAppStore(state => state)
 
   useScreenProperties({
     navigationOptions: {
@@ -49,9 +50,15 @@ export function MedicineKitListScreen() {
     }
   })
 
+  // Обновляем лимиты при фокусе экрана
+  useFocusEffect(useEvent(() => {
+    loadLimitsInfo()
+  }))
+
+  // Обновляем лимиты при изменении количества аптечек/лекарств
   useEffect(() => {
     loadLimitsInfo()
-  }, [loadLimitsInfo])
+  }, [loadLimitsInfo, medicineKits.length, medicines.length])
 
   if (!medicineKits.length) {
     return (

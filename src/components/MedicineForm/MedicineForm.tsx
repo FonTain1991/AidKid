@@ -7,7 +7,7 @@ import { useTheme } from '@/providers/theme'
 import { Medicine } from '@/services/models'
 import { useAppStore } from '@/store'
 import { memo, useEffect, useState } from 'react'
-import { Pressable, StyleSheet, View } from 'react-native'
+import { Alert, Pressable, StyleSheet, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { Button } from '../Button'
 import { FormItemWrapper, List, Textarea, TextInput } from '../Form'
@@ -132,7 +132,23 @@ export const MedicineForm = memo(() => {
       }
       goBack()
     } catch (error) {
-      console.error(error)
+      const errorMessage = error instanceof Error ? error.message : 'Не удалось создать лекарство'
+      // Проверяем, это ошибка лимита или другая ошибка
+      if (errorMessage.includes('лимит') || errorMessage.includes('премиум')) {
+        Alert.alert(
+          'Лимит достигнут',
+          errorMessage,
+          [
+            { text: 'Отмена', style: 'cancel' },
+            {
+              text: 'Оформить Premium',
+              onPress: () => navigate('subscription'),
+            },
+          ]
+        )
+      } else {
+        console.error(error)
+      }
     }
   })
 

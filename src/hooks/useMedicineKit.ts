@@ -3,6 +3,7 @@ import { kitModel } from '@/services/models/KitModel'
 import { useAppStore } from '@/store'
 import { useState } from 'react'
 import { useEvent } from './useEvent'
+import { canCreateKit, formatLimitMessage } from '@/lib/subscriptionLimits'
 
 type CreateMedicineKitPayload = CreateKitData
 
@@ -31,6 +32,15 @@ export function useMedicineKit() {
     setError(null)
 
     try {
+      // Проверяем лимит перед созданием
+      const limitCheck = await canCreateKit()
+      if (!limitCheck.allowed) {
+        const errorMessage = formatLimitMessage(limitCheck)
+        const error = new Error(errorMessage)
+        setError(error)
+        throw error
+      }
+
       const kit = await kitModel.create(data)
       if (!kit) {
         throw new Error('Failed to create medicine kit')
@@ -39,6 +49,7 @@ export function useMedicineKit() {
       return kit
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to create medicine kit'))
+      throw err
     } finally {
       setIsLoading(false)
     }

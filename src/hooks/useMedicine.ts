@@ -2,6 +2,7 @@ import { CreateMedicineData, medicineModel } from '@/services/models'
 import { useAppStore } from '@/store'
 import { useState } from 'react'
 import { useEvent } from './useEvent'
+import { canCreateMedicine, formatLimitMessage } from '@/lib/subscriptionLimits'
 
 type CreateMedicinePayload = CreateMedicineData
 
@@ -30,6 +31,15 @@ export function useMedicine() {
     setError(null)
 
     try {
+      // Проверяем лимит перед созданием
+      const limitCheck = await canCreateMedicine()
+      if (!limitCheck.allowed) {
+        const errorMessage = formatLimitMessage(limitCheck)
+        const error = new Error(errorMessage)
+        setError(error)
+        throw error
+      }
+
       const medicine = await medicineModel.create(data)
       if (!medicine) {
         throw new Error('Failed to create medicine')
@@ -38,6 +48,7 @@ export function useMedicine() {
       return medicine
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to create medicine'))
+      throw err
     } finally {
       setIsLoading(false)
     }
