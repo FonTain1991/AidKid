@@ -1,3 +1,4 @@
+import { Empty } from '@/components/Empty'
 import { FloatingButton } from '@/components/FloatingButton'
 import { Background, Flex, PaddingHorizontal, SafeAreaView } from '@/components/Layout'
 import { LimitIndicator } from '@/components/LimitIndicator'
@@ -5,9 +6,10 @@ import { MedicineKitList } from '@/components/MedicineKitList'
 import { MedicineList } from '@/components/MedicineList'
 import { MedicineLowQuantity } from '@/components/MedicineLowQuantity'
 import { SPACING } from '@/constants'
-import { useNavigationBarColor, useScreenProperties } from '@/hooks'
+import { useEvent, useNavigationBarColor, useScreenProperties } from '@/hooks'
 import { getLimitsInfo } from '@/lib'
 import { useTheme } from '@/providers/theme'
+import { useAppStore } from '@/store'
 import { useEffect, useState } from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
 
@@ -15,6 +17,7 @@ export function MedicineKitListScreen() {
   const { colors } = useTheme()
   const [searchText, setSearchText] = useState('')
   const [limitsInfo, setLimitsInfo] = useState<any>(null)
+  const { medicineKits } = useAppStore(state => state)
 
   useScreenProperties({
     navigationOptions: {
@@ -37,19 +40,33 @@ export function MedicineKitListScreen() {
 
   useNavigationBarColor()
 
-  const loadLimitsInfo = async () => {
+  const loadLimitsInfo = useEvent(async () => {
     try {
       const info = await getLimitsInfo()
-      console.log(info)
       setLimitsInfo(info)
     } catch (error) {
       console.error('Failed to load limits info:', error)
     }
-  }
+  })
 
   useEffect(() => {
     loadLimitsInfo()
-  }, [])
+  }, [loadLimitsInfo])
+
+  if (!medicineKits.length) {
+    return (
+      <SafeAreaView edges={['bottom']}>
+        <Background>
+          <Empty
+            icon='box'
+            title='Аптечки'
+            description='Здесь будут отображаться ваши аптечки'
+          />
+        </Background>
+        <FloatingButton />
+      </SafeAreaView>
+    )
+  }
 
   return (
     <SafeAreaView edges={[]}>

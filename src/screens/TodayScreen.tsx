@@ -1,4 +1,3 @@
-import { AboutScreen } from '@/components/AboutScreen'
 import { Flex, SafeAreaView } from '@/components/Layout'
 import { Today } from '@/components/Today'
 import { useNavigationBarColor, useScreenProperties } from '@/hooks'
@@ -25,10 +24,6 @@ export function TodayScreen() {
           keyboardShouldPersistTaps='handled'
         >
           <Today />
-          {/* <AboutScreen
-            title='О разделе "Сегодня"'
-            text={'• Здесь отображаются все запланированные приемы на сегодня\n• Нажмите на прием, чтобы отметить его выполненным\n• Количество лекарства автоматически уменьшится\n• Приемы показываются на основе настроенных напоминаний'}
-          /> */}
         </ScrollView>
       </Flex>
     </SafeAreaView >

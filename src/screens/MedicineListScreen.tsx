@@ -34,7 +34,18 @@ export function MedicineListScreen() {
   }, [medicineKits, medicines, params?.medicineKitId])
 
   if (isEmpty) {
-    return <Empty icon='box' title='Аптечка пуста' description='Добавьте лекарства в аптечку' />
+    return (
+      <SafeAreaView edges={['bottom']}>
+        <Background>
+          <Empty
+            icon='box'
+            title='Аптечка пуста'
+            description='Добавьте лекарства в аптечку'
+          />
+        </Background>
+        <FloatingButton />
+      </SafeAreaView>
+    )
   }
 
   return (

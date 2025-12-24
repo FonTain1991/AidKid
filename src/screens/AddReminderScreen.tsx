@@ -18,10 +18,10 @@ export function AddReminderScreen() {
   useNavigationBarColor()
 
   return (
-    <SafeAreaView edges={['bottom']} style={styles.container}>
+    <SafeAreaView edges={['bottom']}>
       <KeyboardAwareScrollView
         keyboardShouldPersistTaps='handled'
-        nestedScrollEnabled 
+        nestedScrollEnabled
         style={styles.scroll}
       >
         <AddReminder />

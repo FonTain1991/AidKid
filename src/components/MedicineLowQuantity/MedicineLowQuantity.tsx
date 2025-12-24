@@ -32,7 +32,7 @@ export const MedicineLowQuantity = memo(() => {
   }, [medicines])
 
   return (
-    <View style={styles.alertsContainer}>
+    <View style={(!!expiringCount || !!lowStockCount) ? styles.alertsContainer : undefined}>
       {expiringCount > 0 && (
         <Pressable
           style={[styles.alertCard, { backgroundColor: '#FFF3E0', borderColor: '#FF9800' }]}

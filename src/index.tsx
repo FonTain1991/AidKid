@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
 import { useRef } from 'react'
 import type { MainList } from './navigation/AppNavigation'
+import { StatusBar } from 'react-native'
 
 export default function App() {
   useAppInit()
@@ -16,6 +17,7 @@ export default function App() {
 
   return (
     <GestureHandlerRootView>
+      <StatusBar barStyle='dark-content' backgroundColor='#FFFFFF' />
       <ThemeProvider>
         <SafeAreaProvider>
           <BottomSheetModalProvider>

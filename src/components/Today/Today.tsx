@@ -2,7 +2,7 @@ import { memo, useMemo, useState, useEffect } from 'react'
 import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native'
 import { useAppStore } from '@/store'
 import { Text } from '../Text'
-import { PaddingHorizontal } from '../Layout'
+import { Flex, PaddingHorizontal } from '../Layout'
 import { useTheme } from '@/providers/theme'
 import { RADIUS, SPACING } from '@/constants'
 import { FONT_SIZE, FONT_WEIGHT } from '@/constants/font'
@@ -251,17 +251,19 @@ export const Today = memo(() => {
   if (visibleReminders.length === 0) {
     return (
       <PaddingHorizontal>
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>📅</Text>
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>
-            {todayReminders.length > 0 ? 'Все приемы выполнены!' : 'Нет напоминаний на сегодня'}
-          </Text>
-          <Text style={[styles.emptyText, { color: colors.muted }]}>
-            {todayReminders.length > 0
-              ? `Вы выполнили все ${todayReminders.length} ${todayReminders.length === 1 ? 'прием' : 'приема'} на сегодня`
-              : 'На сегодня не запланировано ни одного приема лекарств'}
-          </Text>
-        </View>
+        <Flex style={{ justifyContent: 'center', alignItems: 'center' }}>
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyIcon}>📅</Text>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              {todayReminders.length > 0 ? 'Все приемы выполнены!' : 'Нет напоминаний на сегодня'}
+            </Text>
+            <Text style={[styles.emptyText, { color: colors.muted }]}>
+              {todayReminders.length > 0
+                ? `Вы выполнили все ${todayReminders.length} ${todayReminders.length === 1 ? 'прием' : 'приема'} на сегодня`
+                : 'На сегодня не запланировано ни одного приема лекарств'}
+            </Text>
+          </View>
+        </Flex>
       </PaddingHorizontal>
     )
   }

@@ -18,7 +18,7 @@ export const MedicineKitDelete = memo(() => {
       {
         text: 'Удалить', style: 'destructive',
         onPress: async () => {
-          await deleteMedicineKit(String(params?.medicineKitId))
+          await deleteMedicineKit(params?.medicineKitId)
           goBack()
         }
       }

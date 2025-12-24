@@ -10,6 +10,7 @@ import { memo, useEffect, useMemo, useState } from 'react'
 import { Alert } from 'react-native'
 import { AboutScreen } from '../AboutScreen'
 import { Button } from '../Button'
+import { EmptyList } from '../EmptyList'
 import { FormItemWrapper, List, MultiList, Textarea, TextInput } from '../Form'
 import { Counter } from '../Form/Counter'
 import { DatePicker } from '../Form/DatePicker'
@@ -373,13 +374,20 @@ export const AddReminder = memo(() => {
     <>
       <PaddingHorizontal>
         <FormItemWrapper>
-          <MultiList
+          <EmptyList
+            onPress={() => navigation.navigate('medicine')}
+            title='Лекарства не найдены.'
             options={medicinesOptions}
-            fieldName='Лекарство'
-            value={reminderForm.selectedMedicineIds}
-            onChange={onMedicineChange}
             error={errors?.medicine}
-          />
+          >
+            <MultiList
+              options={medicinesOptions}
+              fieldName='Лекарство'
+              value={reminderForm.selectedMedicineIds}
+              onChange={onMedicineChange}
+              error={errors?.medicine}
+            />
+          </EmptyList>
         </FormItemWrapper>
         {!!reminderForm.selectedMedicineIds?.length && (
           <FormItemWrapper>
@@ -393,13 +401,20 @@ export const AddReminder = memo(() => {
           </FormItemWrapper>
         )}
         <FormItemWrapper>
-          <List
+          <EmptyList
+            onPress={() => navigation.navigate('familyMember')}
+            title='Члены семьи не найдены.'
             options={familyMembersOptions}
-            fieldName='Член семьи'
-            value={reminderForm.selectedFamilyMember}
-            onChange={onFamilyMemberChange}
             error={errors?.familyMember}
-          />
+          >
+            <List
+              options={familyMembersOptions}
+              fieldName='Член семьи'
+              value={reminderForm.selectedFamilyMember}
+              onChange={onFamilyMemberChange}
+              error={errors?.familyMember}
+            />
+          </EmptyList>
         </FormItemWrapper>
         <FormItemWrapper>
           <TextInput
@@ -478,7 +493,7 @@ export const AddReminder = memo(() => {
       </PaddingHorizontal >
       <AboutScreen
         title='О напоминаниях'
-        text={'• Напоминания будут приходить в указанное время\n• Для повторяющихся напоминаний можно указать количество приемов и дней\n• Ежедневные напоминания повторяются каждый день на указанное количество дней\n• Еженедельные напоминания повторяются каждую неделю\n• Можно отключить или изменить в любой момент'}
+        text={'• Напоминания будут приходить в указанное время\n• Для повторяющихся напоминаний можно указать количество приемов и дней\n• Ежедневные напоминания повторяются каждый день на указанное количество дней\n• Еженедельные напоминания повторяются каждую неделю\n• Можно отключить в любой момент'}
         style={{ marginTop: SPACING.md }}
       />
     </>

@@ -16,6 +16,7 @@ import { Padding, Row } from '../Layout'
 import { MedicinePhoto } from '../MedicinePhoto'
 import { ParentMedicineKitList } from '../ParentMedicineKitList'
 import { Text } from '../Text'
+import { EmptyList } from '../EmptyList'
 
 const INITIAL_MEDICINE: Medicine = {
   name: '',
@@ -34,9 +35,9 @@ const INITIAL_MEDICINE: Medicine = {
 export const MedicineForm = memo(() => {
   const { colors } = useTheme()
   const { params } = useRoute()
-  const { goBack, navigate, setParams } = useMyNavigation()
+  const { goBack, navigate } = useMyNavigation()
   const { createMedicine, updateMedicine } = useMedicine()
-  const { medicines } = useAppStore(state => state)
+  const { medicines, medicineKits } = useAppStore(state => state)
 
   const [medicine, setMedicine] = useState<Medicine>(INITIAL_MEDICINE)
 
@@ -44,15 +45,15 @@ export const MedicineForm = memo(() => {
 
   const onChangeName = useEvent((name: string) => {
     setErrors({ ...errors, name: null })
-    setMedicine({ ...medicine, name })
+    setMedicine(prev => ({ ...prev, name }))
   })
 
   const onChangeDescription = useEvent((description: string) => {
-    setMedicine({ ...medicine, description })
+    setMedicine(prev => ({ ...prev, description }))
   })
 
   const onChangeBarcode = useEvent((barcode: string) => {
-    setMedicine({ ...medicine, barcode })
+    setMedicine(prev => ({ ...prev, barcode }))
   })
 
   const handleScanBarcode = () => {
@@ -60,34 +61,34 @@ export const MedicineForm = memo(() => {
   }
 
   const onChangePhoto = useEvent((photoPath: string | null) => {
-    setMedicine({ ...medicine, photoPath })
+    setMedicine(prev => ({ ...prev, photoPath }))
   })
 
   const onChangeMedicineKitId = useEvent((medicineKitId: number | null) => {
     setErrors({ ...errors, medicineKitId: null })
-    setMedicine({ ...medicine, medicineKitId })
+    setMedicine(prev => ({ ...prev, medicineKitId }))
   })
 
   const onChangeManufacturer = useEvent((manufacturer: string) => {
-    setMedicine({ ...medicine, manufacturer })
+    setMedicine(prev => ({ ...prev, manufacturer }))
   })
   const onChangeDosage = useEvent((dosage: string) => {
-    setMedicine({ ...medicine, dosage })
+    setMedicine(prev => ({ ...prev, dosage }))
   })
   const onChangeUnit = useEvent((unit: string) => {
-    setMedicine({ ...medicine, unit })
+    setMedicine(prev => ({ ...prev, unit }))
   })
   const onChangeUnitForQuantity = useEvent((unitForQuantity: string) => {
-    setMedicine({ ...medicine, unitForQuantity })
+    setMedicine(prev => ({ ...prev, unitForQuantity }))
   })
   const onChangeQuantity = useEvent((quantity: string) => {
     setErrors({ ...errors, quantity: null })
-    setMedicine({ ...medicine, quantity: Number(quantity) })
+    setMedicine(prev => ({ ...prev, quantity: Number(quantity) }))
   })
 
   const onChangeExpirationDate = useEvent((expirationDate: Date) => {
     setErrors({ ...errors, expirationDate: null })
-    setMedicine({ ...medicine, expirationDate: new Date(expirationDate).getTime() })
+    setMedicine(prev => ({ ...prev, expirationDate: new Date(expirationDate).getTime() }))
   })
 
   const onSubmit = useEvent(async () => {
@@ -146,16 +147,16 @@ export const MedicineForm = memo(() => {
 
   useEffect(() => {
     if (params?.medicineName) {
-      setMedicine({ ...medicine, name: params.medicineName })
+      setMedicine(prev => ({ ...prev, name: params.medicineName }))
     }
   }, [params?.medicineName])
 
   // Обработка результата сканирования штрих-кода при возврате
   useEffect(() => {
     if (params?.scannedBarcode) {
-      setMedicine({ ...medicine, barcode: params.scannedBarcode })
+      setMedicine(prev => ({ ...prev, barcode: params.scannedBarcode }))
     }
-  }, [params, medicine])
+  }, [params])
 
   return (
     <KeyboardAwareScrollView
@@ -196,13 +197,20 @@ export const MedicineForm = memo(() => {
           </Pressable>
         </FormItemWrapper>
         <FormItemWrapper>
-          <ParentMedicineKitList
-            fieldName='Аптечка'
-            value={medicine.medicineKitId}
-            onChange={onChangeMedicineKitId}
+          <EmptyList
+            onPress={() => navigate('medicineKit')}
+            title='Аптечки не найдены.'
+            options={medicineKits}
             error={errors?.medicineKitId ?? undefined}
-            noParent
-          />
+          >
+            <ParentMedicineKitList
+              fieldName='Аптечка'
+              value={medicine.medicineKitId}
+              onChange={onChangeMedicineKitId}
+              error={errors?.medicineKitId ?? undefined}
+              noParent
+            />
+          </EmptyList>
         </FormItemWrapper>
         <FormItemWrapper>
           <Textarea

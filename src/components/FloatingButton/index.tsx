@@ -1,27 +1,33 @@
-import { useMyNavigation } from '@/hooks'
-import React from 'react'
+import { useEvent, useMyNavigation } from '@/hooks'
+import { useAppStore } from '@/store'
+import React, { useMemo } from 'react'
 import { FloatingActionButton } from '../FloatingActionButton'
 
 export function FloatingButton() {
   const { navigate } = useMyNavigation()
+  const { medicineKits } = useAppStore(state => state)
 
-  const handleAddMedicineKit = () => {
-    navigate('medicineKit')
-  }
+  const handleAddMedicineKit = useEvent(() => navigate('medicineKit'))
+  const handleAddMedicine = useEvent(() => navigate('medicine'))
+  const handleScanBarcode = useEvent(() => navigate('barcodeScanner'))
 
-  const handleAddMedicine = () => {
-    navigate('medicine')
-  }
+  const items = useMemo(() => {
+    const values = [
+      { letter: 'Аптечка', onPress: handleAddMedicineKit },
+    ]
 
-  const handleScanBarcode = () => {
-    navigate('barcodeScanner')
-  }
+    if (medicineKits.length) {
+      values.push({ letter: 'Лекарство', onPress: handleAddMedicine })
+    }
+
+    if (medicineKits.length) {
+      values.push({ letter: 'Штрих-код', onPress: handleScanBarcode })
+    }
+
+    return values
+  }, [medicineKits, handleAddMedicine, handleAddMedicineKit, handleScanBarcode])
 
   return (
-    <FloatingActionButton items={[
-      { letter: 'Аптечка', onPress: handleAddMedicineKit },
-      { letter: 'Лекарство', onPress: handleAddMedicine },
-      { letter: 'Штрих-код', onPress: handleScanBarcode }
-    ]} />
+    <FloatingActionButton items={items} />
   )
 }

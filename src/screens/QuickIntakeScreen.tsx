@@ -1,5 +1,6 @@
 import { QuickIntakeButton } from '@/components/Buttons'
-import { Flex, PaddingHorizontal, SafeAreaView } from '@/components/Layout'
+import { Empty } from '@/components/Empty'
+import { Background, Flex, PaddingHorizontal, SafeAreaView } from '@/components/Layout'
 import { MedicineListForQuickIntake } from '@/components/MedicineListForQuickIntake'
 import { SPACING } from '@/constants'
 import { useEvent, useNavigationBarColor } from '@/hooks'
@@ -13,7 +14,7 @@ import { ScrollView } from 'react-native'
 export function QuickIntakeScreen() {
   const { colors } = useTheme()
   const [searchText, setSearchText] = useState('')
-  const { setQuickIntakeMedicines } = useAppStore(state => state)
+  const { setQuickIntakeMedicines, medicines } = useAppStore(state => state)
 
   const options = useMemo<UseScreenPropertiesOptions>(() => ({
     navigationOptions: {
@@ -42,6 +43,20 @@ export function QuickIntakeScreen() {
     setSearchText('')
     setQuickIntakeMedicines([])
   }))
+
+  if (!medicines.length) {
+    return (
+      <SafeAreaView edges={['bottom']}>
+        <Background>
+          <Empty
+            icon='box'
+            title='Лекарства'
+            description='Здесь будут отображаться ваши лекарства'
+          />
+        </Background>
+      </SafeAreaView>
+    )
+  }
 
   return (
     <SafeAreaView edges={['bottom']}>

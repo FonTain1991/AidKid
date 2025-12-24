@@ -41,7 +41,7 @@ export function ExpiringMedicinesScreen() {
       .sort((a: Medicine, b: Medicine) => (a.expirationDate || 0) - (b.expirationDate || 0))
   }, [medicines])
 
-  if (expiringMedicines.length === 0) {
+  if (!expiringMedicines.length) {
     return (
       <SafeAreaView edges={['bottom']}>
         <Background>
