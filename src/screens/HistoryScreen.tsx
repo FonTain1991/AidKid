@@ -1,7 +1,7 @@
 import { Empty } from '@/components/Empty'
 import { Background, Flex, PaddingHorizontal, SafeAreaView } from '@/components/Layout'
 import { Text } from '@/components/Text'
-import { SPACING, FREE_LIMITS } from '@/constants'
+import { SPACING, FREE_LIMITS, UNITS } from '@/constants'
 import { FONT_SIZE } from '@/constants/font'
 import { useNavigationBarColor, useScreenProperties, useMyNavigation } from '@/hooks'
 import { databaseService } from '@/services'
@@ -58,7 +58,6 @@ export function HistoryScreen() {
       await databaseService.init()
       const db = databaseService.getDb()
       const [results] = await db.executeSql('SELECT * FROM medicine_usage ORDER BY usageDate DESC')
-
       const usages: MedicineUsage[] = []
       for (let i = 0; i < results.rows.length; i++) {
         const row = results.rows.item(i)
@@ -106,10 +105,10 @@ export function HistoryScreen() {
       const medicine = medicines.find(m => m.id === usage.medicineId)
       const kit = medicine ? medicineKits.find(k => k.id === medicine.medicineKitId) : undefined
       const familyMember = usage.familyMemberId ? familyMembers.find(fm => fm.id === usage.familyMemberId) : undefined
-
       return {
         ...usage,
         medicineName: medicine?.name,
+        unit: UNITS.find(u => u.value === medicine?.unit)?.shortLabel,
         kitName: kit?.name,
         familyMemberName: familyMember?.name,
       }
@@ -284,7 +283,7 @@ export function HistoryScreen() {
                         )}
                       </View>
                       <Text style={[styles.historyQuantity, { color: colors.primary }]}>
-                        {usage.quantityUsed} шт.
+                        {usage.quantityUsed} {usage.unit}
                       </Text>
                     </View>
                   ))}

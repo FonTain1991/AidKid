@@ -1,5 +1,5 @@
 import { Flex, SafeAreaView } from '@/components/Layout'
-import { MedicineForm } from '@/components/MedicineForm'
+import { MedicineDelete, MedicineForm } from '@/components/MedicineForm'
 import { useNavigationBarColor, useRoute, useScreenProperties } from '@/hooks'
 
 export function MedicineScreen() {
@@ -10,6 +10,7 @@ export function MedicineScreen() {
     navigationOptions: {
       headerShown: true,
       title: params?.medicineId ? 'Редактирование лекарства' : 'Добавление лекарства',
+      headerRight: () => params?.medicineId && <MedicineDelete />
     }
   })
 

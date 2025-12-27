@@ -41,6 +41,8 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: FONT_SIZE.md,
-    marginTop: SPACING.xs
+    marginTop: SPACING.xs,
+    marginHorizontal: SPACING.xxl,
+    textAlign: 'center'
   },
 })

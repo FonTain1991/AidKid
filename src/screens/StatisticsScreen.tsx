@@ -39,7 +39,7 @@ interface UsageWithDetails extends MedicineUsage {
   familyMemberName?: string
 }
 
-type Period = 'week' | 'month' | 'all'
+type Period = 'day' | 'week' | 'month' | 'all'
 
 export function StatisticsScreen() {
   const { colors } = useTheme()
@@ -49,7 +49,7 @@ export function StatisticsScreen() {
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [usageHistory, setUsageHistory] = useState<MedicineUsage[]>([])
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('week')
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('day')
   const [stats, setStats] = useState<PeriodStats>({
     today: 0,
     yesterday: 0,
@@ -101,26 +101,47 @@ export function StatisticsScreen() {
       // Вычисляем статистику
       const now = dayjs()
       const todayStart = now.startOf('day')
+      const todayEnd = now.endOf('day')
       const yesterdayStart = now.subtract(1, 'day').startOf('day')
+      const yesterdayEnd = now.subtract(1, 'day').endOf('day')
       const weekStart = now.startOf('week')
+      const weekEnd = now.endOf('week')
       const lastWeekStart = now.subtract(1, 'week').startOf('week')
+      const lastWeekEnd = now.subtract(1, 'week').endOf('week')
       const monthStart = now.startOf('month')
+      const monthEnd = now.endOf('month')
       const lastMonthStart = now.subtract(1, 'month').startOf('month')
+      const lastMonthEnd = now.subtract(1, 'month').endOf('month')
 
-      const today = usages.filter(u => dayjs(u.usageDate).isAfter(todayStart)).length
+      const today = usages.filter(u => {
+        const date = dayjs(u.usageDate)
+        return (date.isAfter(todayStart) || date.isSame(todayStart, 'day')) &&
+          (date.isBefore(todayEnd) || date.isSame(todayEnd, 'day'))
+      }).length
       const yesterday = usages.filter(u => {
         const date = dayjs(u.usageDate)
-        return date.isAfter(yesterdayStart) && date.isBefore(todayStart)
+        return (date.isAfter(yesterdayStart) || date.isSame(yesterdayStart, 'day')) &&
+          (date.isBefore(yesterdayEnd) || date.isSame(yesterdayEnd, 'day'))
       }).length
-      const thisWeek = usages.filter(u => dayjs(u.usageDate).isAfter(weekStart)).length
+      const thisWeek = usages.filter(u => {
+        const date = dayjs(u.usageDate)
+        return (date.isAfter(weekStart) || date.isSame(weekStart, 'day')) &&
+          (date.isBefore(weekEnd) || date.isSame(weekEnd, 'day'))
+      }).length
       const lastWeek = usages.filter(u => {
         const date = dayjs(u.usageDate)
-        return date.isAfter(lastWeekStart) && date.isBefore(weekStart)
+        return (date.isAfter(lastWeekStart) || date.isSame(lastWeekStart, 'day')) &&
+          (date.isBefore(lastWeekEnd) || date.isSame(lastWeekEnd, 'day'))
       }).length
-      const thisMonth = usages.filter(u => dayjs(u.usageDate).isAfter(monthStart)).length
+      const thisMonth = usages.filter(u => {
+        const date = dayjs(u.usageDate)
+        return (date.isAfter(monthStart) || date.isSame(monthStart, 'day')) &&
+          (date.isBefore(monthEnd) || date.isSame(monthEnd, 'day'))
+      }).length
       const lastMonth = usages.filter(u => {
         const date = dayjs(u.usageDate)
-        return date.isAfter(lastMonthStart) && date.isBefore(monthStart)
+        return (date.isAfter(lastMonthStart) || date.isSame(lastMonthStart, 'day')) &&
+          (date.isBefore(lastMonthEnd) || date.isSame(lastMonthEnd, 'day'))
       }).length
 
       const totalDays = Math.max(1, Math.ceil(dayjs().diff(dayjs(usages[usages.length - 1]?.usageDate || now), 'day', true)))
@@ -172,80 +193,53 @@ export function StatisticsScreen() {
 
     const now = dayjs()
     let startDate: dayjs.Dayjs
+    let endDate: dayjs.Dayjs
 
-    if (selectedPeriod === 'week') {
-      // Последние 7 дней
-      startDate = now.subtract(7, 'day').startOf('day')
+    if (selectedPeriod === 'day') {
+      // Только сегодня
+      startDate = now.startOf('day')
+      endDate = now.endOf('day')
+    } else if (selectedPeriod === 'week') {
+      // Последние 7 дней (включая сегодня)
+      startDate = now.subtract(6, 'day').startOf('day') // 7 дней = сегодня + 6 предыдущих
+      endDate = now.endOf('day')
     } else if (selectedPeriod === 'month') {
-      // Последние 30 дней
-      startDate = now.subtract(30, 'day').startOf('day')
+      // Последние 30 дней (включая сегодня)
+      startDate = now.subtract(29, 'day').startOf('day') // 30 дней = сегодня + 29 предыдущих
+      endDate = now.endOf('day')
     } else {
       // Для "все время" не фильтруем, возвращаем все
       return usageHistory
     }
 
     const filtered = usageHistory.filter(usage => {
-      const usageDate = dayjs(usage.usageDate).startOf('day')
-      return usageDate.isAfter(startDate) || usageDate.isSame(startDate, 'day')
+      const usageDate = dayjs(usage.usageDate)
+      return (usageDate.isAfter(startDate) || usageDate.isSame(startDate, 'day')) &&
+        (usageDate.isBefore(endDate) || usageDate.isSame(endDate, 'day'))
     })
 
     return filtered
   }, [isPremium, usageHistory, selectedPeriod])
 
-  // Статистика по дням (график приема по дням)
-  const dayStats = useMemo(() => {
-    if (!isPremium || filteredHistoryForPremium.length === 0) {
+
+  // Статистика по часам (премиум) - только за сегодня
+  const hourStats = useMemo(() => {
+    if (!isPremium || usageHistory.length === 0) {
       return []
     }
 
     const now = dayjs()
-    let daysCount = 7
-    let dateFormat = 'DD.MM'
+    const todayStart = now.startOf('day')
+    const todayEnd = now.endOf('day')
 
-    if (selectedPeriod === 'month') {
-      daysCount = 30
-    } else if (selectedPeriod === 'all') {
-      // Для "все время" берем все дни из истории
-      if (filteredHistoryForPremium.length === 0) {
-        return []
-      }
-      const firstDate = dayjs(filteredHistoryForPremium[filteredHistoryForPremium.length - 1].usageDate).startOf('day')
-      const lastDate = dayjs(filteredHistoryForPremium[0].usageDate).startOf('day')
-      daysCount = lastDate.diff(firstDate, 'day') + 1
-      dateFormat = daysCount > 30 ? 'DD.MM' : 'DD.MM'
-    }
-
-    // Создаем объект для подсчета приемов по дням
-    const days: Record<string, number> = {}
-    
-    // Инициализируем все дни нулями
-    for (let i = 0; i < daysCount; i++) {
-      const date = now.subtract(i, 'day').startOf('day')
-      const key = date.format('YYYY-MM-DD')
-      days[key] = 0
-    }
-
-    // Подсчитываем приемы
-    filteredHistoryForPremium.forEach(usage => {
-      const dateKey = dayjs(usage.usageDate).startOf('day').format('YYYY-MM-DD')
-      if (days[dateKey] !== undefined) {
-        days[dateKey]++
-      }
+    // Фильтруем только записи за сегодня
+    const todayUsages = usageHistory.filter(usage => {
+      const usageDate = dayjs(usage.usageDate)
+      return (usageDate.isAfter(todayStart) || usageDate.isSame(todayStart, 'day')) &&
+        (usageDate.isBefore(todayEnd) || usageDate.isSame(todayEnd, 'day'))
     })
 
-    // Преобразуем в массив и сортируем по дате (от старых к новым)
-    return Object.entries(days)
-      .map(([dateKey, count]) => ({
-        date: dateKey,
-        count,
-        label: dayjs(dateKey).format(dateFormat),
-      }))
-      .sort((a, b) => a.date.localeCompare(b.date))
-  }, [isPremium, filteredHistoryForPremium, selectedPeriod])
-
-  // Статистика по часам (премиум)
-  const hourStats = useMemo(() => {
-    if (!isPremium || filteredHistoryForPremium.length === 0) {
+    if (todayUsages.length === 0) {
       return []
     }
 
@@ -254,7 +248,7 @@ export function StatisticsScreen() {
       hours[i] = 0
     }
 
-    filteredHistoryForPremium.forEach(usage => {
+    todayUsages.forEach(usage => {
       const hour = dayjs(usage.usageDate).hour()
       hours[hour] = (hours[hour] || 0) + 1
     })
@@ -263,7 +257,7 @@ export function StatisticsScreen() {
       hour: Number(hour),
       count,
     }))
-  }, [isPremium, filteredHistoryForPremium])
+  }, [isPremium, usageHistory])
 
   // Статистика по дням недели (премиум)
   const weekdayStats = useMemo(() => {
@@ -502,6 +496,23 @@ export function StatisticsScreen() {
                   <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>Расширенная статистика</Text>
                     <View style={styles.periodSelector}>
+                      <Pressable
+                        style={[
+                          styles.periodButton,
+                          {
+                            backgroundColor: selectedPeriod === 'day' ? colors.primary : 'transparent',
+                            borderColor: colors.border
+                          }
+                        ]}
+                        onPress={() => setSelectedPeriod('day')}
+                      >
+                        <Text style={[
+                          styles.periodButtonText,
+                          { color: selectedPeriod === 'day' ? '#FFFFFF' : colors.text }
+                        ]}>
+                          День
+                        </Text>
+                      </Pressable>
                       <Pressable
                         style={[
                           styles.periodButton,
@@ -823,10 +834,12 @@ const styles = StyleSheet.create({
     borderRadius: SPACING.sm,
     borderWidth: 1,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   periodButtonText: {
     fontSize: FONT_SIZE.sm,
     fontWeight: '500',
+    textAlign: 'center',
   },
   chartCard: {
     padding: SPACING.md,

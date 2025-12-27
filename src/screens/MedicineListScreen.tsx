@@ -42,8 +42,8 @@ export function MedicineListScreen() {
             title='Аптечка пуста'
             description='Добавьте лекарства в аптечку'
           />
+          <FloatingButton />
         </Background>
-        <FloatingButton />
       </SafeAreaView>
     )
   }
