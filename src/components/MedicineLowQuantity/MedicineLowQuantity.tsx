@@ -13,7 +13,7 @@ export const MedicineLowQuantity = memo(() => {
 
   // Подсчет лекарств с низким запасом
   const lowStockCount = useMemo(() => {
-    return medicines.filter((medicine: Medicine) => medicine.quantity && medicine.quantity < 5).length
+    return medicines.filter((medicine: Medicine) => medicine?.quantity < 5).length
   }, [medicines])
 
   // Подсчет истекающих лекарств (в течение 30 дней)

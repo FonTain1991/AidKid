@@ -37,9 +37,14 @@ export const MedicineItem = memo(({ medicine, showKit = true }: { medicine: Medi
     return UNITS.find((item: any) => item.value === medicine.unitForQuantity)
   }, [medicine.unitForQuantity])
 
+  const isLowQuantity = medicine.quantity === 0
+
   return (
     <Pressable
-      style={({ pressed }) => [styles.container, { opacity: pressed ? 0.7 : 1 }]}
+      style={({ pressed }) => [styles.container, {
+        opacity: pressed ? 0.7 : 1,
+        backgroundColor: isLowQuantity ? colors.error + '20' : 'transparent'
+      }]}
       onPress={handlePress}
     >
       {showKit && (

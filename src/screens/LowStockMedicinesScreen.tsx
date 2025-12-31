@@ -27,7 +27,7 @@ export function LowStockMedicinesScreen() {
   // Фильтруем лекарства с низким запасом (quantity < 5)
   const lowStockMedicines = useMemo(() => {
     return medicines
-      .filter((medicine: Medicine) => medicine.quantity && medicine.quantity < 5)
+      .filter((medicine: Medicine) => medicine?.quantity < 5)
       .sort((a: Medicine, b: Medicine) => (a.quantity || 0) - (b.quantity || 0))
   }, [medicines])
 

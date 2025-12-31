@@ -23,8 +23,12 @@ export const MedicineList = memo(({ searchText, showKit = false }: MedicineListP
     return medicines.filter((medicine: Medicine) => medicine.medicineKitId === params?.medicineKitId)
   }, [medicines, params?.medicineKitId, searchText])
 
+  const dataSourceSorted = useMemo(() => {
+    return dataSource.sort((a: Medicine, b: Medicine) => (a?.quantity || 0) - (b?.quantity || 0))
+  }, [dataSource])
+
   return (
-    dataSource?.map((medicine: Medicine) => (
+    dataSourceSorted?.map((medicine: Medicine) => (
       <MedicineItem key={medicine.id} medicine={medicine} showKit={showKit} />
     ))
   )
