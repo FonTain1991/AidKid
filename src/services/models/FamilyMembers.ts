@@ -113,9 +113,6 @@ export class FamilyMembersModel extends BaseModel {
       console.error('SQLite - Error updating family member:', err)
       return null
     })
-
-    console.log('SQLite - Updated family member:', id)
-
     return await this.getFamilyMemberById(id)
   }
 
@@ -127,8 +124,6 @@ export class FamilyMembersModel extends BaseModel {
     await this.db.executeSql(`
       DELETE FROM family_members WHERE id = ?
     `, [id])
-
-    console.log('SQLite - Deleted family member:', id)
   }
 }
 

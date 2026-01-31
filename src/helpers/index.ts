@@ -12,7 +12,6 @@ export async function initPhotosDirectory(): Promise<void> {
     const exists = await RNFS.exists(PHOTOS_DIR)
     if (!exists) {
       await RNFS.mkdir(PHOTOS_DIR)
-      console.log('📁 Created photos directory:', PHOTOS_DIR)
     }
   } catch (error) {
     console.error('Failed to create photos directory:', error)
@@ -158,8 +157,6 @@ async function savePhotoToLocalStorage(asset: Asset): Promise<string | null> {
 
     // Копируем файл
     await RNFS.copyFile(asset.uri!, destPath)
-
-    console.log('📸 Photo saved:', destPath)
     return destPath
   } catch (error) {
     console.error('Failed to save photo:', error)
@@ -176,7 +173,6 @@ export async function deleteMedicinePhoto(photoPath: string): Promise<void> {
     const exists = await RNFS.exists(photoPath)
     if (exists) {
       await RNFS.unlink(photoPath)
-      console.log('🗑️ Photo deleted:', photoPath)
     }
   } catch (error) {
     console.error('Failed to delete photo:', error)

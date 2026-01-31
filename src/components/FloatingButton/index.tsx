@@ -3,12 +3,12 @@ import { useAppStore } from '@/store'
 import React, { useMemo } from 'react'
 import { FloatingActionButton } from '../FloatingActionButton'
 
-export function FloatingButton() {
+export function FloatingButton({ parentId }: { parentId?: number }) {
   const { navigate } = useMyNavigation()
   const { medicineKits } = useAppStore(state => state)
 
-  const handleAddMedicineKit = useEvent(() => navigate('medicineKit'))
-  const handleAddMedicine = useEvent(() => navigate('medicine'))
+  const handleAddMedicineKit = useEvent(() => navigate('medicineKit', { parentId }))
+  const handleAddMedicine = useEvent(() => navigate('medicine', { parentId }))
   const handleScanBarcode = useEvent(() => navigate('barcodeScanner'))
 
   const items = useMemo(() => {

@@ -4,12 +4,15 @@ import { useAppStore } from '@/store'
 import { memo, useMemo } from 'react'
 import { MedicineItem } from './MedicineItem'
 
+export type SortValue = 'name_asc' | 'name_desc' | 'quantity_asc' | 'quantity_desc' | 'date_asc' | 'date_desc' | 'expiration_asc' | 'expiration_desc'
+
 interface MedicineListProps {
   searchText?: string
   showKit?: boolean
+  sort?: SortValue
 }
 
-export const MedicineList = memo(({ searchText, showKit = false }: MedicineListProps) => {
+export const MedicineList = memo(({ searchText, showKit = false, sort = 'name_asc' }: MedicineListProps) => {
   const { params } = useRoute()
   const { medicines } = useAppStore(state => state)
 
@@ -24,8 +27,28 @@ export const MedicineList = memo(({ searchText, showKit = false }: MedicineListP
   }, [medicines, params?.medicineKitId, searchText])
 
   const dataSourceSorted = useMemo(() => {
-    return dataSource.sort((a: Medicine, b: Medicine) => (a?.quantity || 0) - (b?.quantity || 0))
-  }, [dataSource])
+    const sorted = [...dataSource]
+    switch (sort) {
+      case 'name_asc':
+        return sorted.sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
+      case 'name_desc':
+        return sorted.sort((a, b) => (b.name || '').localeCompare(a.name || '', undefined, { sensitivity: 'base' }))
+      case 'quantity_asc':
+        return sorted.sort((a, b) => (a?.quantity || 0) - (b?.quantity || 0))
+      case 'quantity_desc':
+        return sorted.sort((a, b) => (b?.quantity || 0) - (a?.quantity || 0))
+      case 'date_asc':
+        return sorted.sort((a, b) => (b?.createdAt || 0) - (a?.createdAt || 0))
+      case 'date_desc':
+        return sorted.sort((a, b) => (a?.createdAt || 0) - (b?.createdAt || 0))
+      case 'expiration_asc':
+        return sorted.sort((a, b) => (a?.expirationDate || 0) - (b?.expirationDate || 0))
+      case 'expiration_desc':
+        return sorted.sort((a, b) => (b?.expirationDate || 0) - (a?.expirationDate || 0))
+      default:
+        return sorted.sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
+    }
+  }, [dataSource, sort])
 
   return (
     dataSourceSorted?.map((medicine: Medicine) => (

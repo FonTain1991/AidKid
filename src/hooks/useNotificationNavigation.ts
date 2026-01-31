@@ -40,7 +40,7 @@ export function useNotificationNavigation(navigationRef: React.RefObject<Navigat
           targetScreen = 'lowStockMedicines'
           break
         default:
-          console.log('Unknown notification type:', notificationType)
+          console.warn('Unknown notification type:', notificationType)
           return
       }
 

@@ -3,23 +3,26 @@ import { Empty } from '@/components/Empty'
 import { FloatingButton } from '@/components/FloatingButton'
 import { Background, Flex, SafeAreaView } from '@/components/Layout'
 import { MedicineKitList } from '@/components/MedicineKitList'
-import { MedicineList } from '@/components/MedicineList'
+import { MedicineList, type SortValue } from '@/components/MedicineList'
+import { SortList } from '@/components/Sort'
 import { SPACING } from '@/constants'
 import { useBackHandlerMedicineScreen, useMedicineScreenTitle, useNavigationBarColor, useRoute, useScreenProperties } from '@/hooks'
 import { useAppStore } from '@/store'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { ScrollView, StyleSheet } from 'react-native'
 
 export function MedicineListScreen() {
   const { params } = useRoute()
   const { medicineKits, medicines } = useAppStore(state => state)
   const title = useMedicineScreenTitle()
+  const [sort, setSort] = useState<SortValue>('name_asc')
 
   useScreenProperties({
     navigationOptions: {
       headerShown: true,
       title,
-      headerLeft: () => <GoBackMedicineScreen />
+      headerLeft: () => <GoBackMedicineScreen />,
+      headerRight: () => <SortList value={sort} onChange={setSort} />
     }
   })
 
@@ -42,7 +45,7 @@ export function MedicineListScreen() {
             title='Аптечка пуста'
             description='Добавьте лекарства в аптечку'
           />
-          <FloatingButton />
+          <FloatingButton parentId={params?.medicineKitId} />
         </Background>
       </SafeAreaView>
     )
@@ -58,9 +61,9 @@ export function MedicineListScreen() {
             contentContainerStyle={styles.contentContainer}
           >
             <MedicineKitList />
-            <MedicineList />
+            <MedicineList sort={sort} />
           </ScrollView>
-          <FloatingButton />
+          <FloatingButton parentId={params?.medicineKitId} />
         </Flex>
       </Background>
     </SafeAreaView>

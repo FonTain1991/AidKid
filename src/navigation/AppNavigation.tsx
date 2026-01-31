@@ -17,6 +17,7 @@ export type MainList = {
   } | undefined;
   medicineKit: {
     medicineKitId?: number
+    parentId?: number
   } | undefined;
   medicineList: {
     medicineKitId: number,
@@ -26,6 +27,7 @@ export type MainList = {
   medicine: {
     medicineId?: number
     medicineName?: string
+    parentId?: number
   } | undefined;
   barcodeScanner: undefined
   quickIntake: undefined
@@ -129,10 +131,10 @@ export function AppNavigation() {
       <MainStack.Screen name='backup' component={BackupScreen} />
       <MainStack.Screen name='subscription' component={SubscriptionScreen} />
       <MainStack.Screen name='subscribe' component={SubscribeScreen} />
-               <MainStack.Screen name='lowStockMedicines' component={LowStockMedicinesScreen} />
-               <MainStack.Screen name='expiringMedicines' component={ExpiringMedicinesScreen} />
-               <MainStack.Screen name='statistics' component={StatisticsScreen} />
-               <MainStack.Screen name='history' component={HistoryScreen} />
-             </MainStack.Navigator>
+      <MainStack.Screen name='lowStockMedicines' component={LowStockMedicinesScreen} />
+      <MainStack.Screen name='expiringMedicines' component={ExpiringMedicinesScreen} />
+      <MainStack.Screen name='statistics' component={StatisticsScreen} />
+      <MainStack.Screen name='history' component={HistoryScreen} />
+    </MainStack.Navigator>
   )
 }

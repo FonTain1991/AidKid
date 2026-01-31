@@ -86,6 +86,12 @@ export const MedicineKitForm = memo(() => {
     }
   }, [params?.medicineKitId, medicineKits])
 
+  useEffect(() => {
+    if (params?.parentId) {
+      setMedicineKit(prev => ({ ...prev, parentId: params.parentId }))
+    }
+  }, [params?.parentId])
+
   return (
     <ScrollView
       keyboardShouldPersistTaps='handled'

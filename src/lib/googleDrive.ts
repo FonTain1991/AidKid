@@ -161,8 +161,6 @@ class GoogleDriveService {
         await this.refreshToken()
       }
 
-      console.log('Uploading file to Google Drive:', fileName)
-
       // Читаем файл как base64
       const fileContent = await RNFS.readFile(filePath, 'base64')
 
@@ -179,8 +177,6 @@ class GoogleDriveService {
         parents: ['appDataFolder'],
         mimeType: 'application/zip',
       }
-
-      console.log('Uploading with metadata:', metadata)
 
       // Используем правильный upload endpoint с multipart
       const boundary = '----AidKitBoundary' + Date.now()
@@ -227,7 +223,6 @@ class GoogleDriveService {
       }
 
       const fileData = await createResponse.json()
-      console.log('File uploaded successfully:', fileData.id)
       return fileData.id
     } catch (error) {
       console.error('Failed to upload file:', error)
@@ -271,8 +266,6 @@ class GoogleDriveService {
         await this.refreshToken()
       }
 
-      console.log('Downloading file from Google Drive:', fileId)
-
       const response = await fetch(
         `${GOOGLE_DRIVE_API}/files/${fileId}?alt=media`,
         {
@@ -297,7 +290,6 @@ class GoogleDriveService {
             const resultStr = reader.result as string
             const [, base64Data] = resultStr.split(',')
             await RNFS.writeFile(destPath, base64Data, 'base64')
-            console.log('File downloaded successfully:', destPath)
             resolve()
           } catch (error) {
             reject(error)
@@ -329,8 +321,6 @@ class GoogleDriveService {
       if (!response.ok) {
         throw new Error(`Failed to delete file: ${response.status}`)
       }
-
-      console.log('File deleted successfully:', fileId)
     } catch (error) {
       console.error('Failed to delete file:', error)
       throw error
@@ -379,8 +369,6 @@ class GoogleDriveService {
         throw new Error('Пользователь не авторизован')
       }
 
-      console.log('createFamilyGroup: Creating group:', groupName)
-
       const familyGroup: FamilyGroup = {
         id: `family_${Date.now()}`,
         name: groupName,
@@ -402,8 +390,6 @@ class GoogleDriveService {
         mimeType: 'application/json'
       }
 
-      console.log('createFamilyGroup: Uploading to Google Drive...')
-
       const response = await fetch(`${GOOGLE_DRIVE_API}/files`, {
         method: 'POST',
         headers: {
@@ -417,18 +403,14 @@ class GoogleDriveService {
       })
 
       if (!response.ok) {
-        const errorText = await response.text()
-        console.log('createFamilyGroup: Upload failed:', response.status, errorText)
         throw new Error('Не удалось создать семейную группу')
       }
 
       const fileData = await response.json()
       familyGroup.id = fileData.id
-      console.log('createFamilyGroup: Group created successfully:', fileData.id)
 
       return familyGroup
     } catch (error) {
-      console.log('createFamilyGroup: Error:', error)
       throw error
     }
   }
@@ -442,11 +424,8 @@ class GoogleDriveService {
 
       const currentUser = await this.getCurrentUser()
       if (!currentUser) {
-        console.log('getFamilyGroup: No current user')
         return null
       }
-
-      console.log('getFamilyGroup: Searching for family group files...')
 
       // Ищем файл семейной группы в appDataFolder
       const response = await fetch(
@@ -459,9 +438,6 @@ class GoogleDriveService {
       )
 
       if (!response.ok) {
-        const errorText = await response.text()
-        console.log('getFamilyGroup: Failed to search files:', response.status, errorText)
-
         if (response.status === 403) {
           throw new Error('Нет доступа к Google Drive. Проверьте настройки в Google Cloud Console:\n\n1. Включен ли Google Drive API\n2. Правильно ли настроены OAuth клиенты\n3. Добавлены ли нужные разрешения')
         }
@@ -470,7 +446,6 @@ class GoogleDriveService {
       }
 
       const data = await response.json()
-      console.log('getFamilyGroup: Found files:', data.files?.length || 0)
 
       if (data.files && data.files.length > 0) {
         // Загружаем содержимое файла
@@ -484,19 +459,11 @@ class GoogleDriveService {
         )
 
         if (fileResponse.ok) {
-          const groupData = await fileResponse.json()
-          console.log('getFamilyGroup: Loaded group data:', groupData.name)
-          return groupData
+          return await fileResponse.json()
         }
-        console.log('getFamilyGroup: Failed to load file content:', fileResponse.status)
-
-
       }
-
-      console.log('getFamilyGroup: No family group found')
       return null
     } catch (error) {
-      console.log('getFamilyGroup: Error:', error)
       return null
     }
   }

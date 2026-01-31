@@ -23,12 +23,13 @@ export function useAppInit() {
       try {
         // Initialize database
         await databaseService.init()
+
         // Initialize notification service (creates channels)
         await notificationService.init()
-        console.log('✅ Notification service initialized')
+
         // Initialize subscription service
         await subscriptionService.initialize()
-        console.log('✅ Subscription service initialized')
+
         // Initialize data
         await Promise.all([
           getAllFamilyMembers(),

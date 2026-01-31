@@ -167,6 +167,12 @@ export const MedicineForm = memo(() => {
     }
   }, [params?.medicineName])
 
+  useEffect(() => {
+    if (params?.parentId) {
+      setMedicine(prev => ({ ...prev, medicineKitId: params.parentId }))
+    }
+  }, [params?.parentId])
+
   // Обработка результата сканирования штрих-кода при возврате
   useEffect(() => {
     if (params?.scannedBarcode) {
@@ -250,6 +256,7 @@ export const MedicineForm = memo(() => {
                 style={{ flexGrow: 1, flexShrink: 0, flex: 1 }}
                 onChangeText={onChangeDosage}
                 value={medicine.dosage}
+                keyboardType='number-pad'
               />
             </View>
             <View style={{ flex: 0.5 }}>
@@ -270,6 +277,7 @@ export const MedicineForm = memo(() => {
                 value={String(medicine.quantity)}
                 onChangeText={onChangeQuantity}
                 error={errors?.quantity ?? undefined}
+                keyboardType='number-pad'
               />
             </View>
             <View style={{ flex: 0.5 }}>

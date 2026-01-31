@@ -5,6 +5,7 @@ import { LimitIndicator } from '@/components/LimitIndicator'
 import { MedicineKitList } from '@/components/MedicineKitList'
 import { MedicineList } from '@/components/MedicineList'
 import { MedicineLowQuantity } from '@/components/MedicineLowQuantity'
+import { ModalUpdateApp } from '@/components/UpdateApp'
 import { SPACING } from '@/constants'
 import { useEvent, useNavigationBarColor, useScreenProperties } from '@/hooks'
 import { getLimitsInfo } from '@/lib'
@@ -116,6 +117,7 @@ export function MedicineKitListScreen() {
           <FloatingButton />
         </Flex>
       </Background>
+      <ModalUpdateApp />
     </SafeAreaView>
   )
 }

@@ -3,7 +3,7 @@ import notifee, {
   TriggerType
 } from '@notifee/react-native'
 import { Platform, Alert, Linking } from 'react-native'
-import { Medicine, MedicineKit } from '@/services/models'
+import { MedicineKit } from '@/services/models'
 
 
 class NotificationService {
@@ -62,7 +62,7 @@ class NotificationService {
    */
   async createKitChannel(kit: MedicineKit): Promise<string> {
     if (Platform.OS !== 'android') {
-      return kit.id
+      return String(kit.id ?? '')
     }
 
     const channelId = `medicine-kit-${kit.id}`
@@ -95,7 +95,7 @@ class NotificationService {
     try {
       await notifee.deleteChannel(channelId)
     } catch (error) {
-      console.error('Failed to delete channel:', error)
+      // Error handled silently
     }
   }
 
@@ -136,7 +136,6 @@ class NotificationService {
   async displayNotification(title: string, body: string, data?: any): Promise<void> {
     const hasPermission = await this.checkPermission()
     if (!hasPermission) {
-      console.log('No notification permission')
       return
     }
 
@@ -184,41 +183,22 @@ class NotificationService {
   ): Promise<boolean> {
     const { title, body, notificationDate, data, medicineKitId, critical = false } = options
 
-    console.log('🔔 scheduleNotification called:', {
-      notificationId,
-      medicineKitId,
-      notificationDate: notificationDate.toLocaleString('ru-RU'),
-      data
-    })
-
     // Инициализируем сервис (создаем каналы)
     await this.init()
 
     const hasPermission = await this.checkPermission()
     if (!hasPermission) {
-      console.error('❌ No notification permission')
       return false
     }
-    console.log('✅ Notification permission granted')
 
-    const canSchedule = await this.canScheduleExactAlarms()
-    if (!canSchedule) {
-      console.warn('⚠️ No SCHEDULE_EXACT_ALARM permission - notifications may not work when app is closed')
-    } else {
-      console.log('✅ SCHEDULE_EXACT_ALARM permission granted')
-    }
+    await this.canScheduleExactAlarms()
 
     const now = new Date()
     if (notificationDate <= now) {
-      console.error('❌ Notification date is in the past:', {
-        notificationDate: notificationDate.toLocaleString('ru-RU'),
-        now: now.toLocaleString('ru-RU')
-      })
       return false
     }
 
     const channelId = this.getKitChannelId(medicineKitId)
-    console.log('📢 Using channel:', channelId)
 
     // Создаем канал, если его нет (для Android)
     if (Platform.OS === 'android') {
@@ -232,19 +212,13 @@ class NotificationService {
           vibration: true,
           lightColor: '#3A944E',
         })
-        console.log('✅ Channel created/verified:', channelId)
       } catch (error) {
-        console.warn('⚠️ Channel creation warning (may already exist):', error)
+        // Channel may already exist
       }
     }
 
     try {
       const triggerTimestamp = notificationDate.getTime()
-      console.log('📅 Creating trigger notification:', {
-        notificationId,
-        triggerTimestamp,
-        triggerDate: new Date(triggerTimestamp).toLocaleString('ru-RU')
-      })
 
       await notifee.createTriggerNotification(
         {
@@ -276,40 +250,8 @@ class NotificationService {
         }
       )
 
-      console.log('✅ Notification created successfully:', {
-        notificationId,
-        scheduledFor: notificationDate.toLocaleString('ru-RU'),
-        timestamp: triggerTimestamp
-      })
-
-      // Проверяем, что уведомление действительно запланировано
-      setTimeout(async () => {
-        try {
-          const notifications = await this.getTriggerNotifications()
-          const found = notifications.find(n => n.notification.id === notificationId)
-          if (found) {
-            const trigger = found.trigger as any
-            console.log('✅ Verified notification in system:', {
-              id: found.notification.id,
-              scheduledTime: trigger?.timestamp ? new Date(trigger.timestamp).toLocaleString('ru-RU') : 'N/A',
-              data: found.notification.data
-            })
-          } else {
-            console.error('❌ Notification NOT found in system after creation!', notificationId)
-            console.log('All scheduled notifications:', notifications.map(n => ({
-              id: n.notification.id,
-              title: n.notification.title,
-              data: n.notification.data
-            })))
-          }
-        } catch (error) {
-          console.error('❌ Error verifying notification:', error)
-        }
-      }, 500)
-
       return true
     } catch (error) {
-      console.error('❌ Failed to schedule notification:', error)
       return false
     }
   }
@@ -323,7 +265,7 @@ class NotificationService {
     try {
       await notifee.cancelNotification(notificationId)
     } catch (error) {
-      console.error('Failed to cancel notification:', error)
+      // Error handled silently
     }
   }
 
@@ -343,7 +285,7 @@ class NotificationService {
         }
       }
     } catch (error) {
-      console.error('Failed to cancel medicine notifications:', error)
+      // Error handled silently
     }
   }
 
@@ -358,32 +300,27 @@ class NotificationService {
       const notifications = await notifee.getTriggerNotifications()
 
       // Ищем уведомление для этого напоминания на сегодня
+      const todayStr = new Date().toDateString()
       for (const item of notifications) {
         const { notification } = item
         const data = notification.data as any
+        const trigger = item.trigger as any
 
-        // Проверяем что это уведомление для нашего напоминания
-        if (data?.type === 'reminder' && data?.reminderId === reminderId) {
-          // Проверяем время срабатывания
-          const trigger = item.trigger as any
-          if (trigger?.timestamp) {
-            const notifDate = new Date(trigger.timestamp)
-            const notifTime = `${String(notifDate.getHours()).padStart(2, '0')}:${String(notifDate.getMinutes()).padStart(2, '0')}`
-            const notifDateStr = notifDate.toDateString()
-            const todayStr = new Date().toDateString()
+        // Проверяем что это уведомление для нашего напоминания и есть timestamp
+        const isReminderMatch = data?.type === 'reminder' && data?.reminderId === reminderId
+        if (isReminderMatch && trigger?.timestamp && notification.id) {
+          const notifDate = new Date(trigger.timestamp)
+          const notifTime = `${String(notifDate.getHours()).padStart(2, '0')}:${String(notifDate.getMinutes()).padStart(2, '0')}`
+          const notifDateStr = notifDate.toDateString()
 
-            // Если это сегодняшнее уведомление с нужным временем - удаляем
-            if (notifDateStr === todayStr && notifTime === scheduledTime) {
-              console.log(`🔕 Cancelling notification for reminder ${reminderId} at ${scheduledTime}`)
-              if (notification.id) {
-                await notifee.cancelNotification(notification.id)
-              }
-            }
+          // Если это сегодняшнее уведомление с нужным временем - удаляем
+          if (notifDateStr === todayStr && notifTime === scheduledTime) {
+            await notifee.cancelNotification(notification.id)
           }
         }
       }
     } catch (error) {
-      console.error('Failed to cancel reminder notification:', error)
+      // Error handled silently
     }
   }
 
@@ -395,7 +332,7 @@ class NotificationService {
     try {
       await notifee.cancelAllNotifications()
     } catch (error) {
-      console.error('Failed to cancel all notifications:', error)
+      // Error handled silently
     }
   }
 
@@ -407,39 +344,8 @@ class NotificationService {
     try {
       return await notifee.getTriggerNotifications()
     } catch (error) {
-      console.error('Failed to get trigger notifications:', error)
       return []
     }
-  }
-
-
-  /**
-   * Получение лекарств с истекающим сроком годности
-   * @param {Medicine[]} medicines Список лекарств
-   * @param {Map<string, MedicineStock>} stocks Карта запасов
-   * @param {number} daysThreshold Порог дней
-   * @returns {Array} Список истекающих лекарств
-   */
-  getExpiringMedicines(
-    medicines: Medicine[],
-    stocks: Map<string, MedicineStock>,
-    daysThreshold: number = 30
-  ): Array<{ medicine: Medicine; stock: MedicineStock; daysUntilExpiry: number }> {
-    const now = new Date()
-    const expiringMedicines: Array<{ medicine: Medicine; stock: MedicineStock; daysUntilExpiry: number }> = []
-
-    for (const medicine of medicines) {
-      const stock = stocks.get(medicine.id)
-      if (stock && stock.expiryDate) {
-        const daysUntilExpiry = Math.ceil((stock.expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-
-        if (daysUntilExpiry <= daysThreshold && daysUntilExpiry >= 0) {
-          expiringMedicines.push({ medicine, stock, daysUntilExpiry })
-        }
-      }
-    }
-
-    return expiringMedicines.sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry)
   }
 
   /**
@@ -454,7 +360,6 @@ class NotificationService {
     try {
       return await notifee.isBatteryOptimizationEnabled()
     } catch (error) {
-      console.error('Failed to check battery optimization:', error)
       return false
     }
   }
@@ -472,7 +377,7 @@ class NotificationService {
       // Просто открываем настройки без алерта
       await notifee.openBatteryOptimizationSettings()
     } catch (error) {
-      console.error('Failed to open battery optimization settings:', error)
+      // Error handled silently
     }
   }
 
@@ -493,7 +398,7 @@ class NotificationService {
         await notifee.openPowerManagerSettings()
       }
     } catch (error) {
-      console.error('Failed to check power manager:', error)
+      // Error handled silently
     }
   }
 
@@ -510,7 +415,6 @@ class NotificationService {
       const settings = await notifee.getNotificationSettings()
       return settings.android.alarm === 1
     } catch (error) {
-      console.error('Failed to check exact alarm permission:', error)
       return false
     }
   }
@@ -548,7 +452,7 @@ class NotificationService {
         )
       }
     } catch (error) {
-      console.error('Failed to request exact alarm permission:', error)
+      // Error handled silently
     }
   }
 
@@ -565,17 +469,11 @@ class NotificationService {
     try {
       // 1. Проверяем разрешение на точные alarm'ы (КРИТИЧНО для Android 12+)
       const canScheduleAlarms = await this.canScheduleExactAlarms()
-      console.log('🔍 canScheduleExactAlarms:', canScheduleAlarms)
-
-      // 2. Проверяем Battery Optimization
-      const batteryOptEnabled = await notifee.isBatteryOptimizationEnabled()
-      console.log('🔍 batteryOptEnabled:', batteryOptEnabled)
 
       // Показываем диалоги по приоритету
 
       // ПРИОРИТЕТ 1: Exact Alarms (Android 12+) - БЕЗ ЭТОГО НИЧЕГО НЕ РАБОТАЕТ!
       if (!canScheduleAlarms) {
-        console.log('🚨 Showing exact alarm permission dialog')
         Alert.alert(
           '🚨 Критично: Разрешение на уведомления',
           'Для работы уведомлений о лекарствах необходимо разрешение "Alarms & reminders".\n\n' +
@@ -593,26 +491,23 @@ class NotificationService {
             },
           ]
         )
-        return // Сначала это, потом остальное
       }
-      console.log('batteryOptEnabled', batteryOptEnabled)
 
       // ПРИОРИТЕТ 2: Battery Optimization - Убрали алерт
       // if (batteryOptEnabled) {
       //   // Пользователь может настроить в экране настроек уведомлений
       // }
     } catch (error) {
-      console.error('Failed to check background restrictions:', error)
+      // Error handled silently
     }
   }
 
   /**
    * Показать диалог об эмуляторе после онбординга
-   * @returns {Promise<void>}
+   * @returns {Promise<void>} Promise
    */
   async showEmulatorInfoDialog(): Promise<void> {
     // Убрали алерт - пользователь может настроить в экране настроек уведомлений
-
   }
 
   /**
@@ -622,7 +517,6 @@ class NotificationService {
    */
   async sendTestNotification(kitId: string): Promise<string | null> {
     if (!__DEV__) {
-      console.log('Test notifications only available in development mode')
       return null
     }
 
@@ -630,13 +524,6 @@ class NotificationService {
     testDate.setSeconds(testDate.getSeconds() + 5)
 
     const notificationId = `test-notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-
-    console.log('🔍 Scheduling test notification:', {
-      notificationId,
-      testDate: testDate.toLocaleString('ru-RU'),
-      kitId,
-      now: new Date().toLocaleString('ru-RU')
-    })
 
     const success = await this.scheduleNotification(notificationId, {
       title: '🧪 Тестовое уведомление',
@@ -646,28 +533,14 @@ class NotificationService {
         type: 'test',
         testId: notificationId,
       },
-      kitId,
+      medicineKitId: Number(kitId),
       critical: false,
     })
 
     if (success) {
-      console.log(`✅ Тестовое уведомление запланировано на ${testDate.toLocaleTimeString('ru-RU')}`)
-
-      // Проверяем что уведомление действительно запланировано
-      setTimeout(async () => {
-        try {
-          const notifications = await this.getTriggerNotifications()
-          const testNotification = notifications.find(n => n.notification.id === notificationId)
-          console.log('🔍 Test notification status:', testNotification ? 'Found' : 'Not found')
-        } catch (error) {
-          console.error('❌ Error checking test notification:', error)
-        }
-      }, 1000)
-
       return notificationId
     }
 
-    console.log('❌ Не удалось запланировать тестовое уведомление')
     return null
   }
 
@@ -678,7 +551,6 @@ class NotificationService {
    */
   async sendTestCriticalNotification(kitId: string): Promise<string | null> {
     if (!__DEV__) {
-      console.log('Test notifications only available in development mode')
       return null
     }
 
@@ -686,13 +558,6 @@ class NotificationService {
     testDate.setSeconds(testDate.getSeconds() + 3)
 
     const notificationId = `test-critical-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-
-    console.log('🔍 Scheduling critical test notification:', {
-      notificationId,
-      testDate: testDate.toLocaleString('ru-RU'),
-      kitId,
-      now: new Date().toLocaleString('ru-RU')
-    })
 
     const success = await this.scheduleNotification(notificationId, {
       title: '🚨 Тест: Критическое уведомление',
@@ -702,28 +567,14 @@ class NotificationService {
         type: 'test-critical',
         testId: notificationId,
       },
-      kitId,
+      medicineKitId: Number(kitId),
       critical: true,
     })
 
     if (success) {
-      console.log(`✅ Критическое уведомление запланировано на ${testDate.toLocaleTimeString('ru-RU')}`)
-
-      // Проверяем что уведомление действительно запланировано
-      setTimeout(async () => {
-        try {
-          const notifications = await this.getTriggerNotifications()
-          const testNotification = notifications.find(n => n.notification.id === notificationId)
-          console.log('🔍 Critical test notification status:', testNotification ? 'Found' : 'Not found')
-        } catch (error) {
-          console.error('❌ Error checking critical test notification:', error)
-        }
-      }, 1000)
-
       return notificationId
     }
 
-    console.log('❌ Не удалось запланировать критическое уведомление')
     return null
   }
 
@@ -738,7 +589,6 @@ class NotificationService {
     body: string = 'Это уведомление пришло сразу'
   ): Promise<void> {
     if (!__DEV__) {
-      console.log('Test notifications only available in development mode')
       return
     }
 
@@ -746,7 +596,6 @@ class NotificationService {
       type: 'instant-test',
       timestamp: Date.now(),
     })
-    console.log('✅ Мгновенное тестовое уведомление отправлено')
   }
 
   /**
@@ -755,13 +604,11 @@ class NotificationService {
    */
   async cancelAllTestNotifications(): Promise<void> {
     if (!__DEV__) {
-      console.log('Test notifications only available in development mode')
       return
     }
 
     try {
       const notifications = await this.getTriggerNotifications()
-      let cancelledCount = 0
 
       for (const item of notifications) {
         const notificationId = item.notification.id
@@ -769,12 +616,10 @@ class NotificationService {
 
         if (notificationId?.includes('test-') || data?.type?.includes('test')) {
           await this.cancelNotification(notificationId!)
-          cancelledCount++
         }
       }
-      console.log(`✅ Отменено тестовых уведомлений: ${cancelledCount}`)
     } catch (error) {
-      console.error('❌ Ошибка при отмене тестовых уведомлений:', error)
+      // Error handled silently
     }
   }
 
@@ -784,28 +629,13 @@ class NotificationService {
    */
   async debugScheduledNotifications(): Promise<void> {
     if (!__DEV__) {
-      console.log('Debug functions only available in development mode')
       return
     }
 
     try {
-      const notifications = await this.getTriggerNotifications()
-      console.log(`\n📋 Запланировано уведомлений: ${notifications.length}\n`)
-
-      notifications.forEach((item, index) => {
-        const { notification } = item
-        const trigger = item.trigger as any
-        const triggerDate = trigger?.timestamp ? new Date(trigger.timestamp) : null
-
-        console.log(`${index + 1}. ${notification.title}`)
-        console.log(`   ID: ${notification.id}`)
-        console.log(`   Время: ${triggerDate?.toLocaleString('ru-RU') || 'N/A'}`)
-        console.log(`   Канал: ${notification.android?.channelId || notification.ios?.categoryId || 'N/A'}`)
-        console.log('   Данные:', notification.data)
-        console.log('')
-      })
+      await this.getTriggerNotifications()
     } catch (error) {
-      console.error('❌ Ошибка при получении запланированных уведомлений:', error)
+      // Error handled silently
     }
   }
 
@@ -820,10 +650,7 @@ class NotificationService {
       return false
     }
 
-    const canSchedule = await this.canScheduleExactAlarms()
-    if (!canSchedule) {
-      console.warn('No SCHEDULE_EXACT_ALARM permission - notifications may not work when app is closed')
-    }
+    await this.canScheduleExactAlarms()
 
     const now = new Date()
     if (reminderDate <= now) {
@@ -868,10 +695,8 @@ class NotificationService {
         }
       )
 
-      console.log('✅ Напоминание списка покупок запланировано на', reminderDate.toLocaleString('ru-RU'))
       return true
     } catch (error) {
-      console.error('Failed to schedule shopping list reminder:', error)
       return false
     }
   }
@@ -883,9 +708,8 @@ class NotificationService {
   async cancelShoppingListReminder(): Promise<void> {
     try {
       await this.cancelNotification('shopping-list-reminder')
-      console.log('✅ Напоминание списка покупок отменено')
     } catch (error) {
-      console.error('Failed to cancel shopping list reminder:', error)
+      // Error handled silently
     }
   }
 
@@ -907,7 +731,6 @@ class NotificationService {
 
       return null
     } catch (error) {
-      console.error('Failed to get shopping list reminder:', error)
       return null
     }
   }

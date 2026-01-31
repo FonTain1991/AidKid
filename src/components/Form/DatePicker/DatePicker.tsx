@@ -67,6 +67,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         minimumDate={minimumDate}
         locale='ru'
         theme='light'
+        is24hourSource='locale'
       />
     </>
   )

@@ -1,7 +1,7 @@
 export const UNITS = [
   {
     value: 'mg',
-    label: 'мл (Миллиграмм)',
+    label: 'мг (Миллиграмм)',
     shortLabel: 'мг'
   },
   {

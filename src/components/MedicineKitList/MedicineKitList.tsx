@@ -9,10 +9,10 @@ export const MedicineKitList = memo(() => {
   const { medicineKits } = useAppStore(state => state)
 
   const dataSource = useMemo(() => {
-    if (params?.medicineKitId) {
-      return medicineKits.filter((kit: MedicineKit) => kit.parentId === params?.medicineKitId)
-    }
-    return medicineKits.filter((kit: MedicineKit) => kit.parentId === null)
+    const filtered = params?.medicineKitId
+      ? medicineKits.filter((kit: MedicineKit) => kit.parentId === params?.medicineKitId)
+      : medicineKits.filter((kit: MedicineKit) => kit.parentId === null)
+    return [...filtered].sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
   }, [medicineKits, params?.medicineKitId])
 
   return (

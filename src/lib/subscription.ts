@@ -12,7 +12,6 @@ import { Platform } from 'react-native'
 import {
   getRevenueCatApiKey,
   PREMIUM_ENTITLEMENT_ID,
-  DEFAULT_OFFERING_ID,
 } from './subscriptionConfig'
 
 export interface SubscriptionStatus {
@@ -48,7 +47,6 @@ class SubscriptionService {
 
       // Проверяем, что API ключ настроен
       if (apiKey.includes('YOUR_')) {
-        console.warn('⚠️ RevenueCat API key not configured. Subscription features will not work.')
         this.initializationError = new Error('API key not configured')
         return
       }
@@ -56,37 +54,29 @@ class SubscriptionService {
       // Проверяем формат ключа (для production должен начинаться с goog_)
       // Для тестового ключа может быть формат test_XXXXX (без префикса)
       if (Platform.OS === 'android' && !__DEV__ && !apiKey.startsWith('goog_')) {
-        console.error('❌ Invalid Android Production API key format! Should start with "goog_"')
-        console.error('   Current key:', apiKey)
         this.initializationError = new Error('Invalid API key format')
         return
       }
 
       await Purchases.configure({ apiKey })
-      console.log('🔑 RevenueCat configured with API key:', apiKey.substring(0, 20) + '...')
 
       // Если передан userId, привязываем покупки к пользователю
       if (userId) {
         await Purchases.logIn(userId)
-        console.log('👤 RevenueCat: User logged in:', userId)
       }
 
       // Получаем информацию о текущем пользователе
       this.customerInfo = await Purchases.getCustomerInfo()
-      console.log('👤 RevenueCat: Customer info loaded')
 
       // Проверяем доступность Google Play Billing
       try {
-        const canMakePayments = await Purchases.canMakePayments()
-        console.log('💳 RevenueCat: Can make payments:', canMakePayments)
+        await Purchases.canMakePayments()
       } catch (err) {
-        console.warn('⚠️ RevenueCat: Error checking payment availability:', err)
+        // Error handled silently
       }
 
       this.isInitialized = true
-      console.log('✅ RevenueCat initialized successfully')
     } catch (error) {
-      console.error('❌ Error initializing RevenueCat:', error)
       this.initializationError = error as Error
       this.isInitialized = false
     }
@@ -131,7 +121,6 @@ class SubscriptionService {
       // Подписка истекла
       return false
     } catch (error) {
-      console.error('Error checking premium status:', error)
       return false
     }
   }
@@ -144,7 +133,6 @@ class SubscriptionService {
       this.customerInfo = await Purchases.getCustomerInfo()
       return this.customerInfo
     } catch (error) {
-      console.error('Error getting customer info:', error)
       throw error
     }
   }
@@ -156,22 +144,6 @@ class SubscriptionService {
     try {
       const customerInfo = await this.getCustomerInfo()
       const entitlement = customerInfo.entitlements.active[PREMIUM_ENTITLEMENT_ID]
-
-      // Логирование для диагностики
-      if (entitlement) {
-        console.log('📊 Subscription Status:', {
-          identifier: entitlement.identifier,
-          expirationDate: entitlement.expirationDate,
-          productIdentifier: entitlement.productIdentifier,
-          isActive: entitlement.isActive,
-          willRenew: entitlement.willRenew,
-          unsubscribeDetectedAt: entitlement.unsubscribeDetectedAt,
-        })
-      } else {
-        console.log('📊 No active subscription found')
-        // Проверяем все entitlement для диагностики
-        console.log('📊 All entitlements:', Object.keys(customerInfo.entitlements.active))
-      }
 
       const willRenew = entitlement?.willRenew ?? true
       const isCanceled = entitlement?.unsubscribeDetectedAt !== undefined &&
@@ -198,7 +170,6 @@ class SubscriptionService {
         isCanceled,
       }
     } catch (error) {
-      console.error('Error getting subscription status:', error)
       return {
         isPremium: false,
         isInitialized: this.isInitialized,
@@ -219,37 +190,15 @@ class SubscriptionService {
         await this.initialize()
       }
 
-      console.log('🔄 Fetching offerings from RevenueCat...')
       const offerings = await Purchases.getOfferings()
       const { current } = offerings
 
-      // Логирование для отладки
       if (current) {
-        console.log('📦 RevenueCat Offerings loaded:', {
-          identifier: current.identifier,
-          packagesCount: current.availablePackages.length,
-          packages: current.availablePackages.map(pkg => ({
-            identifier: pkg.identifier,
-            hasStoreProduct: !!pkg.storeProduct,
-            productId: pkg.storeProduct?.identifier,
-            price: pkg.storeProduct?.priceString,
-            title: pkg.storeProduct?.title,
-            packageType: pkg.packageType,
-          })),
-        })
-
         // Попробуем загрузить продукты напрямую по Product ID из Google Play
         const productIds = ['premium_monthly', 'premium_yearly']
-        console.log('🔄 Attempting to fetch products directly by ID:', productIds)
 
         try {
-          const directProducts = await Purchases.getProducts(productIds, 'SUBS')
-          console.log('✅ Direct products fetched:', directProducts.map(p => ({
-            identifier: p.identifier,
-            title: p.title,
-            price: p.priceString,
-            currencyCode: p.currencyCode,
-          })))
+          const directProducts = await Purchases.getProducts(productIds)
 
           // Сохраняем в кеш для использования в UI
           directProducts.forEach(product => {
@@ -272,38 +221,18 @@ class SubscriptionService {
                 : p.identifier.includes('yearly')))
 
               if (matchingProduct) {
-                console.log(`✅ Found matching product for package ${pkg.identifier}:`, matchingProduct.identifier)
-                  // Присваиваем storeProduct напрямую (patch для работы в UI)
-                  ; (pkg as any).storeProduct = matchingProduct
+                // Присваиваем storeProduct напрямую (patch для работы в UI)
+                ; (pkg as any).storeProduct = matchingProduct
               }
             }
           }
         } catch (err) {
-          console.error('❌ Error fetching products directly:', err)
+          // Error handled silently
         }
-
-        // Дополнительная диагностика для каждого package
-        for (const pkg of current.availablePackages) {
-          if (!pkg.storeProduct) {
-            console.warn(`⚠️ Package ${pkg.identifier} has no storeProduct`)
-            console.warn('   Package type:', pkg.packageType)
-          } else {
-            console.log(`✅ Package ${pkg.identifier} has storeProduct:`, {
-              identifier: pkg.storeProduct.identifier,
-              title: pkg.storeProduct.title,
-              price: pkg.storeProduct.priceString,
-              currencyCode: pkg.storeProduct.currencyCode,
-            })
-          }
-        }
-      } else {
-        console.warn('⚠️ RevenueCat: No current offering found')
-        console.warn('   All offerings:', Object.keys(offerings.all))
       }
 
       return current
     } catch (error) {
-      console.error('❌ Error getting offerings:', error)
       return null
     }
   }
@@ -322,7 +251,6 @@ class SubscriptionService {
       if (purchasesError.userCancelled) {
         throw new Error('Покупка отменена пользователем')
       } else {
-        console.error('Error purchasing package:', purchasesError)
         throw purchasesError
       }
     }
@@ -337,7 +265,6 @@ class SubscriptionService {
       this.customerInfo = customerInfo
       return customerInfo
     } catch (error) {
-      console.error('Error restoring purchases:', error)
       throw error
     }
   }
@@ -351,7 +278,6 @@ class SubscriptionService {
       this.customerInfo = customerInfo
       return customerInfo
     } catch (error) {
-      console.error('Error linking user account:', error)
       throw error
     }
   }
@@ -365,7 +291,6 @@ class SubscriptionService {
       this.customerInfo = customerInfo
       return customerInfo
     } catch (error) {
-      console.error('Error unlinking user account:', error)
       throw error
     }
   }
@@ -378,7 +303,6 @@ class SubscriptionService {
       const customerInfo = await this.getCustomerInfo()
       return customerInfo.originalAppUserId
     } catch (error) {
-      console.error('Error getting RevenueCat User ID:', error)
       throw error
     }
   }

@@ -141,10 +141,6 @@ export const AddReminder = memo(() => {
           frequency: 'once',
         }
       })
-
-      if (scheduled) {
-        console.log(`Scheduled once reminder for ${notificationTime.toLocaleString('ru-RU')}`)
-      }
     } else if (reminderFrequency === 'daily') {
       // Ежедневные напоминания: создаем quantity уведомлений в день на указанное количество дней
       const notificationPromises = []
@@ -176,13 +172,6 @@ export const AddReminder = memo(() => {
             }
           }))
         }
-      }
-
-      const results = await Promise.all(notificationPromises)
-      const notificationCount = results.filter(Boolean).length
-
-      if (notificationCount > 0) {
-        console.log(`Scheduled ${notificationCount} daily reminders`)
       }
     } else if (reminderFrequency === 'weekly') {
       // Еженедельные напоминания: создаем quantity уведомлений в неделю на указанное количество недель
@@ -217,13 +206,6 @@ export const AddReminder = memo(() => {
             }
           }))
         }
-      }
-
-      const results = await Promise.all(notificationPromises)
-      const notificationCount = results.filter(Boolean).length
-
-      if (notificationCount > 0) {
-        console.log(`Scheduled ${notificationCount} weekly reminders`)
       }
     }
   })
@@ -295,15 +277,15 @@ export const AddReminder = memo(() => {
         timesPerDay: reminderForm.quantity,
         time: timeString,
         isActive: true,
-        description: reminderForm.description
+        description: reminderForm.description,
+        dosage: reminderForm.dosage
       })
-      console.log('Created reminder:', reminder)
+
       if (!reminder || !reminder.id) {
         throw new Error('Не удалось создать напоминание')
       }
 
       const reminderId = reminder.id
-      console.log('Reminder ID:', reminderId, 'Type:', typeof reminderId)
 
       // Создаем связи между напоминанием и лекарствами
       await Promise.all(reminderForm.selectedMedicineIds.map(medicineId => createReminderMedicine({
@@ -397,6 +379,7 @@ export const AddReminder = memo(() => {
               onChangeText={dosage => setReminderForm(prev => ({ ...prev, dosage }))}
               value={reminderForm.dosage}
               error={errors?.dosage}
+              keyboardType='number-pad'
             />
           </FormItemWrapper>
         )}
