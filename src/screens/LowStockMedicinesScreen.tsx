@@ -5,6 +5,7 @@ import { Text } from '@/components/Text'
 import { SPACING } from '@/constants'
 import { FONT_SIZE } from '@/constants/font'
 import { useNavigationBarColor, useScreenProperties } from '@/hooks'
+import { useTranslation } from 'react-i18next'
 import { Medicine } from '@/services/models'
 import { useAppStore } from '@/store'
 import { useMemo } from 'react'
@@ -13,12 +14,13 @@ import { useTheme } from '@/providers/theme'
 
 export function LowStockMedicinesScreen() {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const { medicines } = useAppStore(state => state)
 
   useScreenProperties({
     navigationOptions: {
       headerShown: true,
-      title: 'Лекарства с низким запасом'
+      title: t('screens.lowStockMedicines')
     }
   })
 
@@ -38,8 +40,8 @@ export function LowStockMedicinesScreen() {
         <Background>
           <Empty
             icon='check-circle'
-            title='Все хорошо!'
-            description='Нет лекарств с низким запасом'
+            title={t('empty.allGood')}
+            description={t('empty.noLowStock')}
           />
         </Background>
       </SafeAreaView>
@@ -57,7 +59,7 @@ export function LowStockMedicinesScreen() {
             <PaddingHorizontal>
               <View style={styles.header}>
                 <Text style={[styles.subtitle, { color: colors.muted }]}>
-                  {lowStockMedicines.length} {lowStockMedicines.length === 1 ? 'лекарство' : 'лекарств'} с низким запасом
+                  {lowStockMedicines.length} {lowStockMedicines.length === 1 ? t('lowStock.count_one') : t('lowStock.count_many')} {t('lowStock.withLowStock')}
                 </Text>
               </View>
             </PaddingHorizontal>

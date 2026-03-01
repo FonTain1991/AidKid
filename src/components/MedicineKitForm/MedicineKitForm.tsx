@@ -4,6 +4,7 @@ import { useMedicineKit } from '@/hooks/useMedicineKit'
 import { MedicineKit } from '@/services/models'
 import { useAppStore } from '@/store'
 import { memo, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Alert, ScrollView } from 'react-native'
 import { Button } from '../Button'
 import { ColorPicker, Textarea, TextInput } from '../Form'
@@ -18,6 +19,7 @@ const INITIAL_MEDICINE_KIT: MedicineKit = {
 }
 
 export const MedicineKitForm = memo(() => {
+  const { t } = useTranslation()
   const { params } = useRoute()
   const navigation = useMyNavigation()
   const { medicineKits } = useAppStore(state => state)
@@ -46,7 +48,7 @@ export const MedicineKitForm = memo(() => {
 
   const onSubmit = useEvent(async () => {
     if (!medicineKit.name) {
-      setErrorName('Название обязательно для заполнения')
+      setErrorName(t('medicineKit.nameRequired'))
       return
     }
     setErrorName(null)
@@ -62,14 +64,14 @@ export const MedicineKitForm = memo(() => {
       }
       navigation.goBack()
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Не удалось создать аптечку'
+      const errorMessage = error instanceof Error ? error.message : t('medicineKit.failedToCreate')
       Alert.alert(
-        'Лимит достигнут',
+        t('medicineKit.limitReached'),
         errorMessage,
         [
-          { text: 'Отмена', style: 'cancel' },
+          { text: t('common.cancel'), style: 'cancel' },
           {
-            text: 'Оформить Premium',
+            text: t('common.subscribe'),
             onPress: () => navigation.navigate('subscription'),
           },
         ]
@@ -99,28 +101,28 @@ export const MedicineKitForm = memo(() => {
     >
       <Padding style={{ gap: SPACING.md }}>
         <TextInput
-          label='Название'
+          label={t('medicineKit.name')}
           onChangeText={onChangeName}
           value={medicineKit.name}
           error={errorName ?? undefined}
         />
         <Textarea
-          label='Описание'
+          label={t('medicineKit.description')}
           onChangeText={onChangeDescription}
           value={medicineKit.description}
         />
         <ColorPicker
-          fieldName='Цвет'
+          fieldName={t('medicineKit.color')}
           value={medicineKit.color}
           onColorSelect={onChangeColor}
         />
         <ParentMedicineKitList
-          fieldName='Родительская категория'
+          fieldName={t('medicineKit.parentCategory')}
           value={medicineKit?.parentId}
           onChange={onChangeParentMedicineKit}
         />
         <Button
-          title={params?.medicineKitId ? 'Сохранить' : 'Добавить'}
+          title={params?.medicineKitId ? t('common.save') : t('medicine.add')}
           onPress={onSubmit}
         />
       </Padding>

@@ -1,4 +1,5 @@
 import { useAppStore } from '@/store'
+import { useTranslation } from 'react-i18next'
 import React, { useMemo } from 'react'
 import { List } from '../Form'
 
@@ -14,12 +15,12 @@ interface ParentMedicineKitListProps {
 export const ParentMedicineKitList: React.FC<ParentMedicineKitListProps> = ({
   value,
   onChange,
-  fieldName = 'Родительская категория',
+  fieldName,
   error,
   excludeKitId,
   noParent = false
 }) => {
-
+  const { t } = useTranslation()
   const { medicineKits } = useAppStore(state => state)
 
 
@@ -48,18 +49,18 @@ export const ParentMedicineKitList: React.FC<ParentMedicineKitListProps> = ({
       }))
     }
     return [
-      { label: 'Без родителя', value: null, subtitle: 'Корневая категория' },
+      { label: t('medicineKit.noParent'), value: null, subtitle: t('medicineKit.noParentSubtitle') },
       ...medicineKits.map(kit => ({
         label: kit.name,
         value: kit.id,
         subtitle: kit.description
       }))
     ]
-  }, [noParent, medicineKits])
+  }, [noParent, medicineKits, t])
 
   return (
     <List
-      fieldName={fieldName}
+      fieldName={fieldName ?? t('medicineKit.parentCategory')}
       options={options}
       value={value}
       onChange={onChange}

@@ -1,4 +1,5 @@
 import { useEvent } from '@/hooks'
+import { useTranslation } from 'react-i18next'
 import { useMedicine } from '@/hooks/useMedicine'
 import { useAppStore } from '@/store'
 import { medicineUsageModel } from '@/services/models'
@@ -7,6 +8,7 @@ import { Alert } from 'react-native'
 import { Button } from '../Button'
 
 export const QuickIntakeButton = memo(() => {
+  const { t } = useTranslation()
   const {
     quickIntakeMedicines,
     setQuickIntakeMedicines,
@@ -43,10 +45,10 @@ export const QuickIntakeButton = memo(() => {
     setIsClearedQuickIntakeMedicines(true)
     setQuickIntakeMedicines([])
     Alert.alert(
-      '✅ Прием отмечен',
-      `Принято лекарств: ${quickIntakeMedicines?.length}`,
+      t('today.intakeMarkedTitle'),
+      t('today.medicinesTaken', { count: quickIntakeMedicines?.length }),
       [{
-        text: 'OK', onPress: () => {
+        text: t('common.ok'), onPress: () => {
           setIsClearedQuickIntakeMedicines(false)
         }
       }]
@@ -56,7 +58,7 @@ export const QuickIntakeButton = memo(() => {
   if (quickIntakeMedicines?.length) {
     return (
       <Button
-        title={`Принять выбранные (${quickIntakeMedicines?.length})`}
+        title={t('today.takeSelected', { count: quickIntakeMedicines?.length })}
         onPress={handleQuickIntake}
       />
     )

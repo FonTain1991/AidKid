@@ -1,4 +1,5 @@
 import { RADIUS, SPACING } from '@/constants'
+import { useTranslation } from 'react-i18next'
 import { FONT_SIZE, FONT_WEIGHT } from '@/constants/font'
 import { useEvent, useMyNavigation, useShoppingList } from '@/hooks'
 import { useTheme } from '@/providers/theme'
@@ -13,6 +14,7 @@ interface ShoppingListItemProps {
 
 export function ShoppingListItem({ item }: ShoppingListItemProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const { updateShoppingList, deleteShoppingList } = useShoppingList()
   const { medicines } = useAppStore(state => state)
   const navigation = useMyNavigation()
@@ -22,15 +24,15 @@ export function ShoppingListItem({ item }: ShoppingListItemProps) {
 
     if (existingMedicine) {
       Alert.alert(
-        'Лекарство найдено',
-        `Лекарство "${existingMedicine.name}" уже есть в аптечке. Открыть его?`,
+        t('shoppingList.medicineFound'),
+        t('shoppingList.medicineFoundInKit', { name: existingMedicine.name }),
         [
           {
-            text: 'Отмена',
+            text: t('common.cancel'),
             style: 'cancel'
           },
           {
-            text: 'Открыть',
+            text: t('common.open'),
             onPress: async () => {
               await deleteShoppingList(item.id)
               navigation.navigate('medicine', {
@@ -52,15 +54,15 @@ export function ShoppingListItem({ item }: ShoppingListItemProps) {
 
   const handleDelete = () => {
     Alert.alert(
-      'Удалить товар',
-      'Вы уверены, что хотите удалить этот товар из списка?',
+      t('shoppingList.deleteItem'),
+      t('shoppingList.deleteItemConfirm'),
       [
         {
-          text: 'Отмена',
+          text: t('common.cancel'),
           style: 'cancel'
         },
         {
-          text: 'Удалить',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: () => deleteShoppingList(Number(item.id))
         }
@@ -130,7 +132,7 @@ export function ShoppingListItem({ item }: ShoppingListItemProps) {
             onPress={handleAddToKit}
           >
             <Icon name='plus-circle' size={16} color={colors.card} />
-            <Text style={[styles.addToKitText, { color: colors.card }]}>Добавить в аптечку</Text>
+            <Text style={[styles.addToKitText, { color: colors.card }]}>{t('shoppingList.addToKit')}</Text>
           </Pressable>
         )}
       </View>

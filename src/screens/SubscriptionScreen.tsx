@@ -4,14 +4,17 @@ import { useStyles } from '@/components/Subscription/hooks'
 import { Text } from '@/components/Text'
 import { FONT_WEIGHT } from '@/constants/font'
 import { useNavigationBarColor, useScreenProperties } from '@/hooks'
+import { useTranslation } from 'react-i18next'
 import { ScrollView } from 'react-native'
 
 export function SubscriptionScreen() {
   const styles = useStyles()
+  const { t } = useTranslation()
+
   useScreenProperties({
     navigationOptions: {
       headerShown: true,
-      title: 'Подписка'
+      title: t('screens.subscription')
     }
   })
 
@@ -27,10 +30,10 @@ export function SubscriptionScreen() {
           >
             <Subscription />
             <Text style={styles.disclaimer}>
-              Подписка автоматически продлевается, если не отменена за 24 часа до окончания периода.
-              {'\n'}Вы можете отменить подписку в любое время в настройках Google Play.
+              {t('subscribe.autoRenewal')}
+              {'\n'}{t('subscribe.cancelAnytime')}
               {'\n\n'}
-              <Text style={{ fontWeight: FONT_WEIGHT.bold }}>Политика возврата:</Text> Полный возврат средств возможен в течение 48 часов после покупки через Google Play.
+              <Text style={{ fontWeight: FONT_WEIGHT.bold }}>{t('subscribe.refundPolicy')}</Text> {t('subscribe.refundPolicyText')}
             </Text>
           </ScrollView>
         </Flex>

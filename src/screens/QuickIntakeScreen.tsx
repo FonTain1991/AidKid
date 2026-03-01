@@ -4,6 +4,7 @@ import { Background, Flex, PaddingHorizontal, SafeAreaView } from '@/components/
 import { MedicineListForQuickIntake } from '@/components/MedicineListForQuickIntake'
 import { SPACING } from '@/constants'
 import { useEvent, useNavigationBarColor } from '@/hooks'
+import { useTranslation } from 'react-i18next'
 import { useScreenProperties, UseScreenPropertiesOptions } from '@/hooks/useScreenProperties'
 import { useTheme } from '@/providers/theme'
 import { useAppStore } from '@/store'
@@ -16,24 +17,28 @@ export function QuickIntakeScreen() {
   const [searchText, setSearchText] = useState('')
   const { setQuickIntakeMedicines, medicines } = useAppStore(state => state)
 
-  const options = useMemo<UseScreenPropertiesOptions>(() => ({
-    navigationOptions: {
-      headerShown: true,
-      title: 'Быстрый прием',
-      headerSearchBarOptions: {
-        placeholder: 'Поиск лекарства',
-        onChangeText: event => {
-          setSearchText(event.nativeEvent.text)
+  const { t } = useTranslation()
+  const options = useMemo<UseScreenPropertiesOptions>(
+    () => ({
+      navigationOptions: {
+        headerShown: true,
+        title: t('screens.quickIntake'),
+        headerSearchBarOptions: {
+          placeholder: t('medicine.searchPlaceholder'),
+          onChangeText: event => {
+            setSearchText(event.nativeEvent.text)
+          },
+          onCancelButtonPress: () => {
+            setSearchText('')
+          },
+          headerIconColor: colors.text,
+          shouldShowHintSearchIcon: false,
+          autoFocus: true,
         },
-        onCancelButtonPress: () => {
-          setSearchText('')
-        },
-        headerIconColor: colors.text,
-        shouldShowHintSearchIcon: false,
-        autoFocus: true
-      }
-    }
-  }), [colors])
+      },
+    }),
+    [colors, t]
+  )
 
 
   useScreenProperties(options)
@@ -50,8 +55,8 @@ export function QuickIntakeScreen() {
         <Background>
           <Empty
             icon='box'
-            title='Лекарства'
-            description='Здесь будут отображаться ваши лекарства'
+            title={t('empty.noMedicinesTitle')}
+            description={t('empty.noMedicinesDesc')}
           />
         </Background>
       </SafeAreaView>

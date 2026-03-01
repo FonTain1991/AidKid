@@ -1,4 +1,5 @@
 import { SPACING, UNITS } from '@/constants'
+import { useTranslation } from 'react-i18next'
 import { FONT_SIZE } from '@/constants/font'
 import { useEvent, useMyNavigation } from '@/hooks'
 import { useTheme } from '@/providers/theme'
@@ -15,6 +16,7 @@ import { useAppStore } from '@/store'
 
 export const MedicineItem = memo(({ medicine, showKit = true }: { medicine: Medicine, showKit?: boolean }) => {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const { navigate } = useMyNavigation()
   const { medicineKits } = useAppStore(state => state)
 
@@ -75,7 +77,7 @@ export const MedicineItem = memo(({ medicine, showKit = true }: { medicine: Medi
             <View style={styles.infoRow}>
               {medicine.quantity !== null && medicine.quantity !== undefined && (
                 <Text style={[styles.infoText, { color: colors.muted }]}>
-                  📦 {medicine.quantity} {unit?.shortLabel || 'шт.'}
+                  📦 {medicine.quantity} {unit?.value ? t(`units.${unit.value}Short`) : t('units.pcsShort')}
                 </Text>
               )}
               {medicine.expirationDate && (

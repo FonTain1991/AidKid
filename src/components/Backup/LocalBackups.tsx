@@ -3,6 +3,7 @@ import { backupService, googleDriveService } from '@/lib'
 import { useTheme } from '@/providers/theme'
 import { useAppStore } from '@/store'
 import { memo, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, Alert, Pressable, View } from 'react-native'
 import { Text } from '../Text'
 import { useStyles } from './hooks'
@@ -16,6 +17,7 @@ interface LocalBackup {
 
 export const LocalBackups = memo(() => {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const { googleDrive, localBackups } = useAppStore(state => state)
   const [localBackupsState, setLocalBackupsState] = useState<LocalBackup[]>([])
   const [loading, setLoading] = useState(false)
@@ -50,19 +52,19 @@ export const LocalBackups = memo(() => {
 
   const handleCreateBackup = () => {
     Alert.alert(
-      'Создать резервную копию',
-      'Будут сохранены все данные и фотографии лекарств',
+      t('backup.createBackup'),
+      t('backup.createBackupDesc'),
       [
-        { text: 'Отмена', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Создать',
+          text: t('backup.create'),
           onPress: async () => {
             setLoading(true)
             try {
               await backupService.createBackup()
               await loadData()
             } catch (error: any) {
-              Alert.alert('Ошибка', error.message || 'Не удалось создать резервную копию')
+              Alert.alert(t('support.error'), error.message || t('backup.failedToCreate'))
             } finally {
               setLoading(false)
             }
@@ -73,17 +75,17 @@ export const LocalBackups = memo(() => {
   }
 
   const handleDeleteBackup = useEvent((backup: LocalBackup) => {
-    Alert.alert('Удалить резервную копию', 'Вы уверены?', [
-      { text: 'Отмена', style: 'cancel' },
+    Alert.alert(t('backup.deleteBackup'), t('backup.deleteBackupConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Удалить',
+        text: t('common.delete'),
         style: 'destructive',
         onPress: async () => {
           try {
             await backupService.deleteBackup(backup.path)
             await loadData()
           } catch (error: any) {
-            Alert.alert('Ошибка', error.message || 'Не удалось удалить резервную копию')
+            Alert.alert(t('support.error'), error.message || t('backup.failedToDelete'))
           }
         },
       },
@@ -128,25 +130,24 @@ export const LocalBackups = memo(() => {
 
   const handleRestoreBackup = useEvent((backup: LocalBackup) => {
     Alert.alert(
-      'Восстановить данные',
-      'Все текущие данные будут заменены. Это действие нельзя отменить.',
+      t('backup.restoreData'),
+      t('backup.restoreDataDesc'),
       [
-        { text: 'Отмена', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Восстановить',
+          text: t('backup.restore'),
           style: 'destructive',
           onPress: async () => {
             setLoading(true)
             try {
               await backupService.restoreBackup(backup.path)
               Alert.alert(
-                '✅ Успешно',
-                'Данные и напоминания восстановлены!\n\n' +
-                '⚠️ ВАЖНО: Перезапустите приложение, чтобы все напоминания отобразились корректно.',
-                [{ text: 'Понятно' }]
+                t('backup.success'),
+                t('backup.dataRestored') + '\n\n' + t('backup.restartAppForReminders'),
+                [{ text: t('common.gotIt') }]
               )
             } catch (error: any) {
-              Alert.alert('Ошибка', error.message || 'Не удалось восстановить данные')
+              Alert.alert(t('support.error'), error.message || t('backup.failedToRestore'))
             } finally {
               setLoading(false)
             }
@@ -158,7 +159,7 @@ export const LocalBackups = memo(() => {
 
   const handleUploadToDrive = async (backup: LocalBackup) => {
     if (!googleDrive.isSignedIn) {
-      Alert.alert('Ошибка', 'Необходимо войти в Google аккаунт')
+      Alert.alert(t('support.error'), t('backup.loginRequired'))
       return
     }
 
@@ -166,9 +167,9 @@ export const LocalBackups = memo(() => {
     try {
       await googleDriveService.uploadFile(backup.path, backup.name)
       googleDrive.setIsRefetching(true)
-      Alert.alert('Успешно', 'Резервная копия загружена в Google Drive')
+      Alert.alert(t('backup.success'), t('backup.backupUploaded'))
     } catch (error: any) {
-      Alert.alert('Ошибка', error.message || 'Не удалось загрузить в Google Drive')
+      Alert.alert(t('support.error'), error.message || t('backup.failedToUpload'))
     } finally {
       setLoading(false)
     }
@@ -185,13 +186,13 @@ export const LocalBackups = memo(() => {
   return (
     <>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Локальное резервное копирование</Text>
+        <Text style={styles.sectionTitle}>{t('backup.localBackup')}</Text>
         <Pressable
           style={styles.primaryButton}
           onPress={handleCreateBackup}
         >
           <Text style={styles.primaryButtonText}>
-            📦 Создать резервную копию
+            {t('backup.createBackupButton')}
           </Text>
         </Pressable>
       </View>
@@ -199,7 +200,7 @@ export const LocalBackups = memo(() => {
       {localBackupsState.length > 0 && (
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Локальные копии ({localBackupsState.length})
+            {t('backup.localCopies', { count: localBackupsState.length })}
           </Text>
           {loading && <ActivityIndicator size='large' color={colors.primary} />}
           {localBackupsState.map((backup, index) => (
@@ -218,7 +219,7 @@ export const LocalBackups = memo(() => {
                   style={[styles.actionButton, { backgroundColor: colors.primary }]}
                   onPress={() => handleRestoreBackup(backup)}
                 >
-                  <Text style={styles.actionButtonText}>Восстановить</Text>
+                  <Text style={styles.actionButtonText}>{t('backup.restore')}</Text>
                 </Pressable>
                 {/* <Pressable
                   style={[styles.actionButton, { backgroundColor: colors.primary }]}
@@ -231,14 +232,14 @@ export const LocalBackups = memo(() => {
                     style={[styles.actionButton, { backgroundColor: '#4285F4' }]}
                     onPress={() => handleUploadToDrive(backup)}
                   >
-                    <Text style={styles.actionButtonText}>☁️ Загрузить</Text>
+                    <Text style={styles.actionButtonText}>{t('backup.upload')}</Text>
                   </Pressable>
                 )}
                 <Pressable
                   style={[styles.actionButton, { backgroundColor: colors.error }]}
                   onPress={() => handleDeleteBackup(backup)}
                 >
-                  <Text style={styles.actionButtonText}>Удалить</Text>
+                  <Text style={styles.actionButtonText}>{t('common.delete')}</Text>
                 </Pressable>
               </View>
             </View>

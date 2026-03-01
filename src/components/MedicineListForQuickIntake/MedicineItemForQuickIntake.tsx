@@ -1,4 +1,5 @@
 import { SPACING, UNITS } from '@/constants'
+import { useTranslation } from 'react-i18next'
 import { FONT_SIZE } from '@/constants/font'
 import { getMedicinePhotoUri } from '@/helpers'
 import { useEvent } from '@/hooks'
@@ -17,6 +18,7 @@ import { useStyles } from './useStyles'
 
 export const MedicineItemForQuickIntake = memo(({ medicine }: { medicine: Medicine }) => {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const { medicineKits, quickIntakeMedicines, setQuickIntakeMedicines, isClearedQuickIntakeMedicines } = useAppStore(state => state)
   const dosageRef = useRef<DosageRef>(null)
   const styles = useStyles()
@@ -82,9 +84,9 @@ export const MedicineItemForQuickIntake = memo(({ medicine }: { medicine: Medici
             <View>
               <Text style={styles.name}>{medicine.name}</Text>
               <Row itemsCenter>
-                <Text style={styles.quantity}>Всего: </Text>
+                <Text style={styles.quantity}>{t('statistics.total')}: </Text>
                 <View style={styles.quantityContainer}>
-                  <Text style={styles.quantity}>{medicine.quantity} {unit?.shortLabel ?? ''}</Text>
+                  <Text style={styles.quantity}>{medicine.quantity} {unit?.value ? t(`units.${unit.value}Short`) : ''}</Text>
                 </View>
               </Row>
             </View>

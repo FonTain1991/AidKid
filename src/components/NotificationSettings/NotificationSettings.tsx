@@ -1,4 +1,5 @@
 import { useEvent } from '@/hooks'
+import { useTranslation } from 'react-i18next'
 import { notificationService } from '@/lib'
 import { memo, useEffect, useState } from 'react'
 import { Alert, AppState, Linking, TouchableOpacity, View } from 'react-native'
@@ -7,6 +8,7 @@ import { useStyles } from './useStyles'
 
 export const NotificationSettings = memo(() => {
   const styles = useStyles()
+  const { t } = useTranslation()
 
   const [hasPermission, setHasPermission] = useState(false)
   const [canScheduleAlarms, setCanScheduleAlarms] = useState(false)
@@ -55,13 +57,13 @@ export const NotificationSettings = memo(() => {
       setHasPermission(granted)
 
       if (granted) {
-        Alert.alert('✅ Разрешение получено', 'Уведомления включены!')
+        Alert.alert(t('notifications.permissionGranted'), t('notifications.notificationsEnabled'))
       } else {
-        Alert.alert('❌ Разрешение отклонено', 'Уведомления будут отключены.')
+        Alert.alert(t('notifications.permissionDenied'), t('notifications.notificationsDisabled'))
       }
     } catch (error) {
       console.error('Failed to request permission:', error)
-      Alert.alert('Ошибка', 'Не удалось запросить разрешение')
+      Alert.alert(t('support.error'), t('notifications.failedToRequest'))
     }
   })
 
@@ -74,18 +76,18 @@ export const NotificationSettings = memo(() => {
       await Linking.openSettings()
     } catch (error) {
       console.error('Failed to open app settings:', error)
-      Alert.alert('Ошибка', 'Не удалось открыть настройки приложения')
+      Alert.alert(t('support.error'), t('notifications.failedToOpenSettings'))
     }
   })
 
   const getStatusIcon = useEvent((status: boolean) => (status ? '✅' : '❌'))
-  const getStatusText = useEvent((status: boolean) => (status ? 'Включено' : 'Отключено'))
+  const getStatusText = useEvent((status: boolean) => (status ? t('notifications.enabled') : t('notifications.disabled')))
 
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <Text style={styles.loadingText}>
-          Загрузка настроек...
+          {t('notificationSettings.loading')}
         </Text>
       </View>
     )
@@ -95,14 +97,14 @@ export const NotificationSettings = memo(() => {
     <>
       {/* Статус разрешений */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Статус разрешений</Text>
+        <Text style={styles.sectionTitle}>{t('notificationSettings.permissionStatus')}</Text>
 
         <View style={styles.statusItem}>
           <View style={styles.statusContent}>
             <Text style={styles.statusIcon}>{getStatusIcon(hasPermission)}</Text>
             <View style={styles.statusText}>
               <Text style={styles.statusTitle}>
-                Основные уведомления
+                {t('notificationSettings.mainNotifications')}
               </Text>
               <Text style={styles.statusDescription}>
                 {getStatusText(hasPermission)}
@@ -114,7 +116,7 @@ export const NotificationSettings = memo(() => {
               style={styles.actionButton}
               onPress={requestPermission}
             >
-              <Text style={styles.actionButtonText}>Включить</Text>
+              <Text style={styles.actionButtonText}>{t('notificationSettings.enable')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -124,7 +126,7 @@ export const NotificationSettings = memo(() => {
             <Text style={styles.statusIcon}>{getStatusIcon(canScheduleAlarms)}</Text>
             <View style={styles.statusText}>
               <Text style={styles.statusTitle}>
-                Точные уведомления (Android 12+)
+                {t('notificationSettings.exactAlarms')}
               </Text>
               <Text style={styles.statusDescription}>
                 {getStatusText(canScheduleAlarms)}
@@ -136,7 +138,7 @@ export const NotificationSettings = memo(() => {
               style={styles.actionButton}
               onPress={openAlarmSettings}
             >
-              <Text style={styles.actionButtonText}>Настроить</Text>
+              <Text style={styles.actionButtonText}>{t('notificationSettings.configure')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -144,7 +146,7 @@ export const NotificationSettings = memo(() => {
 
       {/* Настройки приложения */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Настройки приложения</Text>
+        <Text style={styles.sectionTitle}>{t('notificationSettings.appSettings')}</Text>
 
         <TouchableOpacity
           style={styles.menuItem}
@@ -154,10 +156,10 @@ export const NotificationSettings = memo(() => {
             <Text style={styles.menuIcon}>⚙️</Text>
             <View style={styles.menuText}>
               <Text style={styles.menuTitle}>
-                Открыть настройки приложения
+                {t('notificationSettings.openAppSettings')}
               </Text>
               <Text style={styles.menuDescription}>
-                Системные настройки уведомлений и разрешений
+                {t('notificationSettings.appSettingsDesc')}
               </Text>
             </View>
             <Text style={styles.menuArrow}>›</Text>
@@ -167,12 +169,9 @@ export const NotificationSettings = memo(() => {
 
       {/* Информация */}
       <View style={styles.infoSection}>
-        <Text style={styles.infoTitle}>О уведомлениях</Text>
+        <Text style={styles.infoTitle}>{t('notificationSettings.aboutNotifications')}</Text>
         <Text style={styles.infoText}>
-          • Уведомления приходят за 30, 14, 7, 3, 2, 1 день до истечения срока годности{'\n'}
-          • Критические уведомления приходят в день истечения и после{'\n'}
-          • Для надежной работы отключите оптимизацию батареи{'\n'}
-          • На Android 12+ требуется разрешение "Alarms & reminders"
+          {t('notificationSettings.aboutNotificationsText')}
         </Text>
       </View>
     </>

@@ -1,6 +1,7 @@
 import { FONT_FAMILY, WIDTH } from '@/constants'
 import { FONT_SIZE } from '@/constants/font'
 import { useTheme } from '@/providers/theme'
+import { useTranslation } from 'react-i18next'
 import { Linking, StyleSheet, Text, View } from 'react-native'
 import Icon from 'react-native-vector-icons/Feather'
 import VersionCheck from 'react-native-version-check'
@@ -12,6 +13,7 @@ interface IProps {
 
 export function UpdateApp({ onHide }: IProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const goToStore = () => {
     VersionCheck.getPlayStoreUrl({ packageName: 'com.aidkit' }).then(url => {
       Linking.canOpenURL(url).then((supported: boolean) => {
@@ -28,17 +30,17 @@ export function UpdateApp({ onHide }: IProps) {
       <View style={styles.iconWrapper}>
         <Icon name='download-cloud' size={80} color={colors.primary} />
       </View>
-      <Text style={[styles.label, { color: colors.primary }]}>Обновите приложение</Text>
-      <Text style={[styles.description, { color: colors.muted }]}>Новая версия доступна для скачивания</Text>
+      <Text style={[styles.label, { color: colors.primary }]}>{t('updateApp.title')}</Text>
+      <Text style={[styles.description, { color: colors.muted }]}>{t('updateApp.description')}</Text>
       <PaddingHorizontal>
         <Button
           onPress={goToStore}
-          title='Обновить'
+          title={t('updateApp.update')}
           style={styles.buttonSecondary}
         />
         <Button
           onPress={onHide}
-          title='Не сейчас'
+          title={t('updateApp.notNow')}
           style={styles.buttonGhost}
           textStyle={{ color: colors.primary }}
         />

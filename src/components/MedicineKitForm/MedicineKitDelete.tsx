@@ -3,20 +3,22 @@ import { useEvent, useMyNavigation, useRoute } from '@/hooks'
 import { useMedicineKit } from '@/hooks/useMedicineKit'
 import { useTheme } from '@/providers/theme'
 import { memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Alert, Pressable } from 'react-native'
 import Icon from 'react-native-vector-icons/Feather'
 
 export const MedicineKitDelete = memo(() => {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const { deleteMedicineKit } = useMedicineKit()
   const { params } = useRoute()
   const { goBack } = useMyNavigation()
 
   const handleDelete = useEvent(() => {
-    Alert.alert('Удалить аптечку?', 'Это действие нельзя будет отменить', [
-      { text: 'Отмена', style: 'cancel' },
+    Alert.alert(t('medicineKitDelete.title'), t('medicineKitDelete.message'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Удалить', style: 'destructive',
+        text: t('common.delete'), style: 'destructive',
         onPress: async () => {
           await deleteMedicineKit(params?.medicineKitId)
           goBack()

@@ -5,6 +5,7 @@ import { Text } from '@/components/Text'
 import { SPACING } from '@/constants'
 import { FONT_SIZE } from '@/constants/font'
 import { useNavigationBarColor, useScreenProperties } from '@/hooks'
+import { useTranslation } from 'react-i18next'
 import { Medicine } from '@/services/models'
 import { useAppStore } from '@/store'
 import { useMemo } from 'react'
@@ -13,12 +14,13 @@ import { useTheme } from '@/providers/theme'
 
 export function ExpiringMedicinesScreen() {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const { medicines } = useAppStore(state => state)
 
   useScreenProperties({
     navigationOptions: {
       headerShown: true,
-      title: 'Истекает срок годности'
+      title: t('screens.expiringMedicines')
     }
   })
 
@@ -47,8 +49,8 @@ export function ExpiringMedicinesScreen() {
         <Background>
           <Empty
             icon='check-circle'
-            title='Все хорошо!'
-            description='Нет лекарств с истекающим сроком годности'
+            title={t('empty.allGood')}
+            description={t('empty.noExpiring')}
           />
         </Background>
       </SafeAreaView>
@@ -66,7 +68,7 @@ export function ExpiringMedicinesScreen() {
             <PaddingHorizontal>
               <View style={styles.header}>
                 <Text style={[styles.subtitle, { color: colors.muted }]}>
-                  {expiringMedicines.length} {expiringMedicines.length === 1 ? 'лекарство' : 'лекарств'} требует внимания
+                  {expiringMedicines.length} {expiringMedicines.length === 1 ? t('expiring.count_one') : t('expiring.count_many')} {t('expiring.needsAttention')}
                 </Text>
               </View>
             </PaddingHorizontal>

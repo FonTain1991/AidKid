@@ -4,6 +4,7 @@ import { Text } from '@/components/Text'
 import { SPACING, FREE_LIMITS, UNITS } from '@/constants'
 import { FONT_SIZE } from '@/constants/font'
 import { useNavigationBarColor, useScreenProperties, useMyNavigation } from '@/hooks'
+import { useTranslation } from 'react-i18next'
 import { databaseService } from '@/services'
 import { useAppStore } from '@/store'
 import { useSubscription } from '@/components/Subscription/hooks/useSubscription'
@@ -26,10 +27,13 @@ interface UsageWithDetails extends MedicineUsage {
   medicineName?: string
   kitName?: string
   familyMemberName?: string
+  unit?: string
+  unitValue?: string
 }
 
 export function HistoryScreen() {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const { medicines, medicineKits, familyMembers } = useAppStore(state => state)
   const { isPremium } = useSubscription()
   const { navigate } = useMyNavigation()
@@ -41,7 +45,7 @@ export function HistoryScreen() {
   useScreenProperties({
     navigationOptions: {
       headerShown: true,
-      title: 'История'
+      title: t('screens.history')
     }
   })
 
@@ -109,6 +113,7 @@ export function HistoryScreen() {
         ...usage,
         medicineName: medicine?.name,
         unit: UNITS.find(u => u.value === medicine?.unit)?.shortLabel,
+        unitValue: medicine?.unit,
         kitName: kit?.name,
         familyMemberName: familyMember?.name,
       }
@@ -145,7 +150,7 @@ export function HistoryScreen() {
           <Flex style={styles.loadingContainer}>
             <ActivityIndicator size='large' color={colors.primary} />
             <Text style={[styles.loadingText, { color: colors.muted }]}>
-              Загрузка истории...
+              {t('history.loading')}
             </Text>
           </Flex>
         </Background>
@@ -161,8 +166,8 @@ export function HistoryScreen() {
         <Background>
           <Empty
             icon='clock'
-            title='Нет истории'
-            description='История приемов лекарств будет отображаться здесь'
+            title={t('empty.noHistoryTitle')}
+            description={t('empty.noHistoryDesc')}
           />
         </Background>
       </SafeAreaView>
@@ -176,18 +181,18 @@ export function HistoryScreen() {
           <Flex style={styles.limitContainer}>
             <Text style={[styles.limitIcon, { color: colors.primary }]}>💎</Text>
             <Text style={[styles.limitTitle, { color: colors.text }]}>
-              Расширенная история
+              {t('history.extendedHistory')}
             </Text>
             <Text style={[styles.limitDescription, { color: colors.muted }]}>
-              В бесплатной версии доступна история только за последние {FREE_LIMITS.HISTORY_DAYS} дней.
+              {t('history.freeLimitDesc', { days: FREE_LIMITS.HISTORY_DAYS })}
               {'\n\n'}
-              Оформите премиум подписку, чтобы видеть полную историю приема лекарств.
+              {t('history.premiumForFullHistory')}
             </Text>
             <Pressable
               style={[styles.premiumButton, { backgroundColor: colors.primary }]}
               onPress={() => navigate('subscription')}
             >
-              <Text style={styles.premiumButtonText}>Оформить премиум</Text>
+              <Text style={styles.premiumButtonText}>{t('history.getPremium')}</Text>
             </Pressable>
           </Flex>
         </Background>
@@ -214,8 +219,12 @@ export function HistoryScreen() {
               <View style={styles.header}>
                 <Text style={[styles.headerText, { color: colors.muted }]}>
                   {hasLimitedHistory
-                    ? `Показано: ${filteredHistory.length} из ${usageHistory.length} записей (последние ${FREE_LIMITS.HISTORY_DAYS} дней)`
-                    : `Всего записей: ${usageHistory.length}`
+                    ? t('history.shownRecords', {
+                        shown: filteredHistory.length,
+                        total: usageHistory.length,
+                        days: FREE_LIMITS.HISTORY_DAYS,
+                      })
+                    : t('history.totalRecords', { count: usageHistory.length })
                   }
                 </Text>
                 {hasLimitedHistory && (
@@ -224,7 +233,7 @@ export function HistoryScreen() {
                     onPress={() => navigate('subscription')}
                   >
                     <Text style={[styles.upgradeButtonText, { color: colors.primary }]}>
-                      💎 Получить полную историю
+                      {t('history.getFullHistory')}
                     </Text>
                   </Pressable>
                 )}
@@ -236,10 +245,10 @@ export function HistoryScreen() {
                 <PaddingHorizontal>
                   <View style={styles.dateHeader}>
                     <Text style={[styles.dateLabel, { color: colors.text }]}>
-                      {isToday ? 'Сегодня' : isYesterday ? 'Вчера' : dayjs(dateKey).format('DD.MM.YYYY')}
+                      {isToday ? t('history.today') : isYesterday ? t('history.yesterday') : dayjs(dateKey).format('DD.MM.YYYY')}
                     </Text>
                     <Text style={[styles.dateCount, { color: colors.muted }]}>
-                      {usages.length} {usages.length === 1 ? 'прием' : usages.length < 5 ? 'приема' : 'приемов'}
+                      {usages.length} {usages.length === 1 ? t('history.intake_one') : usages.length < 5 ? t('history.intake_few') : t('history.intake_many')}
                     </Text>
                   </View>
                 </PaddingHorizontal>
@@ -278,12 +287,22 @@ export function HistoryScreen() {
                         </View>
                         {usage.notes && (
                           <Text style={[styles.historyNotes, { color: colors.muted }]}>
-                            {usage.notes}
+                            {(() => {
+                              const ruMatch = usage.notes?.match(/^Запланированный прием в (.+)$/)
+                              if (ruMatch) {
+                                return t('today.scheduledIntakeAt', { time: ruMatch[1] })
+                              }
+                              const enMatch = usage.notes?.match(/^Scheduled intake at (.+)$/)
+                              if (enMatch) {
+                                return t('today.scheduledIntakeAt', { time: enMatch[1] })
+                              }
+                              return usage.notes
+                            })()}
                           </Text>
                         )}
                       </View>
                       <Text style={[styles.historyQuantity, { color: colors.primary }]}>
-                        {usage.quantityUsed} {usage.unit}
+                        {usage.quantityUsed} {usage.unitValue ? t(`units.${usage.unitValue}Short`) : usage.unit || ''}
                       </Text>
                     </View>
                   ))}

@@ -9,6 +9,7 @@ import { useAppStore } from '@/store'
 import { useSubscription } from '@/components/Subscription/hooks/useSubscription'
 import { useTheme } from '@/providers/theme'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View, Pressable } from 'react-native'
 import dayjs from 'dayjs'
 
@@ -43,6 +44,7 @@ type Period = 'day' | 'week' | 'month' | 'all'
 
 export function StatisticsScreen() {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const { isPremium } = useSubscription()
   const { medicines, medicineKits, familyMembers } = useAppStore(state => state)
 
@@ -64,7 +66,7 @@ export function StatisticsScreen() {
   useScreenProperties({
     navigationOptions: {
       headerShown: true,
-      title: 'Статистика'
+      title: t('screens.statistics')
     }
   })
 
@@ -266,7 +268,7 @@ export function StatisticsScreen() {
     }
 
     const weekdays: Record<number, number> = {}
-    const weekdayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+    const weekdayNames = dayjs.localeData().weekdaysShort()
 
     for (let i = 0; i < 7; i++) {
       weekdays[i] = 0
@@ -305,13 +307,13 @@ export function StatisticsScreen() {
         const kit = medicineKits.find(k => k.id === Number(kitId))
         return {
           kitId: Number(kitId),
-          kitName: kit?.name || 'Неизвестная аптечка',
+          kitName: kit?.name || t('statistics.unknownKit'),
           count,
           percentage: total > 0 ? Math.round((count / total) * 100) : 0,
         }
       })
       .sort((a, b) => b.count - a.count)
-  }, [isPremium, filteredHistoryForPremium, medicines, medicineKits])
+  }, [isPremium, filteredHistoryForPremium, medicines, medicineKits, t])
 
   // Топ лекарств (премиум)
   const topMedicines = useMemo(() => {
@@ -329,40 +331,43 @@ export function StatisticsScreen() {
         const medicine = medicines.find(m => m.id === Number(medicineId))
         return {
           medicineId: Number(medicineId),
-          medicineName: medicine?.name || 'Неизвестное лекарство',
+          medicineName: medicine?.name || t('statistics.unknownMedicine'),
           count,
         }
       })
       .sort((a, b) => b.count - a.count)
       .slice(0, 5)
-  }, [isPremium, filteredHistoryForPremium, medicines])
+  }, [isPremium, filteredHistoryForPremium, medicines, t])
 
-  const statCards = useMemo(() => [
-    {
-      title: 'Сегодня',
-      value: stats.today,
-      icon: '📅',
-      color: colors.primary,
-    },
-    {
-      title: 'Эта неделя',
-      value: stats.thisWeek,
-      icon: '📆',
-      color: colors.secondary,
-    },
-    {
-      title: 'Этот месяц',
-      value: stats.thisMonth,
-      icon: '🗓️',
-      color: colors.primary,
-    },
-    {
-      title: 'Всего',
-      value: stats.total,
-      icon: '📊',
-      color: colors.muted,
-    },
-  ], [stats, colors])
+  const statCards = useMemo(
+    () => [
+      {
+        title: t('statistics.today'),
+        value: stats.today,
+        icon: '📅',
+        color: colors.primary,
+      },
+      {
+        title: t('statistics.thisWeek'),
+        value: stats.thisWeek,
+        icon: '📆',
+        color: colors.secondary,
+      },
+      {
+        title: t('statistics.thisMonth'),
+        value: stats.thisMonth,
+        icon: '🗓️',
+        color: colors.primary,
+      },
+      {
+        title: t('statistics.total'),
+        value: stats.total,
+        icon: '📊',
+        color: colors.muted,
+      },
+    ],
+    [stats, colors, t]
+  )
 
   if (isLoading) {
     return (
@@ -371,7 +376,7 @@ export function StatisticsScreen() {
           <Flex style={styles.loadingContainer}>
             <ActivityIndicator size='large' color={colors.primary} />
             <Text style={[styles.loadingText, { color: colors.muted }]}>
-              Загрузка статистики...
+              {t('statistics.loading')}
             </Text>
           </Flex>
         </Background>
@@ -385,8 +390,8 @@ export function StatisticsScreen() {
         <Background>
           <Empty
             icon='bar-chart'
-            title='Нет данных'
-            description='Начните отмечать приемы лекарств, чтобы увидеть статистику'
+            title={t('empty.noDataTitle')}
+            description={t('empty.noDataDesc')}
           />
         </Background>
       </SafeAreaView>
@@ -433,26 +438,26 @@ export function StatisticsScreen() {
               {/* Дополнительная статистика */}
               <View style={styles.additionalStats}>
                 <View style={[styles.additionalStatCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <Text style={[styles.additionalStatLabel, { color: colors.muted }]}>Вчера</Text>
+                  <Text style={[styles.additionalStatLabel, { color: colors.muted }]}>{t('statistics.yesterday')}</Text>
                   <Text style={[styles.additionalStatValue, { color: colors.text }]}>{stats.yesterday}</Text>
                 </View>
                 <View style={[styles.additionalStatCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <Text style={[styles.additionalStatLabel, { color: colors.muted }]}>В день</Text>
+                  <Text style={[styles.additionalStatLabel, { color: colors.muted }]}>{t('statistics.perDay')}</Text>
                   <Text style={[styles.additionalStatValue, { color: colors.text }]}>{stats.averagePerDay}</Text>
                 </View>
               </View>
 
               {/* Сравнение периодов */}
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Динамика</Text>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('statistics.dynamics')}</Text>
 
                 <View style={[styles.comparisonCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <View style={styles.comparisonRow}>
-                    <Text style={[styles.comparisonLabel, { color: colors.text }]}>Эта неделя</Text>
+                    <Text style={[styles.comparisonLabel, { color: colors.text }]}>{t('statistics.thisWeek')}</Text>
                     <Text style={[styles.comparisonValue, { color: colors.primary }]}>{stats.thisWeek}</Text>
                   </View>
                   <View style={styles.comparisonRow}>
-                    <Text style={[styles.comparisonLabel, { color: colors.muted }]}>Прошлая неделя</Text>
+                    <Text style={[styles.comparisonLabel, { color: colors.muted }]}>{t('statistics.lastWeek')}</Text>
                     <Text style={[styles.comparisonValue, { color: colors.muted }]}>{stats.lastWeek}</Text>
                   </View>
                   {stats.lastWeek > 0 && (
@@ -469,11 +474,11 @@ export function StatisticsScreen() {
 
                 <View style={[styles.comparisonCard, { backgroundColor: colors.card, borderColor: colors.border, marginTop: SPACING.md }]}>
                   <View style={styles.comparisonRow}>
-                    <Text style={[styles.comparisonLabel, { color: colors.text }]}>Этот месяц</Text>
+                    <Text style={[styles.comparisonLabel, { color: colors.text }]}>{t('statistics.thisMonth')}</Text>
                     <Text style={[styles.comparisonValue, { color: colors.primary }]}>{stats.thisMonth}</Text>
                   </View>
                   <View style={styles.comparisonRow}>
-                    <Text style={[styles.comparisonLabel, { color: colors.muted }]}>Прошлый месяц</Text>
+                    <Text style={[styles.comparisonLabel, { color: colors.muted }]}>{t('statistics.lastMonth')}</Text>
                     <Text style={[styles.comparisonValue, { color: colors.muted }]}>{stats.lastMonth}</Text>
                   </View>
                   {stats.lastMonth > 0 && (
@@ -494,7 +499,7 @@ export function StatisticsScreen() {
                 <>
                   {/* Переключатель периода */}
                   <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Расширенная статистика</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('statistics.extendedStats')}</Text>
                     <View style={styles.periodSelector}>
                       <Pressable
                         style={[
@@ -510,7 +515,7 @@ export function StatisticsScreen() {
                           styles.periodButtonText,
                           { color: selectedPeriod === 'day' ? '#FFFFFF' : colors.text }
                         ]}>
-                          День
+                          {t('statistics.day')}
                         </Text>
                       </Pressable>
                       <Pressable
@@ -527,7 +532,7 @@ export function StatisticsScreen() {
                           styles.periodButtonText,
                           { color: selectedPeriod === 'week' ? '#FFFFFF' : colors.text }
                         ]}>
-                          Неделя
+                          {t('statistics.week')}
                         </Text>
                       </Pressable>
                       <Pressable
@@ -544,7 +549,7 @@ export function StatisticsScreen() {
                           styles.periodButtonText,
                           { color: selectedPeriod === 'month' ? '#FFFFFF' : colors.text }
                         ]}>
-                          Месяц
+                          {t('statistics.month')}
                         </Text>
                       </Pressable>
                       <Pressable
@@ -561,7 +566,7 @@ export function StatisticsScreen() {
                           styles.periodButtonText,
                           { color: selectedPeriod === 'all' ? '#FFFFFF' : colors.text }
                         ]}>
-                          Все время
+                          {t('statistics.allTime')}
                         </Text>
                       </Pressable>
                     </View>
@@ -570,7 +575,7 @@ export function StatisticsScreen() {
                   {/* Статистика по часам */}
                   {hourStats.length > 0 && (
                     <View style={styles.section}>
-                      <Text style={[styles.sectionTitle, { color: colors.text }]}>Приемы по времени суток</Text>
+                      <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('statistics.byTimeOfDay')}</Text>
                       <View style={[styles.chartCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         {hourStats.map(({ hour, count }) => (
                           <View key={hour} style={styles.hourBar}>
@@ -598,7 +603,7 @@ export function StatisticsScreen() {
                   {/* Статистика по дням недели */}
                   {weekdayStats.length > 0 && (
                     <View style={styles.section}>
-                      <Text style={[styles.sectionTitle, { color: colors.text }]}>Приемы по дням недели</Text>
+                      <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('statistics.byWeekday')}</Text>
                       <View style={[styles.chartCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         {weekdayStats.map(({ weekday, name, count }) => (
                           <View key={weekday} style={styles.weekdayBar}>
@@ -624,7 +629,7 @@ export function StatisticsScreen() {
                   {/* Статистика по аптечкам */}
                   {kitStats.length > 0 && (
                     <View style={styles.section}>
-                      <Text style={[styles.sectionTitle, { color: colors.text }]}>Приемы по аптечкам</Text>
+                      <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('statistics.byKits')}</Text>
                       <View style={[styles.chartCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         {kitStats.map(({ kitName, count, percentage }) => (
                           <View key={kitName} style={styles.kitStat}>
@@ -653,7 +658,7 @@ export function StatisticsScreen() {
                   {/* Топ лекарств */}
                   {topMedicines.length > 0 && (
                     <View style={styles.section}>
-                      <Text style={[styles.sectionTitle, { color: colors.text }]}>Топ лекарств</Text>
+                      <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('statistics.topMedicines')}</Text>
                       <View style={[styles.chartCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         {topMedicines.map(({ medicineName, count }, index) => (
                           <View key={medicineName} style={styles.topMedicineItem}>
@@ -665,7 +670,7 @@ export function StatisticsScreen() {
                             <View style={styles.topMedicineContent}>
                               <Text style={[styles.topMedicineName, { color: colors.text }]}>{medicineName}</Text>
                               <Text style={[styles.topMedicineCount, { color: colors.muted }]}>
-                                {count} {count === 1 ? 'прием' : count < 5 ? 'приема' : 'приемов'}
+                                {count} {count === 1 ? t('history.intake_one') : count < 5 ? t('history.intake_few') : t('history.intake_many')}
                               </Text>
                             </View>
                           </View>
@@ -678,7 +683,7 @@ export function StatisticsScreen() {
 
               {/* История приемов */}
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Последние приемы</Text>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('statistics.recentIntakes')}</Text>
                 {usageWithDetails.slice(0, 10).map(usage => (
                   <View
                     key={usage.id}
@@ -710,12 +715,22 @@ export function StatisticsScreen() {
                       </View>
                       {usage.notes && (
                         <Text style={[styles.historyNotes, { color: colors.muted }]}>
-                          {usage.notes}
+                          {(() => {
+                            const ruMatch = usage.notes?.match(/^Запланированный прием в (.+)$/)
+                            if (ruMatch) {
+                              return t('today.scheduledIntakeAt', { time: ruMatch[1] })
+                            }
+                            const enMatch = usage.notes?.match(/^Scheduled intake at (.+)$/)
+                            if (enMatch) {
+                              return t('today.scheduledIntakeAt', { time: enMatch[1] })
+                            }
+                            return usage.notes
+                          })()}
                         </Text>
                       )}
                     </View>
                     <Text style={[styles.historyQuantity, { color: colors.primary }]}>
-                      {usage.quantityUsed} шт.
+                      {usage.quantityUsed} {t('units.pcsShort')}
                     </Text>
                   </View>
                 ))}

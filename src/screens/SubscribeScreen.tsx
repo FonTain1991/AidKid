@@ -4,17 +4,19 @@ import { Text } from '@/components/Text'
 import { SPACING } from '@/constants'
 import { FONT_SIZE } from '@/constants/font'
 import { useMyNavigation, useNavigationBarColor, useScreenProperties } from '@/hooks'
+import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/providers/theme'
 import { ScrollView, StyleSheet, View } from 'react-native'
 
 export function SubscribeScreen() {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const navigation = useMyNavigation()
 
   useScreenProperties({
     navigationOptions: {
       headerShown: true,
-      title: 'Подписка'
+      title: t('screens.subscribe')
     }
   })
 
@@ -25,30 +27,29 @@ export function SubscribeScreen() {
         <View style={styles.premiumRequiredContainer}>
           <Text style={styles.premiumIcon}>💎</Text>
           <Text style={[styles.premiumTitle, { color: colors.text }]}>
-            Требуется премиум подписка
+            {t('subscribe.premiumRequired')}
           </Text>
           <Text style={[styles.premiumDescription, { color: colors.muted }]}>
-            Резервное копирование доступно только для премиум пользователей.{'\n\n'}
-            Оформите подписку, чтобы получить доступ к резервному копированию и синхронизации данных в Google Drive, а также другим премиум функциям.
+            {t('subscribe.premiumDesc')}
           </Text>
 
           <View style={styles.featuresList}>
             <View style={styles.featureItem}>
               <Text style={styles.featureIcon}>✓</Text>
               <Text style={[styles.featureText, { color: colors.text }]}>
-                Облачное резервное копирование
+                {t('subscribe.cloudBackup')}
               </Text>
             </View>
             <View style={styles.featureItem}>
               <Text style={styles.featureIcon}>✓</Text>
               <Text style={[styles.featureText, { color: colors.text }]}>
-                Синхронизация между устройствами
+                {t('subscribe.syncDevices')}
               </Text>
             </View>
             <View style={styles.featureItem}>
               <Text style={styles.featureIcon}>✓</Text>
               <Text style={[styles.featureText, { color: colors.text }]}>
-                Неограниченные аптечки и лекарства
+                {t('subscribe.unlimitedKits')}
               </Text>
             </View>
             {/* <View style={styles.featureItem}>
@@ -60,7 +61,7 @@ export function SubscribeScreen() {
           </View>
 
           <Button
-            title='Оформить подписку'
+            title={t('subscribe.getSubscription')}
             onPress={() => navigation.replace('subscription')}
             variant='primary'
             size='large'

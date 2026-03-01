@@ -5,11 +5,13 @@ import { useEvent, useNavigationBarColor, useScreenProperties, useShoppingList }
 import { useTheme } from '@/providers/theme'
 import { useAppStore } from '@/store'
 import { memo, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Alert, Pressable, ScrollView, StyleSheet } from 'react-native'
 import Icon from 'react-native-vector-icons/Feather'
 
 export const ShoppingListScreen = memo(() => {
   const { colors } = useTheme()
+  const { t } = useTranslation()
 
   const { cleanShoppingList } = useShoppingList()
   const { shoppingList } = useAppStore(state => state)
@@ -20,18 +22,18 @@ export const ShoppingListScreen = memo(() => {
 
   const clearPurchased = useEvent(() => {
     Alert.alert(
-      'Очистить купленные',
-      'Удалить все купленные товары из списка?',
+      t('shoppingList.clearPurchased'),
+      t('shoppingList.clearPurchasedConfirm'),
       [
         {
-          text: 'Отмена',
-          style: 'cancel'
+          text: t('common.cancel'),
+          style: 'cancel',
         },
         {
-          text: 'Удалить',
+          text: t('common.delete'),
           style: 'destructive',
-          onPress: cleanShoppingList
-        }
+          onPress: cleanShoppingList,
+        },
       ]
     )
   })
@@ -39,7 +41,7 @@ export const ShoppingListScreen = memo(() => {
   useScreenProperties({
     navigationOptions: {
       headerShown: true,
-      title: 'Список покупок',
+      title: t('screens.shoppingList'),
       headerRight: () => (
         isPurchased && (
           <Pressable

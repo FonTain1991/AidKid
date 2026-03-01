@@ -1,55 +1,52 @@
 import { memo, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 import { Text } from '../Text'
 import { useMyNavigation } from '@/hooks'
 import { useItemMenuStyles } from './useItemMenuStyles'
 
 export const IntakeItemsMenu = memo(() => {
+  const { t } = useTranslation()
   const { navigate } = useMyNavigation()
   const styles = useItemMenuStyles()
 
-  const intakeItems = useMemo(() => [
-    {
-      title: 'Сегодня',
-      description: 'Запланированные приемы на сегодня',
-      icon: '📅',
-      count: 0,
-      onPress: () => {
-        navigate('today')
+  const intakeItems = useMemo(
+    () => [
+      {
+        title: t('intakeMenu.today'),
+        description: t('intakeMenu.todayDesc'),
+        icon: '📅',
+        count: 0,
+        onPress: () => navigate('today'),
       },
-    },
-    {
-      title: 'Напоминания',
-      description: 'Настройка напоминаний о приеме',
-      icon: '⏰',
-      count: 0,
-      onPress: () => {
-        navigate('reminders')
+      {
+        title: t('intakeMenu.reminders'),
+        description: t('intakeMenu.remindersDesc'),
+        icon: '⏰',
+        count: 0,
+        onPress: () => navigate('reminders'),
       },
-    },
-    {
-      title: 'История',
-      description: 'Все записи о приемах лекарств',
-      icon: '📋',
-      count: 0,
-      onPress: () => {
-        navigate('history')
+      {
+        title: t('intakeMenu.history'),
+        description: t('intakeMenu.historyDesc'),
+        icon: '📋',
+        count: 0,
+        onPress: () => navigate('history'),
       },
-    },
-    {
-      title: 'Статистика',
-      description: 'Анализ приема лекарств',
-      icon: '📊',
-      count: 0,
-      onPress: () => {
-        navigate('statistics')
+      {
+        title: t('intakeMenu.statistics'),
+        description: t('intakeMenu.statisticsDesc'),
+        icon: '📊',
+        count: 0,
+        onPress: () => navigate('statistics'),
       },
-    }
-  ], [navigate])
+    ],
+    [navigate, t]
+  )
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Разделы</Text>
+      <Text style={styles.sectionTitle}>{t('sections')}</Text>
 
       {intakeItems.map((item, index) => (
         <Pressable

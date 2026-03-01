@@ -11,6 +11,7 @@ import {
 } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import Icon from 'react-native-vector-icons/Feather'
+import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/providers/theme'
 import { SafeAreaView } from '@/components/Layout'
 
@@ -20,47 +21,49 @@ interface OnboardingScreenProps {
   onComplete: () => void
 }
 
-const slides = [
+const getSlides = (t: (key: string) => string) => [
   {
-    icon: 'heart',
+    icon: 'heart' as const,
     iconColor: '#FF6B6B',
-    title: 'Добро пожаловать в AidKit',
-    description: 'Ваш персональный помощник для управления домашней аптечкой и контроля приема лекарств'
+    title: t('onboarding.welcome'),
+    description: t('onboarding.welcomeDesc'),
   },
   {
-    icon: 'package',
+    icon: 'package' as const,
     iconColor: '#4ECDC4',
-    title: 'Организуйте аптечку',
-    description: 'Создавайте аптечки для дома, дачи, автомобиля. Добавляйте лекарства с фото, сроком годности и количеством'
+    title: t('onboarding.organizeKit'),
+    description: t('onboarding.organizeKitDesc'),
   },
   {
-    icon: 'bell',
+    icon: 'bell' as const,
     iconColor: '#FFD93D',
-    title: 'Умные напоминания',
-    description: 'Настраивайте напоминания о приеме лекарств для всей семьи. Отслеживайте историю приема'
+    title: t('onboarding.smartReminders'),
+    description: t('onboarding.smartRemindersDesc'),
   },
   {
-    icon: 'calendar',
+    icon: 'calendar' as const,
     iconColor: '#95E1D3',
-    title: 'Контроль сроков',
-    description: 'Получайте уведомления о заканчивающихся лекарствах и истекающих сроках годности'
+    title: t('onboarding.expiryControl'),
+    description: t('onboarding.expiryControlDesc'),
   },
   {
-    icon: 'shopping-cart',
+    icon: 'shopping-cart' as const,
     iconColor: '#F38181',
-    title: 'Список покупок',
-    description: 'Создавайте списки необходимых лекарств с напоминаниями о походе в аптеку'
+    title: t('onboarding.shoppingList'),
+    description: t('onboarding.shoppingListDesc'),
   },
   {
-    icon: 'bar-chart-2',
+    icon: 'bar-chart-2' as const,
     iconColor: '#A8E6CF',
-    title: 'Статистика и аналитика',
-    description: 'Отслеживайте прием лекарств, просматривайте историю и статистику для всей семьи'
-  }
+    title: t('onboarding.statistics'),
+    description: t('onboarding.statisticsDesc'),
+  },
 ]
 
 export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
+  const slides = getSlides(t)
   const [currentIndex, setCurrentIndex] = useState(0)
   const scrollViewRef = useRef<ScrollView>(null)
 
@@ -114,7 +117,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           onPress={handleComplete}
         >
           <Text style={[styles.skipText, { color: colors.textSecondary }]}>
-            Пропустить
+            {t('common.skip')}
           </Text>
         </TouchableOpacity>
       )}
@@ -195,7 +198,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           >
             <Icon name='arrow-left' size={20} color={colors.text} />
             <Text style={[styles.navButtonText, { color: colors.text }]}>
-              Назад
+              {t('common.back')}
             </Text>
           </TouchableOpacity>
         )}
@@ -210,7 +213,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           onPress={goToNext}
         >
           <Text style={[styles.navButtonText, { color: '#FFFFFF' }]}>
-            {isLastSlide ? 'Начать' : 'Далее'}
+            {isLastSlide ? t('common.start') : t('common.next')}
           </Text>
           <Icon name='arrow-right' size={20} color='#FFFFFF' />
         </TouchableOpacity>

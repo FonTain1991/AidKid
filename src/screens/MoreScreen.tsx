@@ -2,52 +2,69 @@ import { Background, Flex, SafeAreaView } from '@/components/Layout'
 import { Text } from '@/components/Text'
 import { SPACING } from '@/constants'
 import { FONT_SIZE } from '@/constants/font'
+import i18n, { LANGUAGES, setStoredLanguage } from '@/i18n'
 import { useEvent, useMyNavigation, useNavigationBarColor, useScreenProperties } from '@/hooks'
 import { useTheme } from '@/providers/theme'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import DeviceInfo from 'react-native-device-info'
-import { displayName } from '../../app.json'
 import { useSubscription } from '@/components/Subscription/hooks/useSubscription'
 
 export function MoreScreen() {
   const { colors } = useTheme()
   const { navigate } = useMyNavigation()
   const { isPremium } = useSubscription()
+  const { t } = useTranslation()
 
   useScreenProperties({
     navigationOptions: {
       headerShown: true,
-      title: 'Еще'
-    }
+      title: t('screens.more'),
+    },
   })
 
   useNavigationBarColor()
+
+  const handleLanguageSelect = useEvent(() => {
+    Alert.alert(
+      t('moreMenu.language'),
+      t('moreMenu.languageDesc'),
+      [
+        { text: t('common.cancel'), style: 'cancel' as const },
+        ...LANGUAGES.map(({ code, label }) => ({
+          text: label,
+          onPress: async () => {
+            await setStoredLanguage(code)
+            await i18n.changeLanguage(code)
+          },
+        })),
+      ]
+    )
+  })
+
   const handleShowOnboarding = useEvent(() => {
     Alert.alert(
-      'Показать знакомство',
-      'Хотите посмотреть приветственные экраны снова?',
+      t('onboardingAlert.showAgain'),
+      t('onboardingAlert.showAgainConfirm'),
       [
         {
-          text: 'Отмена',
-          style: 'cancel'
+          text: t('common.cancel'),
+          style: 'cancel',
         },
         {
-          text: 'Показать',
+          text: t('common.show'),
           onPress: async () => {
             try {
               await AsyncStorage.removeItem('@onboarding_completed')
-              Alert.alert(
-                'Готово',
-                'Перезапустите приложение, чтобы увидеть приветственные экраны'
-              )
+              Alert.alert(t('onboardingAlert.done'), t('onboardingAlert.restartMessage'))
             } catch (error) {
               console.error('Failed to reset onboarding:', error)
-              Alert.alert('Ошибка', 'Не удалось сбросить настройки')
+              Alert.alert(t('onboardingAlert.error'), t('onboardingAlert.failedToReset'))
             }
-          }
-        }
+          },
+        },
       ]
     )
   })
@@ -59,72 +76,73 @@ export function MoreScreen() {
       if (canOpen) {
         await Linking.openURL(telegramUrl)
       } else {
-        Alert.alert('Ошибка', 'Не удалось открыть Telegram')
+        Alert.alert(t('support.error'), t('support.failedToOpenTelegram'))
       }
     } catch (error) {
       console.error('Failed to open Telegram:', error)
-      Alert.alert('Ошибка', 'Не удалось открыть ссылку')
+      Alert.alert(t('support.error'), t('support.failedToOpenLink'))
     }
   })
 
-  const menuItems = useMemo(() => [
-    {
-      title: 'Премиум подписка',
-      description: 'Откройте все возможности приложения',
-      icon: '💎',
-      onPress: () => {
-        navigate('subscription')
+  const menuItems = useMemo(
+    () => [
+      {
+        title: t('moreMenu.language'),
+        description: t('moreMenu.languageDesc'),
+        icon: '🌐',
+        onPress: handleLanguageSelect,
       },
-    },
-    {
-      title: 'Список покупок',
-      description: 'Список лекарств для покупки',
-      icon: '🛒',
-      onPress: () => {
-        navigate('shoppingList')
+      {
+        title: t('moreMenu.premium'),
+        description: t('moreMenu.premiumDesc'),
+        icon: '💎',
+        onPress: () => navigate('subscription'),
       },
-    },
-    {
-      title: 'Члены семьи',
-      description: 'Управление членами семьи',
-      icon: '👨‍👩‍👧‍👦',
-      onPress: () => {
-        navigate('familyMembers')
+      {
+        title: t('moreMenu.shoppingList'),
+        description: t('moreMenu.shoppingListDesc'),
+        icon: '🛒',
+        onPress: () => navigate('shoppingList'),
       },
-    },
-    {
-      title: 'Настройки уведомлений',
-      description: 'Управление уведомлениями о лекарствах',
-      icon: '🔔',
-      onPress: () => {
-        navigate('notificationSettings')
+      {
+        title: t('moreMenu.familyMembers'),
+        description: t('moreMenu.familyMembersDesc'),
+        icon: '👨‍👩‍👧‍👦',
+        onPress: () => navigate('familyMembers'),
       },
-    },
-    {
-      title: 'Резервное копирование',
-      description: 'Синхронизация и экспорт данных',
-      icon: '💾',
-      onPress: () => {
-        if (isPremium) {
-          navigate('backup')
-          return
-        }
-        navigate('subscribe')
+      {
+        title: t('moreMenu.notifications'),
+        description: t('moreMenu.notificationsDesc'),
+        icon: '🔔',
+        onPress: () => navigate('notificationSettings'),
       },
-    },
-    {
-      title: 'Поддержка',
-      description: 'Задать вопрос или сообщить о проблеме',
-      icon: '💬',
-      onPress: handleSupport,
-    },
-    {
-      title: 'О приложении',
-      description: 'Повторно показать приветственные экраны',
-      icon: '💡',
-      onPress: handleShowOnboarding,
-    },
-  ], [navigate, handleShowOnboarding, handleSupport])
+      {
+        title: t('moreMenu.backup'),
+        description: t('moreMenu.backupDesc'),
+        icon: '💾',
+        onPress: () => {
+          if (isPremium) {
+            navigate('backup')
+            return
+          }
+          navigate('subscribe')
+        },
+      },
+      {
+        title: t('moreMenu.support'),
+        description: t('moreMenu.supportDesc'),
+        icon: '💬',
+        onPress: handleSupport,
+      },
+      {
+        title: t('moreMenu.about'),
+        description: t('moreMenu.aboutDesc'),
+        icon: '💡',
+        onPress: handleShowOnboarding,
+      },
+    ],
+    [navigate, handleShowOnboarding, handleSupport, handleLanguageSelect, isPremium, t]
+  )
 
   return (
     <SafeAreaView edges={[]}>
@@ -157,10 +175,10 @@ export function MoreScreen() {
             ))}
             <View style={styles.footer}>
               <Text style={[styles.version, { color: colors.muted }]}>
-                {displayName} v{DeviceInfo.getVersion()}
+                {t('app.name')} v{DeviceInfo.getVersion()}
               </Text>
               <Text style={[styles.copyright, { color: colors.muted }]}>
-                © {new Date().getFullYear()}. Все права защищены.
+                © {new Date().getFullYear()}. {t('footer.allRightsReserved')}
               </Text>
             </View>
           </ScrollView>

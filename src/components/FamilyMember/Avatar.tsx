@@ -1,4 +1,5 @@
 import { SPACING } from '@/constants'
+import { useTranslation } from 'react-i18next'
 import { FONT_SIZE, FONT_WEIGHT } from '@/constants/font'
 import { useTheme } from '@/providers/theme'
 import { memo, useEffect, useState } from 'react'
@@ -12,6 +13,7 @@ interface AvatarProps {
 }
 export const Avatar = memo(({ onChange, value }: AvatarProps) => {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const [selectedAvatar, setSelectedAvatar] = useState(value || AVATAR_OPTIONS[0])
 
   const handleChange = (avatar: string) => {
@@ -25,7 +27,7 @@ export const Avatar = memo(({ onChange, value }: AvatarProps) => {
 
   return (
     <View>
-      <Text style={[styles.formLabel, { color: colors.text }]}>Аватар</Text>
+      <Text style={[styles.formLabel, { color: colors.text }]}>{t('familyMember.avatar')}</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}

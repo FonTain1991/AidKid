@@ -1,4 +1,5 @@
 import { Pressable, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
 import { Text } from '../Text'
 import { useAppStore } from '@/store'
 import { memo, useMemo } from 'react'
@@ -7,6 +8,7 @@ import { useMyNavigation } from '@/hooks'
 import { useStyles } from './styles'
 
 export const MedicineLowQuantity = memo(() => {
+  const { t } = useTranslation()
   const { medicines } = useAppStore(state => state)
   const styles = useStyles()
   const navigation = useMyNavigation()
@@ -41,10 +43,10 @@ export const MedicineLowQuantity = memo(() => {
           <Text style={styles.alertIcon}>⏰</Text>
           <View style={styles.alertContent}>
             <Text style={[styles.alertTitle, { color: '#E65100' }]}>
-              Истекает срок годности
+              {t('medicineLowQuantity.expiring')}
             </Text>
             <Text style={[styles.alertText, { color: '#F57C00' }]}>
-              {expiringCount} {expiringCount === 1 ? 'лекарство' : 'лекарств'} требует внимания
+              {expiringCount} {expiringCount === 1 ? t('expiring.count_one') : t('expiring.count_many')} {t('expiring.needsAttention')}
             </Text>
           </View>
           <Text style={[styles.alertArrow, { color: '#FF9800' }]}>›</Text>
@@ -59,10 +61,10 @@ export const MedicineLowQuantity = memo(() => {
           <Text style={styles.alertIcon}>📦</Text>
           <View style={styles.alertContent}>
             <Text style={[styles.alertTitle, { color: '#C62828' }]}>
-              Заканчиваются
+              {t('medicineLowQuantity.lowStock')}
             </Text>
             <Text style={[styles.alertText, { color: '#E53935' }]}>
-              {lowStockCount} {lowStockCount === 1 ? 'лекарство' : 'лекарств'} с низким запасом
+              {lowStockCount} {lowStockCount === 1 ? t('lowStock.count_one') : t('lowStock.count_many')} {t('lowStock.withLowStock')}
             </Text>
           </View>
           <Text style={[styles.alertArrow, { color: '#F44336' }]}>›</Text>

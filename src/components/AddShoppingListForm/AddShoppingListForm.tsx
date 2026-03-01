@@ -1,4 +1,5 @@
 import { SPACING } from '@/constants'
+import { useTranslation } from 'react-i18next'
 import { FONT_SIZE } from '@/constants/font'
 import { useAppStore } from '@/store'
 import { memo, useMemo, useState } from 'react'
@@ -10,6 +11,7 @@ import { useEvent, useShoppingList } from '@/hooks'
 import { useNavigation } from '@react-navigation/native'
 
 export const AddShoppingListForm = memo(() => {
+  const { t } = useTranslation()
   const { goBack } = useNavigation()
   const { createShoppingList } = useShoppingList()
   const { medicines, medicineKits } = useAppStore(state => state)
@@ -47,12 +49,12 @@ export const AddShoppingListForm = memo(() => {
           options={options}
           value={data.medicineName}
           onChangeText={medicineName => setData({ ...data, medicineName })}
-          label='Введите название лекарства'
+          label={t('addShoppingList.medicineNamePlaceholder')}
         />
       </FormItemWrapper>
       <FormItemWrapper>
         <Textarea
-          label='Описание'
+          label={t('addShoppingList.description')}
           value={data.description}
           onChangeText={description => setData({ ...data, description })}
         />
@@ -60,12 +62,12 @@ export const AddShoppingListForm = memo(() => {
 
       <View style={styles.helpText}>
         <Text style={styles.helpTextContent}>
-          💡 Совет: Начните вводить название лекарства, и мы покажем подходящие варианты из вашей аптечки
+          {t('addShoppingList.helpText')}
         </Text>
       </View>
 
       <Button
-        title={'Сохранить'}
+        title={t('addShoppingList.save')}
         onPress={handleSave}
       />
     </View>

@@ -3,6 +3,7 @@ import { FONT_SIZE, FONT_WEIGHT } from '@/constants/font'
 import { useMyNavigation } from '@/hooks'
 import { useTheme } from '@/providers/theme'
 import { memo, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Pressable, StyleSheet, View } from 'react-native'
 import { PaddingHorizontal } from '../Layout'
 import { Text } from '../Text'
@@ -34,32 +35,32 @@ const QuickActionsButton = memo(({ action }: QuickActionsButtonProps) => {
 
 export function QuickActions() {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const { navigate } = useMyNavigation()
 
-  const quickActions = useMemo(() => [
-    {
-      title: 'Быстрый прием',
-      description: 'Отметить прием лекарства',
-      icon: '💊',
-      color: colors.primary,
-      onPress: () => {
-        navigate('quickIntake')
+  const quickActions = useMemo(
+    () => [
+      {
+        title: t('quickActions.quickIntake'),
+        description: t('quickActions.quickIntakeDesc'),
+        icon: '💊',
+        color: colors.primary,
+        onPress: () => navigate('quickIntake'),
       },
-    },
-    {
-      title: 'Добавить напоминание',
-      description: 'Создать новое напоминание',
-      icon: '➕',
-      color: colors.secondary,
-      onPress: () => {
-        navigate('addReminder')
+      {
+        title: t('quickActions.addReminder'),
+        description: t('quickActions.addReminderDesc'),
+        icon: '➕',
+        color: colors.secondary,
+        onPress: () => navigate('addReminder'),
       },
-    },
-  ], [colors, navigate])
+    ],
+    [colors, navigate, t]
+  )
 
   return (
     <PaddingHorizontal style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>Быстрые действия</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('quickActions.title')}</Text>
 
       <View style={styles.quickActionsGrid}>
         {quickActions.map((action, index) => (

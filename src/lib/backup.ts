@@ -1,3 +1,4 @@
+import i18n from '@/i18n'
 import RNFS from 'react-native-fs'
 import { zip, unzip } from 'react-native-zip-archive'
 import { notificationService } from './notifications'
@@ -315,7 +316,7 @@ class BackupService {
     const medicineKitId = medicines[0].medicineKitId || medicines[0].kit_id || medicines[0].medicine_kit_id
     await notificationService.scheduleNotification(notificationId, {
       title: reminder.title,
-      body: `Время принять: ${medicineNames}`,
+      body: i18n.t('reminder.notificationBody', { medicines: medicineNames }),
       notificationDate: notificationTime,
       data: {
         type: 'reminder',
@@ -355,7 +356,11 @@ class BackupService {
           const notificationId = `reminder-daily-${reminder.id}-day${day}-intake${intake}`
           notifications.push(notificationService.scheduleNotification(notificationId, {
             title: reminder.title,
-            body: `Время принять: ${medicineNames} (прием ${intake + 1} из ${timesPerDay})`,
+            body: i18n.t('reminder.notificationBodyWithIntake', {
+              medicines: medicineNames,
+              intake: intake + 1,
+              total: timesPerDay,
+            }),
             notificationDate: notificationTime,
             data: {
               type: 'reminder',
@@ -403,7 +408,11 @@ class BackupService {
           const notificationId = `reminder-weekly-${reminder.id}-week${week}-intake${intake}`
           notifications.push(notificationService.scheduleNotification(notificationId, {
             title: reminder.title,
-            body: `Время принять: ${medicineNames} (прием ${intake + 1} из ${timesPerDay} в неделю)`,
+            body: i18n.t('reminder.notificationBodyWeekly', {
+              medicines: medicineNames,
+              intake: intake + 1,
+              total: timesPerDay,
+            }),
             notificationDate: notificationTime,
             data: {
               type: 'reminder',

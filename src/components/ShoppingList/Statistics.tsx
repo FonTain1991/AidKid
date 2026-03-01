@@ -3,10 +3,12 @@ import { FONT_SIZE, FONT_WEIGHT } from '@/constants/font'
 import { useTheme } from '@/providers/theme'
 import { useAppStore } from '@/store'
 import { memo, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 import { Text } from '../Text'
 
 export const Statistics = memo(() => {
+  const { t } = useTranslation()
   const { shoppingList } = useAppStore(state => state)
   const { colors } = useTheme()
   const stats = useMemo(() => ({
@@ -22,7 +24,7 @@ export const Statistics = memo(() => {
           {stats.total}
         </Text>
         <Text style={[styles.statLabel, { color: colors.muted }]}>
-          Всего
+          {t('shoppingList.total')}
         </Text>
       </View>
 
@@ -31,7 +33,7 @@ export const Statistics = memo(() => {
           {stats.pending}
         </Text>
         <Text style={[styles.statLabel, { color: colors.muted }]}>
-          Не куплено
+          {t('shoppingList.unpurchased')}
         </Text>
       </View>
 
@@ -40,7 +42,7 @@ export const Statistics = memo(() => {
           {stats.purchased}
         </Text>
         <Text style={[styles.statLabel, { color: colors.muted }]}>
-          Куплено
+          {t('shoppingList.purchased')}
         </Text>
       </View>
     </View>
@@ -66,6 +68,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: FONT_SIZE.sm,
-    fontWeight: FONT_WEIGHT.medium
+    fontWeight: FONT_WEIGHT.medium,
+    textAlign: 'center',
   }
 })

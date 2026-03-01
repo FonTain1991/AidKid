@@ -1,5 +1,5 @@
 
-import { FREQUENCY_OPTIONS, SPACING } from '@/constants'
+import { SPACING } from '@/constants'
 import { getValuesForList } from '@/helpers'
 import { useMyNavigation, useReminder, useReminderMedicine } from '@/hooks'
 import { useEvent } from '@/hooks/useEvent'
@@ -7,6 +7,7 @@ import { notificationService } from '@/lib'
 import { Medicine } from '@/services/models'
 import { useAppStore } from '@/store'
 import { memo, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Alert } from 'react-native'
 import { AboutScreen } from '../AboutScreen'
 import { Button } from '../Button'
@@ -33,6 +34,7 @@ interface ReminderFormType {
 
 export const AddReminder = memo(() => {
   const styles = useStyles()
+  const { t } = useTranslation()
   const navigation = useMyNavigation()
   const { medicines, familyMembers } = useAppStore(state => state)
 
@@ -57,6 +59,14 @@ export const AddReminder = memo(() => {
 
   const medicinesOptions = useMemo(() => getValuesForList(medicines), [medicines])
   const familyMembersOptions = useMemo(() => getValuesForList(familyMembers), [familyMembers])
+  const frequencyOptions = useMemo(
+    () => [
+      { value: 'once', label: t('reminder.once'), icon: '📅' },
+      { value: 'daily', label: t('reminder.daily'), icon: '🔄' },
+      { value: 'weekly', label: t('reminder.weekly'), icon: '📆' },
+    ],
+    [t]
+  )
 
   // Инициализируем время по умолчанию для разных приемов
   useEffect(() => {
@@ -132,7 +142,7 @@ export const AddReminder = memo(() => {
       const scheduled = await scheduleSingleNotification({
         notificationId,
         notificationTime,
-        body: `Время принять: ${medicineNames}`,
+        body: t('reminder.notificationBody', { medicines: medicineNames }),
         data: {
           type: 'reminder',
           reminderId,
@@ -193,7 +203,11 @@ export const AddReminder = memo(() => {
           notificationPromises.push(scheduleSingleNotification({
             notificationId,
             notificationTime,
-            body: `Время принять: ${medicineNames} (прием ${intakeNumber} из ${reminderQuantity} в неделю)`,
+            body: t('reminder.notificationBodyWeekly', {
+              medicines: medicineNames,
+              intake: intakeNumber,
+              total: reminderQuantity,
+            }),
             data: {
               type: 'reminder',
               reminderId,
@@ -213,15 +227,15 @@ export const AddReminder = memo(() => {
   const handleCreateReminder = useEvent(async () => {
     const errorsFields: { medicine?: string; familyMember?: string; dosage?: string } = {}
     if (!reminderForm.selectedMedicineIds.length) {
-      errorsFields.medicine = 'Выберите хотя бы одно лекарство'
+      errorsFields.medicine = t('addReminder.selectMedicine')
     }
 
     if (!reminderForm.dosage) {
-      errorsFields.dosage = 'Выберите дозировку'
+      errorsFields.dosage = t('addReminder.selectDosage')
     }
 
     if (!reminderForm.selectedFamilyMember) {
-      errorsFields.familyMember = 'Выберите члена семьи'
+      errorsFields.familyMember = t('addReminder.selectFamilyMember')
     }
 
     if (Object.keys(errorsFields).length) {
@@ -236,13 +250,13 @@ export const AddReminder = memo(() => {
       const granted = await notificationService.requestPermission()
       if (!granted) {
         Alert.alert(
-          'Требуется разрешение',
-          'Для работы напоминаний необходимо разрешение на отправку уведомлений',
+          t('addReminder.permissionRequired'),
+          t('addReminder.permissionDesc'),
           [
             {
-              text: 'OK',
-              style: 'cancel'
-            }
+              text: t('common.ok'),
+              style: 'cancel',
+            },
           ]
         )
         return
@@ -254,8 +268,8 @@ export const AddReminder = memo(() => {
     const selectedMedicines = medicines.filter(m => reminderForm.selectedMedicineIds.includes(m.id!))
     const medicineNames = selectedMedicines.map(m => m.name).join(', ')
     const defaultTitle = selectedMedicines.length === 1
-      ? `Принять ${selectedMedicines[0].name}`
-      : `Принять ${selectedMedicines.length} лекарств`
+      ? t('addReminder.takeMedicine', { name: selectedMedicines[0].name })
+      : t('addReminder.takeNMedicines', { count: selectedMedicines.length })
     const title = reminderForm.reminderTitle.trim() || defaultTitle
 
     try {
@@ -282,7 +296,7 @@ export const AddReminder = memo(() => {
       })
 
       if (!reminder || !reminder.id) {
-        throw new Error('Не удалось создать напоминание')
+        throw new Error(t('addReminder.failedToCreate'))
       }
 
       const reminderId = reminder.id
@@ -306,38 +320,40 @@ export const AddReminder = memo(() => {
       })
 
       const frequencyText = reminderForm.frequency === 'once'
-        ? 'один раз'
+        ? t('addReminder.once')
         : reminderForm.frequency === 'daily'
-          ? 'ежедневно'
-          : 'еженедельно'
+          ? t('addReminder.daily')
+          : t('addReminder.weekly')
 
-      let message = `Напоминания для ${selectedMedicines.length} ${selectedMedicines.length === 1 ? 'лекарства' : 'лекарств'} созданы!\n\n`
-      message += `Лекарства: ${medicineNames}\n`
-      message += `Частота: ${frequencyText}\n`
+      const medicinesWord = selectedMedicines.length === 1 ? t('lowStock.count_one') : t('lowStock.count_many')
+      let message = t('addReminder.remindersCreated', { count: selectedMedicines.length, medicines: medicinesWord })
+      message += `${t('addReminder.medicinesLabel')}: ${medicineNames}\n`
+      message += `${t('addReminder.frequencyLabel')}: ${frequencyText}\n`
 
       if (reminderForm.frequency === 'once') {
-        const timeStr = reminderForm.reminderTime.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
-        message += `Время: ${timeStr}`
+        const timeStr = reminderForm.reminderTime.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+        message += `${t('addReminder.timeLabel')}: ${timeStr}`
       } else {
-        message += `Приемов в ${reminderForm.frequency === 'daily' ? 'день' : 'неделю'}: ${reminderForm.quantity}\n`
-        message += `Количество дней: ${reminderForm.daysCount}\n`
-        message += 'Время приемов:\n'
+        const perPeriod = reminderForm.frequency === 'daily' ? t('addReminder.intakesPerDay') : t('addReminder.intakesPerWeek')
+        message += `${perPeriod}: ${reminderForm.quantity}\n`
+        message += `${t('addReminder.daysCount')}: ${reminderForm.daysCount}\n`
+        message += `${t('addReminder.intakeTimesLabel')}:\n`
         for (let i = 0; i < reminderForm.quantity; i++) {
-          const timeStr = reminderForm.reminderTimes[i].toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+          const timeStr = reminderForm.reminderTimes[i].toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
           message += `  ${i + 1}. ${timeStr}\n`
         }
       }
 
-      Alert.alert('✅ Напоминание создано', message, [
+      Alert.alert(t('addReminder.reminderCreated'), message, [
         {
-          text: 'OK',
+          text: t('common.ok'),
           onPress: () => navigation.goBack()
         }
       ])
     } catch (error) {
       console.error('Failed to create reminders:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка'
-      Alert.alert('Ошибка', `Не удалось создать напоминание: ${errorMessage}`)
+      const errorMessage = error instanceof Error ? error.message : t('addReminder.unknownError')
+      Alert.alert(t('support.error'), `${t('addReminder.failedToCreate')}: ${errorMessage}`)
     }
   })
 
@@ -358,13 +374,13 @@ export const AddReminder = memo(() => {
         <FormItemWrapper>
           <EmptyList
             onPress={() => navigation.navigate('medicine')}
-            title='Лекарства не найдены.'
+            title={t('addReminder.noMedicinesFound')}
             options={medicinesOptions}
             error={errors?.medicine}
           >
             <MultiList
               options={medicinesOptions}
-              fieldName='Лекарство'
+              fieldName={t('addReminder.medicine')}
               value={reminderForm.selectedMedicineIds}
               onChange={onMedicineChange}
               error={errors?.medicine}
@@ -374,7 +390,7 @@ export const AddReminder = memo(() => {
         {!!reminderForm.selectedMedicineIds?.length && (
           <FormItemWrapper>
             <TextInput
-              label='Дозировка'
+              label={t('addReminder.dosage')}
               style={{ flexGrow: 1, flexShrink: 0, flex: 1 }}
               onChangeText={dosage => setReminderForm(prev => ({ ...prev, dosage }))}
               value={reminderForm.dosage}
@@ -386,13 +402,13 @@ export const AddReminder = memo(() => {
         <FormItemWrapper>
           <EmptyList
             onPress={() => navigation.navigate('familyMember')}
-            title='Члены семьи не найдены.'
+            title={t('addReminder.noFamilyMembersFound')}
             options={familyMembersOptions}
             error={errors?.familyMember}
           >
             <List
               options={familyMembersOptions}
-              fieldName='Член семьи'
+              fieldName={t('addReminder.familyMember')}
               value={reminderForm.selectedFamilyMember}
               onChange={onFamilyMemberChange}
               error={errors?.familyMember}
@@ -401,22 +417,22 @@ export const AddReminder = memo(() => {
         </FormItemWrapper>
         <FormItemWrapper>
           <TextInput
-            label='Название'
+            label={t('addReminder.name')}
             value={reminderForm.reminderTitle}
             onChangeText={reminderTitle => setReminderForm(prev => ({ ...prev, reminderTitle }))}
           />
         </FormItemWrapper>
         <FormItemWrapper>
           <Textarea
-            label='Описание'
+            label={t('addReminder.description')}
             value={reminderForm.description}
             onChangeText={description => setReminderForm(prev => ({ ...prev, description }))}
           />
         </FormItemWrapper>
         <FormItemWrapper>
           <List
-            options={FREQUENCY_OPTIONS}
-            fieldName='Частота'
+            options={frequencyOptions}
+            fieldName={t('addReminder.frequency')}
             value={reminderForm.frequency}
             onChange={frequency => setReminderForm(prev => ({ ...prev, frequency }))}
           />
@@ -424,7 +440,7 @@ export const AddReminder = memo(() => {
         {isOnce && (
           <FormItemWrapper>
             <DatePicker
-              fieldName='Время'
+              fieldName={t('addReminder.time')}
               value={reminderForm.reminderTime}
               onChange={reminderTime => setReminderForm(prev => ({ ...prev, reminderTime }))}
               mode='time'
@@ -437,18 +453,18 @@ export const AddReminder = memo(() => {
               <Counter
                 value={reminderForm.quantity}
                 onChange={quantity => setReminderForm(prev => ({ ...prev, quantity }))}
-                label='Количество приемов'
+                label={t('addReminder.intakeCount')}
               />
             </FormItemWrapper>
             <>
-              <Text style={styles.inputLabel}>Время приемов</Text>
+              <Text style={styles.inputLabel}>{t('addReminder.intakeTimesLabel')}</Text>
               {Array.from({ length: reminderForm.quantity }).map((_, index) => (
                 <FormItemWrapper key={`time-picker-${index}`}>
                   <Text style={styles.timePickerLabel}>
-                    {index + 1}. Прием
+                    {index + 1}. {t('addReminder.intakeN')}
                   </Text>
                   <DatePicker
-                    fieldName='Выберите время'
+                    fieldName={t('addReminder.selectTime')}
                     value={reminderForm.reminderTimes[index]}
                     onChange={newTime => {
                       const newTimes = [...reminderForm.reminderTimes]
@@ -464,19 +480,19 @@ export const AddReminder = memo(() => {
               <Counter
                 value={reminderForm.daysCount}
                 onChange={daysCount => setReminderForm(prev => ({ ...prev, daysCount }))}
-                label='Количество дней'
+                label={t('addReminder.daysCount')}
               />
             </FormItemWrapper>
           </>
         )}
         <Button
-          title='Создать напоминание'
+          title={t('addReminder.createReminder')}
           onPress={handleCreateReminder}
         />
       </PaddingHorizontal >
       <AboutScreen
-        title='О напоминаниях'
-        text={'• Напоминания будут приходить в указанное время\n• Для повторяющихся напоминаний можно указать количество приемов и дней\n• Ежедневные напоминания повторяются каждый день на указанное количество дней\n• Еженедельные напоминания повторяются каждую неделю\n• Можно отключить в любой момент'}
+        title={t('addReminder.aboutReminders')}
+        text={t('addReminder.aboutRemindersText')}
         style={{ marginTop: SPACING.md }}
       />
     </>

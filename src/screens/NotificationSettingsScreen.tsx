@@ -1,13 +1,16 @@
 import { Background, Flex, SafeAreaView } from '@/components/Layout'
 import { NotificationSettings } from '@/components/NotificationSettings'
 import { useNavigationBarColor, useScreenProperties } from '@/hooks'
+import { useTranslation } from 'react-i18next'
 import { ScrollView } from 'react-native'
 
 export function NotificationSettingsScreen() {
+  const { t } = useTranslation()
+
   useScreenProperties({
     navigationOptions: {
       headerShown: true,
-      title: 'Настройки уведомлений'
+      title: t('screens.notificationSettings')
     }
   })
 

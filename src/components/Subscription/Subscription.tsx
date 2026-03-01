@@ -1,4 +1,5 @@
 import { SPACING } from '@/constants'
+import { useTranslation } from 'react-i18next'
 import { useEvent, useMyNavigation } from '@/hooks'
 import { subscriptionService } from '@/lib'
 import { useTheme } from '@/providers/theme'
@@ -15,6 +16,7 @@ import { IsPremium } from './IsPremium'
 
 export const Subscription = memo(() => {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const styles = useStyles()
   const navigation = useMyNavigation()
 
@@ -42,11 +44,11 @@ export const Subscription = memo(() => {
 
       if (currentIsPremium) {
         Alert.alert(
-          'Успешно! ✅',
-          'Ваши покупки восстановлены.',
+          t('subscription.success'),
+          t('subscription.purchasesRestored'),
           [
             {
-              text: 'Отлично',
+              text: t('common.great'),
               onPress: () => {
                 navigation.goBack()
               },
@@ -55,12 +57,12 @@ export const Subscription = memo(() => {
         )
       } else {
         Alert.alert(
-          'Не найдено',
-          'Не удалось найти активные покупки для восстановления.'
+          t('subscription.notFound'),
+          t('subscription.noPurchases')
         )
       }
     } catch (err) {
-      Alert.alert('Ошибка', 'Не удалось восстановить покупки. Попробуйте еще раз.')
+      Alert.alert(t('support.error'), t('subscription.failedToRestore'))
     }
   })
 
@@ -69,11 +71,11 @@ export const Subscription = memo(() => {
     try {
       await purchasePackage(pkg)
       Alert.alert(
-        'Успешно! 🎉',
-        'Ваша премиум подписка активирована. Спасибо за поддержку!',
+        t('subscription.success'),
+        t('subscription.premiumActivated'),
         [
           {
-            text: 'Отлично',
+            text: t('common.great'),
             onPress: () => {
               navigation.goBack()
             },
@@ -81,10 +83,10 @@ export const Subscription = memo(() => {
         ]
       )
     } catch (err: any) {
-      if (err.message === 'Покупка отменена пользователем') {
+      if (err.message === 'Покупка отменена пользователем' || err.message === 'Purchase cancelled by user') {
         return
       }
-      Alert.alert('Ошибка', 'Не удалось оформить подписку. Попробуйте еще раз.')
+      Alert.alert(t('support.error'), t('subscription.failedToSubscribe'))
     }
   })
 
@@ -109,7 +111,7 @@ export const Subscription = memo(() => {
       <View style={styles.loadingContainer}>
         <ActivityIndicator size='large' color={colors.primary} />
         <Text style={[styles.emptyStateText, { marginTop: SPACING.md }]}>
-          Загрузка...
+          {t('subscription.loading')}
         </Text>
       </View>
     )
@@ -123,30 +125,29 @@ export const Subscription = memo(() => {
     <>
       <View style={styles.header}>
         <Text style={styles.premiumIcon}>💎</Text>
-        <Text style={styles.title}>Премиум подписка</Text>
+        <Text style={styles.title}>{t('subscription.premiumTitle')}</Text>
         <Text style={styles.subtitle}>
-          Откройте все возможности приложения
+          {t('subscription.premiumSubtitle')}
         </Text>
       </View>
 
       {error && (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>
-            ⚠️ {error.message || 'Произошла ошибка. Попробуйте обновить страницу.'}
+            ⚠️ {error.message || t('subscription.errorOccurred')}
           </Text>
         </View>
       )}
 
-      <Features title='Что включено:' />
+      <Features title={t('subscription.whatIncluded')} />
 
       {!packages.length && (
         <View style={styles.emptyState}>
           <Text style={styles.emptyStateText}>
-            Подписки временно недоступны.{'\n'}
-            Попробуйте позже или обратитесь в поддержку.
+            {t('subscription.subscriptionsUnavailable')}
           </Text>
           <Button
-            title='Обновить'
+            title={t('updateApp.update')}
             onPress={async () => {
               await refreshStatus()
               await loadOfferings()
@@ -226,37 +227,37 @@ export const Subscription = memo(() => {
               >
                 {isRecommended && (
                   <View style={styles.recommendedBadge}>
-                    <Text style={styles.recommendedText}>⭐ РЕКОМЕНДУЕТСЯ</Text>
+                    <Text style={styles.recommendedText}>{t('subscription.recommended')}</Text>
                   </View>
                 )}
 
                 <View style={styles.packageContent}>
                   <View style={styles.packageTitleRow}>
                     <Text style={styles.packageTitle}>
-                      {productInfo?.title || (isMonthly ? 'Месячная подписка' : 'Годовая подписка')}
+                      {productInfo?.title || (isMonthly ? t('subscription.monthly') : t('subscription.yearly'))}
                     </Text>
                     <View style={styles.packagePriceContainer}>
                       <Text style={styles.packagePrice}>
                         {price}
                       </Text>
                       <Text style={styles.packagePricePeriod}>
-                        {currency} {isMonthly ? '/мес' : '/год'}
+                        {currency} {isMonthly ? t('subscription.perMonth') : t('subscription.perYear')}
                       </Text>
                     </View>
                   </View>
 
                   {isMonthly ? (
                     <Text style={styles.packageDescription}>
-                      Подписка автоматически продлевается каждый месяц
+                      {t('subscription.monthlyRenewal')}
                     </Text>
                   ) : (
                     <Text style={styles.packageDescription}>
-                      Экономия до 40% по сравнению с ежемесячной подпиской
+                      {t('subscription.yearlySavings')}
                     </Text>
                   )}
 
                   <Button
-                    title={isRecommended ? 'Выбрать этот план' : 'Выбрать'}
+                    title={isRecommended ? t('subscription.selectPlan') : t('common.select')}
                     onPress={() => handlePurchase(pkg)}
                     variant={isRecommended ? 'primary' : 'outline'}
                     size='large'
@@ -271,7 +272,7 @@ export const Subscription = memo(() => {
       )}
 
       <Button
-        title='Восстановить покупки'
+        title={t('subscription.restorePurchases')}
         onPress={handleRestore}
         variant='outline'
         style={styles.restoreButton}

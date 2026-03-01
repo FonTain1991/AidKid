@@ -1,4 +1,5 @@
 import { RADIUS, SPACING } from '@/constants'
+import { useTranslation } from 'react-i18next'
 import { FONT_SIZE, FONT_WEIGHT } from '@/constants/font'
 import { useTheme } from '@/providers/theme'
 import { Pressable, StyleSheet } from 'react-native'
@@ -16,6 +17,7 @@ interface EmptyListProps {
 
 export function EmptyList({ onPress, title, options, children, error }: EmptyListProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
 
   const { length } = options
   return (
@@ -36,7 +38,7 @@ export function EmptyList({ onPress, title, options, children, error }: EmptyLis
         >
           <Row itemsCenter>
             <Icon name='database' size={30} color={colors.error} />
-            <Text style={[styles.title, { color: colors.text }]}>{title}{'\n'}<Text style={{ color: colors.link }}>Добавить</Text></Text>
+            <Text style={[styles.title, { color: colors.text }]}>{title}{'\n'}<Text style={{ color: colors.link }}>{t('medicine.add')}</Text></Text>
           </Row>
         </Pressable>
       )}

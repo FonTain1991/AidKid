@@ -5,18 +5,20 @@ import { Background, Flex, SafeAreaView } from '@/components/Layout'
 import { SPACING } from '@/constants'
 import { FONT_SIZE } from '@/constants/font'
 import { useMyNavigation, useNavigationBarColor, useScreenProperties } from '@/hooks'
+import { useTranslation } from 'react-i18next'
 import { useAppStore } from '@/store'
 import { Pressable } from 'react-native'
 import Icon from 'react-native-vector-icons/Feather'
 
 export function FamilyMembersScreen() {
+  const { t } = useTranslation()
   const { navigate } = useMyNavigation()
   const familyMembers = useAppStore(state => state.familyMembers)
 
   useScreenProperties({
     navigationOptions: {
       headerShown: true,
-      title: 'Список членов семьи',
+      title: t('screens.familyMembers'),
       headerRight: () => (
         <Pressable
           onPress={() => navigate('familyMember')}
@@ -35,11 +37,11 @@ export function FamilyMembersScreen() {
         <Background>
           <Empty
             icon='users'
-            title='Члены семьи'
-            description='Добавьте членов семьи для использования приложения'
+            title={t('empty.familyEmptyTitle')}
+            description={t('empty.familyEmptyDesc')}
           >
             <Button
-              title='Добавить члена семьи'
+              title={t('empty.addFamilyMember')}
               onPress={() => navigate('familyMember')}
               style={{ marginTop: SPACING.md }}
             />

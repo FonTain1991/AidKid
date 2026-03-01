@@ -1,4 +1,5 @@
 import { FONT_SIZE } from '@/constants/font'
+import { useTranslation } from 'react-i18next'
 import { useEvent } from '@/hooks'
 import { forwardRef, useImperativeHandle } from 'react'
 import { Alert, StyleSheet, View } from 'react-native'
@@ -36,11 +37,12 @@ const getDefaultDosage = (unit?: string): string => {
 }
 
 export const Dosage = forwardRef(({ onChange, unit, dosage, isChecked, quantity }: DosageProps, ref) => {
+  const { t } = useTranslation()
   const showPrompt = useEvent(() => {
     const defaultDosage = getDefaultDosage(unit)
     const buttons = [
       {
-        text: 'Отмена', onPress: () => {
+        text: t('common.cancel'), onPress: () => {
           if (dosage) {
             return
           }
@@ -48,20 +50,20 @@ export const Dosage = forwardRef(({ onChange, unit, dosage, isChecked, quantity 
         }, style: 'cancel'
       },
       {
-        text: 'OK',
+        text: t('common.ok'),
         onPress: (value: string) => {
           const trimmedDosage = value?.trim() || ''
 
           if (!trimmedDosage) {
-            Alert.alert('Ошибка', 'Пожалуйста, введите дозировку', [
-              { text: 'OK', onPress: () => showPrompt() }
+            Alert.alert(t('support.error'), t('dosage.enterDosage'), [
+              { text: t('common.ok'), onPress: () => showPrompt() }
             ])
             return
           }
 
           if (Number(trimmedDosage) > quantity) {
-            Alert.alert('Ошибка', `Пожалуйста, введите дозировку меньше либо равную ${quantity}`, [
-              { text: 'OK', onPress: () => showPrompt() }
+            Alert.alert(t('support.error'), t('dosage.dosageTooHigh', { max: quantity }), [
+              { text: t('common.ok'), onPress: () => showPrompt() }
             ])
             return
           }
@@ -72,13 +74,13 @@ export const Dosage = forwardRef(({ onChange, unit, dosage, isChecked, quantity 
     ]
     if (dosage) {
       buttons.unshift({
-        text: 'Очистить', onPress: () => {
+        text: t('common.clear'), onPress: () => {
           onChange?.('')
         }, style: 'cancel'
       })
     }
     prompt(
-      'Введите количество',
+      t('dosage.enterQuantity'),
       '',
       buttons,
       {
@@ -101,7 +103,7 @@ export const Dosage = forwardRef(({ onChange, unit, dosage, isChecked, quantity 
       {!dosage && (
         <Checkbox value={isChecked} onChange={() => showPrompt()} />
       )}
-      {dosage && <Text onPress={showPrompt} style={styles.text}>Количество:{'\n'}<Text style={{ textDecorationLine: 'underline' }}>{dosage}</Text></Text>}
+      {dosage && <Text onPress={showPrompt} style={styles.text}>{t('dosage.quantity')}:{'\n'}<Text style={{ textDecorationLine: 'underline' }}>{dosage}</Text></Text>}
     </View>
   )
 })

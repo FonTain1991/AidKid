@@ -1,9 +1,11 @@
 import { useEvent, useMyNavigation } from '@/hooks'
 import { useAppStore } from '@/store'
 import React, { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FloatingActionButton } from '../FloatingActionButton'
 
 export function FloatingButton({ parentId }: { parentId?: number }) {
+  const { t } = useTranslation()
   const { navigate } = useMyNavigation()
   const { medicineKits } = useAppStore(state => state)
 
@@ -13,19 +15,19 @@ export function FloatingButton({ parentId }: { parentId?: number }) {
 
   const items = useMemo(() => {
     const values = [
-      { letter: 'Аптечка', onPress: handleAddMedicineKit },
+      { letter: t('floatingButton.medicineKit'), onPress: handleAddMedicineKit },
     ]
 
     if (medicineKits.length) {
-      values.push({ letter: 'Лекарство', onPress: handleAddMedicine })
+      values.push({ letter: t('floatingButton.medicine'), onPress: handleAddMedicine })
     }
 
     if (medicineKits.length) {
-      values.push({ letter: 'Штрих-код', onPress: handleScanBarcode })
+      values.push({ letter: t('floatingButton.barcode'), onPress: handleScanBarcode })
     }
 
     return values
-  }, [medicineKits, handleAddMedicine, handleAddMedicineKit, handleScanBarcode])
+  }, [medicineKits, handleAddMedicine, handleAddMedicineKit, handleScanBarcode, t])
 
   return (
     <FloatingActionButton items={items} />

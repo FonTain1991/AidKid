@@ -5,12 +5,14 @@ import { useTheme } from '@/providers/theme'
 import { medicineModel } from '@/services/models'
 import { CommonActions } from '@react-navigation/native'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Alert, Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { Camera, CameraType } from 'react-native-camera-kit'
 import { check, PERMISSIONS, request, RESULTS } from 'react-native-permissions'
 
 export function BarcodeScannerScreen() {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const navigation = useMyNavigation()
   const [hasPermission, setHasPermission] = useState(false)
   const [isScanning, setIsScanning] = useState(true)
@@ -41,11 +43,11 @@ export function BarcodeScannerScreen() {
       } else {
         // Permission blocked or unavailable
         Alert.alert(
-          'Нет доступа к камере',
-          'Для сканирования штрих-кодов необходим доступ к камере. Пожалуйста, разрешите доступ в настройках приложения.',
+          t('barcode.noCameraAccess'),
+          t('barcode.noCameraAccessDesc'),
           [
-            { text: 'Отмена', style: 'cancel', onPress: () => navigation.goBack() },
-            { text: 'Открыть настройки', onPress: () => Linking.openSettings() }
+            { text: t('common.cancel'), style: 'cancel', onPress: () => navigation.goBack() },
+            { text: t('common.openSettings'), onPress: () => Linking.openSettings() },
           ]
         )
       }
@@ -72,19 +74,19 @@ export function BarcodeScannerScreen() {
       if (medicine) {
         // Лекарство найдено - открываем его
         Alert.alert(
-          'Лекарство найдено!',
+          t('medicine.medicineFound'),
           `${medicine.name}`,
           [
             {
-              text: 'Открыть',
+              text: t('common.open'),
               onPress: () => {
                 navigation.navigate('medicine', { medicineId: Number(medicine.id) })
-              }
+              },
             },
             {
-              text: 'Сканировать еще',
-              onPress: () => setIsScanning(true)
-            }
+              text: t('common.scanAgain'),
+              onPress: () => setIsScanning(true),
+            },
           ]
         )
       } else {
@@ -117,17 +119,17 @@ export function BarcodeScannerScreen() {
         } else {
           // Если открыли с главной - показываем что не найдено
           Alert.alert(
-            'Лекарство не найдено',
-            `Штрих-код ${barcode} не найден в вашей аптечке.`,
+            t('medicine.medicineNotFound'),
+            t('medicine.barcodeNotFound', { barcode }),
             [
               {
-                text: 'Сканировать еще',
-                onPress: () => setIsScanning(true)
+                text: t('common.scanAgain'),
+                onPress: () => setIsScanning(true),
               },
               {
-                text: 'Закрыть',
-                onPress: () => navigation.goBack()
-              }
+                text: t('common.close'),
+                onPress: () => navigation.goBack(),
+              },
             ]
           )
         }
@@ -135,10 +137,10 @@ export function BarcodeScannerScreen() {
     } catch (error) {
       console.error('Ошибка при поиске лекарства:', error)
       Alert.alert(
-        'Ошибка',
-        'Не удалось найти лекарство',
+        t('support.error'),
+        t('medicine.failedToFindMedicine'),
         [
-          { text: 'Попробовать снова', onPress: () => setIsScanning(true) }
+          { text: t('common.tryAgain'), onPress: () => setIsScanning(true) },
         ]
       )
     }
@@ -150,22 +152,22 @@ export function BarcodeScannerScreen() {
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>📷</Text>
           <Text style={[styles.emptyTitle, { color: colors.text }]}>
-            Нет доступа к камере
+            {t('barcode.noCameraAccess')}
           </Text>
           <Text style={[styles.emptyText, { color: colors.secondary }]}>
-            Разрешите доступ к камере в настройках
+            {t('barcode.noCameraAccessDesc')}
           </Text>
           <TouchableOpacity
             style={[styles.button, { backgroundColor: colors.primary }]}
             onPress={() => Linking.openSettings()}
           >
-            <Text style={styles.buttonText}>Открыть настройки</Text>
+            <Text style={styles.buttonText}>{t('common.openSettings')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, { backgroundColor: colors.border, marginTop: SPACING.sm }]}
             onPress={() => navigation.goBack()}
           >
-            <Text style={[styles.buttonText, { color: colors.text }]}>Назад</Text>
+            <Text style={[styles.buttonText, { color: colors.text }]}>{t('common.back')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -206,7 +208,7 @@ export function BarcodeScannerScreen() {
 
         <View style={styles.footer}>
           <Text style={[styles.instruction, { color: 'white' }]}>
-            Наведите камеру на штрих-код
+            {t('barcode.pointCamera')}
           </Text>
         </View>
       </View>

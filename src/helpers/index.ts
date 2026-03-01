@@ -1,3 +1,4 @@
+import i18n from '@/i18n'
 import { launchImageLibrary, launchCamera, ImagePickerResponse, Asset } from 'react-native-image-picker'
 import { Platform, PermissionsAndroid, Alert } from 'react-native'
 import RNFS from 'react-native-fs'
@@ -30,11 +31,11 @@ async function requestCameraPermission(): Promise<boolean> {
     const granted = await PermissionsAndroid.request(
       PermissionsAndroid.PERMISSIONS.CAMERA,
       {
-        title: 'Разрешение на камеру',
-        message: 'Приложению нужен доступ к камере для фотографирования лекарств',
-        buttonNeutral: 'Позже',
-        buttonNegative: 'Отмена',
-        buttonPositive: 'OK',
+        title: i18n.t('notifications.cameraPermission'),
+        message: i18n.t('photoPicker.cameraPermissionMessage'),
+        buttonNeutral: i18n.t('common.later'),
+        buttonNegative: i18n.t('common.cancel'),
+        buttonPositive: i18n.t('common.ok'),
       }
     )
     return granted === PermissionsAndroid.RESULTS.GRANTED
@@ -50,15 +51,15 @@ async function requestCameraPermission(): Promise<boolean> {
 export async function pickMedicinePhoto(): Promise<string | null> {
   return new Promise(resolve => {
     Alert.alert(
-      'Добавить фото',
-      'Выберите источник изображения',
+      i18n.t('photoPicker.addPhoto'),
+      i18n.t('photoPicker.chooseSource'),
       [
         {
-          text: 'Камера',
+          text: i18n.t('notifications.camera'),
           onPress: async () => {
             const hasPermission = await requestCameraPermission()
             if (!hasPermission) {
-              Alert.alert('Ошибка', 'Нет разрешения на использование камеры')
+              Alert.alert(i18n.t('support.error'), i18n.t('photoPicker.noCameraPermission'))
               resolve(null)
               return
             }
@@ -67,14 +68,14 @@ export async function pickMedicinePhoto(): Promise<string | null> {
           }
         },
         {
-          text: 'Галерея',
+          text: i18n.t('notifications.gallery'),
           onPress: async () => {
             const result = await pickFromGallery()
             resolve(result)
           }
         },
         {
-          text: 'Отмена',
+          text: i18n.t('common.cancel'),
           style: 'cancel',
           onPress: () => resolve(null)
         }
@@ -132,7 +133,7 @@ async function processImageResult(result: ImagePickerResponse): Promise<string |
 
   if (result.errorCode) {
     console.error('Image picker error:', result.errorCode, result.errorMessage)
-    Alert.alert('Ошибка', 'Не удалось загрузить изображение')
+    Alert.alert(i18n.t('support.error'), i18n.t('photoPicker.failedToLoad'))
     return null
   }
 
@@ -160,7 +161,7 @@ async function savePhotoToLocalStorage(asset: Asset): Promise<string | null> {
     return destPath
   } catch (error) {
     console.error('Failed to save photo:', error)
-    Alert.alert('Ошибка', 'Не удалось сохранить фото')
+    Alert.alert(i18n.t('support.error'), i18n.t('photoPicker.failedToSave'))
     return null
   }
 }

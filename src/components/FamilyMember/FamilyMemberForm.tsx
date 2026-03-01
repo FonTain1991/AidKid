@@ -1,4 +1,5 @@
 import { SPACING } from '@/constants'
+import { useTranslation } from 'react-i18next'
 import { useEvent, useMyNavigation, useRoute } from '@/hooks'
 import { useFamilyMember } from '@/hooks/useFamilyMember'
 import { FamilyMember } from '@/services/models'
@@ -13,6 +14,7 @@ import { Colors } from './Colors'
 type CreateFamilyMemberPayload = Omit<FamilyMember, 'id' | 'createdAt' | 'updatedAt'>
 
 export const FamilyMemberForm = memo(() => {
+  const { t } = useTranslation()
   const { params } = useRoute()
   const { createFamilyMember, getFamilyMemberById, updateFamilyMember } = useFamilyMember()
   const { goBack } = useMyNavigation()
@@ -27,7 +29,7 @@ export const FamilyMemberForm = memo(() => {
 
   const onSubmit = useEvent(async () => {
     if (member.name === '') {
-      setError('Имя является обязательным полем')
+      setError(t('familyMember.nameRequired'))
       return
     }
 
@@ -65,7 +67,7 @@ export const FamilyMemberForm = memo(() => {
       <Avatar onChange={avatar => setMember({ ...member, avatar })} value={member.avatar} />
       <PaddingHorizontal>
         <TextInput
-          label='Имя'
+          label={t('familyMember.name')}
           onChangeText={onChangeText}
           value={member.name}
           error={error ?? undefined}
@@ -74,7 +76,7 @@ export const FamilyMemberForm = memo(() => {
       <Colors onChange={color => setMember({ ...member, color })} value={member.color} />
       <PaddingHorizontal>
         <Button
-          title={params?.familyMemberId ? 'Сохранить' : 'Добавить'}
+          title={params?.familyMemberId ? t('common.save') : t('medicine.add')}
           onPress={onSubmit}
         />
       </PaddingHorizontal>

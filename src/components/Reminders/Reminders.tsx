@@ -1,9 +1,10 @@
-import { getFrequencyIcon, getFrequencyText } from '@/constants'
+import { getFrequencyIcon } from '@/constants'
 import { useMyNavigation, useReminder, useReminderMedicine } from '@/hooks'
 import { notificationService } from '@/lib'
 import { Reminder } from '@/services/models'
 import { useAppStore } from '@/store'
 import { memo, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Alert, TouchableOpacity, View } from 'react-native'
 import { PaddingHorizontal } from '../Layout'
 import { Text } from '../Text'
@@ -16,6 +17,7 @@ interface ReminderList extends Reminder {
   nextNotification: Date | null
 }
 export const Reminders = memo(() => {
+  const { t } = useTranslation()
   const { navigate } = useMyNavigation()
   const { reminders, reminderMedicines, medicines } = useAppStore(state => state)
   const { deleteReminder } = useReminder()
@@ -89,20 +91,20 @@ export const Reminders = memo(() => {
     // Находим напоминание в списке
     const reminder = dataSource.find(r => r.id === reminderId)
     if (!reminder) {
-      Alert.alert('Ошибка', 'Напоминание не найдено')
+      Alert.alert(t('support.error'), t('reminders.notFound'))
       return
     }
 
     Alert.alert(
-      'Удалить напоминание?',
-      `Вы уверены, что хотите удалить напоминание "${reminder.medicineNames || reminder.title}"?`,
+      t('reminders.deleteTitle'),
+      t('reminders.deleteConfirm', { name: reminder.medicineNames || reminder.title }),
       [
         {
-          text: 'Отмена',
+          text: t('common.cancel'),
           style: 'cancel',
         },
         {
-          text: 'Удалить',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -127,7 +129,7 @@ export const Reminders = memo(() => {
               await deleteReminder(reminderId)
             } catch (error) {
               console.error('Failed to delete reminder:', error)
-              Alert.alert('Ошибка', 'Не удалось удалить напоминание')
+              Alert.alert(t('support.error'), t('reminders.failedToDelete'))
             }
           },
         },
@@ -142,13 +144,13 @@ export const Reminders = memo(() => {
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyIcon}>⏰</Text>
         <Text style={styles.emptyTitle}>
-          Нет активных напоминаний
+          {t('reminders.noActive')}
         </Text>
         <Text style={styles.emptyText}>
-          Создайте напоминание о приеме лекарств
+          {t('reminders.createReminder')}
         </Text>
         <Button
-          title='Добавить напоминание'
+          title={t('reminders.addReminder')}
           onPress={() => navigate('addReminder')}
         />
       </View>
@@ -174,7 +176,7 @@ export const Reminders = memo(() => {
                     <View style={styles.reminderFrequencyContainer}>
                       <Text style={styles.frequencyIcon}>{getFrequencyIcon(reminder.frequency)}</Text>
                       <Text style={styles.reminderFrequency}>
-                        {getFrequencyText(reminder.frequency)}
+                        {t(`reminder.${reminder.frequency}`)}
                       </Text>
                     </View>
                   </View>
@@ -195,7 +197,7 @@ export const Reminders = memo(() => {
                 )}
                 <View style={styles.reminderTimesContainer}>
                   <Text style={styles.reminderTimesLabel}>
-                    Время приемов:
+                    {t('reminders.intakeTimes')}
                   </Text>
                   <View style={styles.timesList}>
                     {times?.map((val: any, idx: number) => (
@@ -214,7 +216,7 @@ export const Reminders = memo(() => {
                 {reminder.nextNotification && (
                   <View style={styles.nextNotificationContainer}>
                     <Text style={styles.nextNotificationLabel}>
-                      Следующее:
+                      {t('reminders.next')}
                     </Text>
                     <Text style={styles.nextNotificationTime}>
                       {reminder.nextNotification.toLocaleDateString('ru-RU', {
@@ -228,7 +230,7 @@ export const Reminders = memo(() => {
                 )}
 
                 <Text style={styles.reminderCount}>
-                  Всего запланировано: {reminder.totalCount}
+                  {t('reminders.totalScheduled')} {reminder.totalCount}
                 </Text>
               </View>
             </View>

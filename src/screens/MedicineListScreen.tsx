@@ -9,9 +9,11 @@ import { SPACING } from '@/constants'
 import { useBackHandlerMedicineScreen, useMedicineScreenTitle, useNavigationBarColor, useRoute, useScreenProperties } from '@/hooks'
 import { useAppStore } from '@/store'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ScrollView, StyleSheet } from 'react-native'
 
 export function MedicineListScreen() {
+  const { t } = useTranslation()
   const { params } = useRoute()
   const { medicineKits, medicines } = useAppStore(state => state)
   const title = useMedicineScreenTitle()
@@ -42,8 +44,8 @@ export function MedicineListScreen() {
         <Background>
           <Empty
             icon='box'
-            title='Аптечка пуста'
-            description='Добавьте лекарства в аптечку'
+            title={t('empty.emptyKitTitle')}
+            description={t('empty.emptyKitDesc')}
           />
           <FloatingButton parentId={params?.medicineKitId} />
         </Background>

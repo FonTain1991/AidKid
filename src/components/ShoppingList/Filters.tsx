@@ -3,6 +3,7 @@ import { RADIUS, SPACING } from '@/constants'
 import { FONT_SIZE, FONT_WEIGHT } from '@/constants/font'
 import { useTheme } from '@/providers/theme'
 import { memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Pressable, StyleSheet, View } from 'react-native'
 
 interface FiltersProps {
@@ -11,6 +12,7 @@ interface FiltersProps {
 }
 export const Filters = memo(({ filter, setFilter }: FiltersProps) => {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   return (
     <View style={styles.filtersContainer} >
       <Pressable
@@ -28,7 +30,7 @@ export const Filters = memo(({ filter, setFilter }: FiltersProps) => {
             filter === 'all' && { color: '#FFFFFF' }
           ]}
         >
-          Все
+          {t('shoppingList.all')}
         </Text>
       </Pressable>
 
@@ -47,7 +49,7 @@ export const Filters = memo(({ filter, setFilter }: FiltersProps) => {
             filter === 'pending' && { color: '#FFFFFF' }
           ]}
         >
-          Не куплено
+          {t('shoppingList.unpurchased')}
         </Text>
       </Pressable>
 
@@ -66,7 +68,7 @@ export const Filters = memo(({ filter, setFilter }: FiltersProps) => {
             filter === 'purchased' && { color: '#FFFFFF' }
           ]}
         >
-          Куплено
+          {t('shoppingList.purchased')}
         </Text>
       </Pressable>
     </View >
@@ -86,10 +88,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    alignItems: 'center'
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   filterText: {
     fontSize: FONT_SIZE.md,
-    fontWeight: FONT_WEIGHT.medium
+    fontWeight: FONT_WEIGHT.medium,
+    textAlign: 'center',
   },
 })

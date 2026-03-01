@@ -8,6 +8,7 @@ import { MedicineLowQuantity } from '@/components/MedicineLowQuantity'
 import { ModalUpdateApp } from '@/components/UpdateApp'
 import { SPACING } from '@/constants'
 import { useEvent, useNavigationBarColor, useScreenProperties } from '@/hooks'
+import { useTranslation } from 'react-i18next'
 import { getLimitsInfo } from '@/lib'
 import { useTheme } from '@/providers/theme'
 import { useAppStore } from '@/store'
@@ -17,6 +18,7 @@ import { ScrollView, StyleSheet, View } from 'react-native'
 
 export function MedicineKitListScreen() {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const [searchText, setSearchText] = useState('')
   const [limitsInfo, setLimitsInfo] = useState<any>(null)
   const { medicineKits, medicines } = useAppStore(state => state)
@@ -24,9 +26,9 @@ export function MedicineKitListScreen() {
   useScreenProperties({
     navigationOptions: {
       headerShown: true,
-      title: 'Аптечки',
+      title: t('screens.medicineKits'),
       headerSearchBarOptions: {
-        placeholder: 'Поиск лекарства',
+        placeholder: t('medicine.searchPlaceholder'),
         onChangeText: event => {
           setSearchText(event.nativeEvent.text)
         },
@@ -67,8 +69,8 @@ export function MedicineKitListScreen() {
         <Background>
           <Empty
             icon='box'
-            title='Аптечки'
-            description='Здесь будут отображаться ваши аптечки'
+            title={t('empty.noKitsTitle')}
+            description={t('empty.noKitsDesc')}
           />
         </Background>
         <FloatingButton />
@@ -92,13 +94,13 @@ export function MedicineKitListScreen() {
               }}>
                 <LimitIndicator
                   limitCheck={limitsInfo.kits}
-                  label='Аптечки'
+                  label={t('nav.medicineKits')}
                   showPremiumButton={!limitsInfo.kits.allowed}
                   compact={false}
                 />
                 <LimitIndicator
                   limitCheck={limitsInfo.medicines}
-                  label='Лекарства'
+                  label={t('nav.medicines')}
                   showPremiumButton={!limitsInfo.medicines.allowed}
                   compact={false}
                 />

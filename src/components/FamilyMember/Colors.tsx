@@ -1,4 +1,5 @@
 import { SPACING, WIDTH } from '@/constants'
+import { useTranslation } from 'react-i18next'
 import { FONT_SIZE, FONT_WEIGHT } from '@/constants/font'
 import { useTheme } from '@/providers/theme'
 import { memo, useEffect, useState } from 'react'
@@ -12,6 +13,7 @@ interface ColorsProps {
 }
 export const Colors = memo(({ onChange, value }: ColorsProps) => {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const [selectedColor, setSelectedColor] = useState(value || COLOR_OPTIONS[0])
 
   const handleChange = (color: string) => {
@@ -26,7 +28,7 @@ export const Colors = memo(({ onChange, value }: ColorsProps) => {
   return (
     <View>
       {/* Выбор цвета */}
-      <Text style={[styles.formLabel, { color: colors.text }]}>Цвет</Text>
+      <Text style={[styles.formLabel, { color: colors.text }]}>{t('medicineKit.color')}</Text>
       <View style={styles.colorGrid}>
         {COLOR_OPTIONS.map(color => (
           <TouchableOpacity

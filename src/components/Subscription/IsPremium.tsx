@@ -1,4 +1,5 @@
 import { memo, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useStyles } from './hooks'
 import { useSubscription } from './hooks/useSubscription'
 import { subscriptionService } from '@/lib'
@@ -13,6 +14,7 @@ import { Features } from './Features'
 
 export const IsPremium = memo(() => {
   const { colors } = useTheme()
+  const { t, i18n } = useTranslation()
   const styles = useStyles()
 
   const {
@@ -51,8 +53,8 @@ export const IsPremium = memo(() => {
     } catch (err) {
       console.error('Error opening subscription management:', err)
       Alert.alert(
-        'Не удалось открыть управление подпиской',
-        'Пожалуйста, откройте Google Play → Профиль → Платежи и подписки → Подписки вручную.'
+        t('isPremium.failedToOpenSubscription'),
+        t('isPremium.openManually')
       )
     }
   })
@@ -65,69 +67,68 @@ export const IsPremium = memo(() => {
         <View style={styles.premiumBadge}>
           <Text style={styles.premiumBadgeText}>💎 Premium</Text>
         </View>
-        <Text style={styles.title}>Спасибо за поддержку! 🎉</Text>
+        <Text style={styles.title}>{t('isPremium.thanksForSupport')}</Text>
         {isCanceled && expirationDate ? (
           <View style={styles.canceledWarning}>
             <Text style={[styles.canceledTitle, { color: colors.error }]}>
-              ⚠️ Подписка отменена
+              ⚠️ {t('isPremium.subscriptionCanceled')}
             </Text>
             <Text style={[styles.canceledText, { color: colors.muted }]}>
-              Ваша подписка была отменена, но она продолжит действовать до{' '}
-              {new Intl.DateTimeFormat('ru-RU', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              }).format(expirationDate)}.
-              {'\n\n'}
-              После этой даты премиум функции станут недоступны.
+              {t('isPremium.subscriptionCanceledDesc', {
+                date: new Intl.DateTimeFormat(i18n.language === 'ru' ? 'ru-RU' : 'en-US', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                }).format(expirationDate),
+              })}
             </Text>
           </View>
         ) : (
           <Text style={styles.subtitle}>
-            Ваша премиум подписка активна. Вы имеете доступ ко всем функциям приложения.
+            {t('isPremium.subscriptionActive')}
           </Text>
         )}
       </View>
 
-      <Features title='Ваши премиум функции:' />
+      <Features title={t('isPremium.yourPremiumFeatures')} />
 
       <View style={styles.manageSection}>
         <Button
-          title='Управление подпиской'
+          title={t('isPremium.manageSubscription')}
           onPress={handleManageSubscription}
           variant='outline'
           style={styles.manageButton}
         />
         <Button
-          title='🔄 Обновить статус'
+          title={t('isPremium.refreshStatus')}
           onPress={async () => {
             await refreshStatus()
             // Получаем актуальный статус после обновления
             const currentStatus = await subscriptionService.isPremium()
             Alert.alert(
-              'Статус обновлен',
+              t('isPremium.statusUpdated'),
               currentStatus
-                ? 'Ваша премиум подписка активна'
-                : 'Премиум подписка не активна. Если вы только что оформили подписку, подождите несколько секунд и обновите снова.'
+                ? t('isPremium.premiumActive')
+                : t('isPremium.premiumInactive')
             )
           }}
           variant='outline'
           style={[styles.manageButton, { marginTop: SPACING.sm }]}
         />
         <Text style={[styles.manageHint, { color: colors.muted }]}>
-          Вы можете отменить подписку или изменить её параметры в Google Play
+          {t('isPremium.manageHint')}
         </Text>
       </View>
 
       <View style={styles.refundInfoSection}>
         <Text style={[styles.refundTitle, { color: colors.text }]}>
-          💰 Политика возврата средств
+          {t('isPremium.refundPolicy')}
         </Text>
         <Text style={[styles.refundText, { color: colors.muted }]}>
-          Подписку можно отменить в любое время. После отмены подписка продолжит действовать до конца оплаченного периода, и вы сохраните доступ ко всем премиум функциям до этой даты.
+          {t('isPremium.refundText')}
         </Text>
         <Text style={[styles.refundText, { color: colors.muted, marginTop: SPACING.sm }]}>
-          <Text style={{ fontWeight: '600' }}>Полный возврат средств</Text> возможен в течение 48 часов после покупки через Google Play → Подписки → Запросить возврат.
+          <Text style={{ fontWeight: '600' }}>{t('isPremium.fullRefundBold')}</Text> {t('isPremium.fullRefundRest')}
         </Text>
       </View>
     </>

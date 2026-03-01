@@ -1,3 +1,5 @@
+import { getStoredLanguage } from '@/i18n'
+import i18n from '@/i18n'
 import { notificationService, subscriptionService } from '@/lib'
 import { databaseService } from '@/services'
 import { useEffect } from 'react'
@@ -21,6 +23,10 @@ export function useAppInit() {
   useEffect(() => {
     const init = async () => {
       try {
+        // Load saved language
+        const savedLang = await getStoredLanguage()
+        await i18n.changeLanguage(savedLang)
+
         // Initialize database
         await databaseService.init()
 

@@ -1,4 +1,5 @@
 import { memo, useMemo, useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native'
 import { useAppStore } from '@/store'
 import { Text } from '../Text'
@@ -22,6 +23,7 @@ interface TodayReminder {
 
 export const Today = memo(() => {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const { reminders, reminderMedicines, medicines } = useAppStore(state => state)
   const { updateMedicine } = useMedicine()
   const { getTodayMedicineUsages, createMedicineUsage } = useMedicineUsage()
@@ -135,18 +137,17 @@ export const Today = memo(() => {
       // Проверяем, были ли приняты все лекарства из этого напоминания сегодня
       // Ищем записи о приеме, которые содержат время приема в notes
       const reminderTime = reminder.time
+      const scheduledNote = t('today.scheduledIntakeAt', { time: reminderTime })
       const allMedicinesTaken = reminder.medicineIds.every(medicineId => {
         return medicineUsages.some(usage => {
-          // Проверяем, что это лекарство было принято сегодня
-          if (usage.medicineId !== medicineId) {
-            return false
-          }
-
-          // Проверяем, что в заметке указано время приема этого напоминания
-          if (usage.notes && usage.notes.includes(`Запланированный прием в ${reminderTime}`)) {
+          if (usage.medicineId !== medicineId) return false
+          if (usage.notes && (
+            usage.notes.includes(scheduledNote) ||
+            usage.notes.includes(`Запланированный прием в ${reminderTime}`) ||
+            usage.notes.includes(`Scheduled intake at ${reminderTime}`)
+          )) {
             return true
           }
-
           return false
         })
       })
@@ -157,7 +158,7 @@ export const Today = memo(() => {
     }
 
     return taken
-  }, [todayReminders, medicineUsages])
+  }, [todayReminders, medicineUsages, t])
 
   // Объединяем проверенные и новые принятые напоминания
   useEffect(() => {
@@ -176,15 +177,15 @@ export const Today = memo(() => {
     }
 
     Alert.alert(
-      'Отметить прием?',
-      `${reminder.medicineNames}\nВремя: ${reminder.time}\nДозировка: ${reminder.dosage}`,
+      t('today.markIntake'),
+      `${reminder.medicineNames}\n${t('today.time')}: ${reminder.time}\n${t('today.dosage')}: ${reminder.dosage}`,
       [
         {
-          text: 'Отмена',
+          text: t('common.cancel'),
           style: 'cancel',
         },
         {
-          text: 'Принял',
+          text: t('reminder.took'),
           onPress: async () => {
             try {
               const dosage = Number(reminder.dosage) || 1
@@ -205,7 +206,7 @@ export const Today = memo(() => {
                   medicineId,
                   quantityUsed: dosage,
                   usageDate: new Date().toISOString(),
-                  notes: `Запланированный прием в ${reminder.time}`,
+                  notes: t('today.scheduledIntakeAt', { time: reminder.time }),
                   familyMemberId: null,
                 })
               }))
@@ -217,10 +218,10 @@ export const Today = memo(() => {
               const todayUsages = await getTodayMedicineUsages()
               setMedicineUsages(todayUsages)
 
-              Alert.alert('✅ Прием отмечен', `${reminder.medicineNames} принято успешно!`)
+              Alert.alert(t('today.intakeMarked'), t('today.intakeMarkedSuccess', { names: reminder.medicineNames }))
             } catch (error) {
               console.error('Failed to mark reminder as taken:', error)
-              Alert.alert('Ошибка', 'Не удалось отметить прием')
+              Alert.alert(t('today.error'), t('today.failedToMark'))
             }
           },
         },
@@ -233,16 +234,16 @@ export const Today = memo(() => {
     const diff = notificationDate.getTime() - now.getTime()
 
     if (diff <= 0) {
-      return { text: 'Время приема', color: colors.primary, isPast: true }
+      return { text: t('today.intakeTime'), color: colors.primary, isPast: true }
     }
 
     const hoursUntil = Math.floor(diff / (1000 * 60 * 60))
     const minutesUntil = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
 
     if (hoursUntil === 0) {
-      return { text: `Через ${minutesUntil} мин`, color: colors.muted, isPast: false }
+      return { text: t('today.inMinutes', { count: minutesUntil }), color: colors.muted, isPast: false }
     }
-    return { text: `Через ${hoursUntil}ч ${minutesUntil}м`, color: colors.muted, isPast: false }
+    return { text: t('today.inHours', { hours: hoursUntil, minutes: minutesUntil }), color: colors.muted, isPast: false }
   }
 
   // Фильтруем принятые напоминания
@@ -255,12 +256,15 @@ export const Today = memo(() => {
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>📅</Text>
             <Text style={[styles.emptyTitle, { color: colors.text }]}>
-              {todayReminders.length > 0 ? 'Все приемы выполнены!' : 'Нет напоминаний на сегодня'}
+              {todayReminders.length > 0 ? t('today.allDone') : t('today.noRemindersToday')}
             </Text>
             <Text style={[styles.emptyText, { color: colors.muted }]}>
               {todayReminders.length > 0
-                ? `Вы выполнили все ${todayReminders.length} ${todayReminders.length === 1 ? 'прием' : 'приема'} на сегодня`
-                : 'На сегодня не запланировано ни одного приема лекарств'}
+                ? t('today.completedAll', {
+                    count: todayReminders.length,
+                    intake: todayReminders.length === 1 ? t('history.intake_one') : t('history.intake_few'),
+                  })
+                : t('today.noPlanned')}
             </Text>
           </View>
         </Flex>
@@ -307,7 +311,7 @@ export const Today = memo(() => {
                   </Text>
                   {reminder.dosage && (
                     <Text style={[styles.dosageText, { color: colors.muted }]}>
-                      Дозировка: {reminder.dosage}
+                      {t('today.dosage')}: {reminder.dosage}
                     </Text>
                   )}
                   <Text style={[styles.timeStatus, { color: timeStatus.color }]}>
@@ -320,7 +324,7 @@ export const Today = memo(() => {
                 onPress={() => handleTakeMedicine(reminder)}
               >
                 <Text style={[styles.takeButtonText, { color: colors.headerColor }]}>
-                  Принять
+                  {t('reminder.took')}
                 </Text>
               </TouchableOpacity>
             </View>

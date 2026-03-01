@@ -5,6 +5,7 @@ import { useTheme } from '@/providers/theme'
 import { useAppStore } from '@/store'
 import NetInfo from '@react-native-community/netinfo'
 import { memo, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, Alert, Pressable, View } from 'react-native'
 import { Row } from '../Layout'
 import { Text } from '../Text'
@@ -14,6 +15,7 @@ const WEB_CLIENT_ID = '464124582533-2ctqatjjbk7h1lgu4d1facpe017p167j.apps.google
 
 export const GoogleDriveBackups = memo(() => {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const { googleDrive, localBackups } = useAppStore(state => state)
   const [driveBackups, setDriveBackups] = useState<DriveFile[]>([])
   const [loading, setLoading] = useState(false)
@@ -38,15 +40,15 @@ export const GoogleDriveBackups = memo(() => {
         if (user && user.email) {
           setUserEmail(user.email)
         } else {
-          setUserEmail('Пользователь Google')
+          setUserEmail(t('backup.googleUser'))
         }
         // Загружаем бэкапы из Google Drive
         await loadData()
       } catch (error: any) {
         if (error.message?.includes('DEVELOPER_ERROR')) {
           Alert.alert(
-            'Ошибка конфигурации Google Drive',
-            'Проверьте настройки Google Cloud Console:\n\n1. Включен ли Google Drive API\n2. Правильно ли настроены OAuth клиенты\n3. Добавлен ли Web Client ID'
+            t('backup.googleDriveError'),
+            t('backup.googleDriveErrorDesc')
           )
         }
       }
@@ -94,10 +96,10 @@ export const GoogleDriveBackups = memo(() => {
   })
 
   const handleDeleteFromDrive = useEvent((driveFile: DriveFile) => {
-    Alert.alert('Удалить из Google Drive', 'Вы уверены?', [
-      { text: 'Отмена', style: 'cancel' },
+    Alert.alert(t('backup.deleteFromDrive'), t('backup.deleteBackupConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Удалить',
+        text: t('common.delete'),
         style: 'destructive',
         onPress: async () => {
           setLoadingForDelete(true)
@@ -105,7 +107,7 @@ export const GoogleDriveBackups = memo(() => {
             await googleDriveService.deleteFile(driveFile.id)
             await loadData()
           } catch (error: any) {
-            Alert.alert('Ошибка', error.message || 'Не удалось удалить из Google Drive')
+            Alert.alert(t('support.error'), error.message || t('backup.failedToDeleteFromDrive'))
           } finally {
             setLoadingForDelete(false)
           }
@@ -124,7 +126,7 @@ export const GoogleDriveBackups = memo(() => {
       localBackups.setIsRefetching(true)
       await loadData()
     } catch (error: any) {
-      Alert.alert('Ошибка', error.message || 'Не удалось скачать из Google Drive')
+      Alert.alert(t('support.error'), error.message || t('backup.failedToDownload'))
     } finally {
       setLoadingForUpdate(false)
     }
@@ -136,10 +138,10 @@ export const GoogleDriveBackups = memo(() => {
   }
 
   const handleGoogleSignOut = () => {
-    Alert.alert('Выход из аккаунта', 'Вы уверены?', [
-      { text: 'Отмена', style: 'cancel' },
+    Alert.alert(t('backup.signOutConfirm'), t('backup.signOutConfirmDesc'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Выйти',
+        text: t('backup.signOut'),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -152,7 +154,7 @@ export const GoogleDriveBackups = memo(() => {
             setDriveBackups([])
           } catch (error: any) {
             console.error('Google Sign-Out error:', error)
-            Alert.alert('Ошибка', 'Не удалось выйти из аккаунта')
+            Alert.alert(t('support.error'), t('backup.failedToSignOut'))
           } finally {
             setLoading(false)
           }
@@ -166,8 +168,8 @@ export const GoogleDriveBackups = memo(() => {
     const hasInternet = await checkInternetConnection()
     if (!hasInternet) {
       Alert.alert(
-        'Нет интернет-соединения',
-        'Для авторизации в Google Drive необходимо подключение к интернету. Проверьте соединение и попробуйте снова.'
+        t('backup.noInternet'),
+        t('backup.noInternetDesc')
       )
       return
     }
@@ -180,7 +182,7 @@ export const GoogleDriveBackups = memo(() => {
       await loadData()
     } catch (error: any) {
       console.error('Google Sign-In error:', error)
-      Alert.alert('Ошибка', 'Не удалось войти в Google аккаунт')
+      Alert.alert(t('support.error'), t('backup.failedToLogin'))
     } finally {
       setLoading(false)
     }
@@ -191,7 +193,7 @@ export const GoogleDriveBackups = memo(() => {
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Google Drive</Text>
         <Text style={[styles.offlineText, { color: colors.error }]}>
-          ⚠️ Нет интернет-соединения
+          ⚠️ {t('backup.noInternet')}
         </Text>
       </View>
     )
@@ -202,7 +204,7 @@ export const GoogleDriveBackups = memo(() => {
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Google Drive</Text>
         <Text style={[styles.offlineText, { color: colors.error }]}>
-          ⚠️ Загрузка...
+          ⚠️ {t('backup.loading')}
         </Text>
       </View>
     )
@@ -227,7 +229,7 @@ export const GoogleDriveBackups = memo(() => {
           disabled={loading || !isOnline}
         >
           <Text style={styles.googleButtonText}>
-            ☁️ Войти в Google Drive
+            {t('backup.signInToDrive')}
           </Text>
         </Pressable>
       </View>
@@ -240,13 +242,13 @@ export const GoogleDriveBackups = memo(() => {
       <View style={[styles.googleInfo, { backgroundColor: colors.card }]}>
         <Text style={[styles.googleEmail, { color: colors.text }]}>✅ {userEmail}</Text>
         <Pressable onPress={handleGoogleSignOut}>
-          <Text style={[styles.googleSignOut, { color: colors.error }]}>Выйти</Text>
+          <Text style={[styles.googleSignOut, { color: colors.error }]}>{t('backup.signOut')}</Text>
         </Pressable>
       </View>
       {driveBackups.length > 0 && (
         <View style={styles.driveBackups}>
           <Text style={[styles.subsectionTitle, { color: colors.text }]}>
-            Копии в облаке ({driveBackups.length})
+            {t('backup.cloudCopies', { count: driveBackups.length })}
           </Text>
           {driveBackups.map((driveFile, index) => (
             <View key={index} style={[styles.backupItem, { borderBottomColor: colors.border }]}>
@@ -266,7 +268,7 @@ export const GoogleDriveBackups = memo(() => {
                   disabled={loadingForUpdate || loadingForDelete}
                 >
                   <Row itemsCenter style={{ gap: SPACING.sm }}>
-                    {loadingForUpdate && <ActivityIndicator size='small' color={colors.headerColor} />}<Text style={styles.actionButtonText}>Скачать</Text>
+                    {loadingForUpdate && <ActivityIndicator size='small' color={colors.headerColor} />}<Text style={styles.actionButtonText}>{t('backup.download')}</Text>
                   </Row>
                 </Pressable>
                 <Pressable
@@ -275,7 +277,7 @@ export const GoogleDriveBackups = memo(() => {
                   disabled={loadingForDelete || loadingForUpdate}
                 >
                   <Row itemsCenter style={{ gap: SPACING.sm }}>
-                    {loadingForDelete && <ActivityIndicator size='small' color={colors.headerColor} />}<Text style={styles.actionButtonText}>Удалить</Text>
+                    {loadingForDelete && <ActivityIndicator size='small' color={colors.headerColor} />}<Text style={styles.actionButtonText}>{t('common.delete')}</Text>
                   </Row>
                 </Pressable>
               </View>

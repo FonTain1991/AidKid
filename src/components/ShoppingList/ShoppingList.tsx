@@ -3,6 +3,7 @@ import { FONT_SIZE, FONT_WEIGHT } from '@/constants/font'
 import { useTheme } from '@/providers/theme'
 import { useAppStore } from '@/store'
 import { memo, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 import { Text } from '../Text'
 import { ShoppingListItem } from './ShoppingListItem'
@@ -13,6 +14,7 @@ interface ShoppingListProps {
 export const ShoppingList = memo(({ filter }: ShoppingListProps) => {
   const { shoppingList } = useAppStore(state => state)
   const { colors } = useTheme()
+  const { t } = useTranslation()
 
   const filteredShoppingList = useMemo(() => {
     return shoppingList.filter(item => {
@@ -34,14 +36,14 @@ export const ShoppingList = memo(({ filter }: ShoppingListProps) => {
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyIcon}>🛒</Text>
         <Text style={[styles.emptyTitle, { color: colors.text }]}>
-          {filter === 'all' && 'Список покупок пуст'}
-          {filter === 'pending' && 'Нет товаров для покупки'}
-          {filter === 'purchased' && 'Нет купленных товаров'}
+          {filter === 'all' && t('shoppingList.emptyAll')}
+          {filter === 'pending' && t('shoppingList.emptyPending')}
+          {filter === 'purchased' && t('shoppingList.emptyPurchased')}
         </Text>
         <Text style={[styles.emptyText, { color: colors.muted }]}>
-          {filter === 'all' && 'Добавьте первый товар в список'}
-          {filter === 'pending' && 'Все товары уже куплены'}
-          {filter === 'purchased' && 'Отметьте купленные товары'}
+          {filter === 'all' && t('shoppingList.addFirst')}
+          {filter === 'pending' && t('shoppingList.allPurchased')}
+          {filter === 'purchased' && t('shoppingList.markPurchased')}
         </Text>
       </View>
     )

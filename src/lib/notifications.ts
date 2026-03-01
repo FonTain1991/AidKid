@@ -3,6 +3,7 @@ import notifee, {
   TriggerType
 } from '@notifee/react-native'
 import { Platform, Alert, Linking } from 'react-native'
+import i18n from '@/i18n'
 import { MedicineKit } from '@/services/models'
 
 
@@ -31,8 +32,8 @@ class NotificationService {
   private async createDefaultChannel(): Promise<void> {
     await notifee.createChannel({
       id: this.defaultChannelId,
-      name: 'Общие уведомления',
-      description: 'Общие уведомления о лекарствах',
+      name: i18n.t('notifications.channelGeneral'),
+      description: i18n.t('notifications.medicineNotifications'),
       importance: AndroidImportance.HIGH,
       sound: 'default',
       lightColor: '#3A944E',
@@ -70,7 +71,7 @@ class NotificationService {
     await notifee.createChannel({
       id: channelId,
       name: kit.name,
-      description: `Уведомления о лекарствах из аптечки "${kit.name}"`,
+      description: i18n.t('notifications.channelKitDesc', { name: kit.name }),
       importance: AndroidImportance.HIGH,
       sound: 'default',
       vibration: true,
@@ -205,8 +206,8 @@ class NotificationService {
       try {
         await notifee.createChannel({
           id: channelId,
-          name: `Аптечка ${medicineKitId}`,
-          description: `Уведомления о лекарствах из аптечки ${medicineKitId}`,
+          name: i18n.t('notifications.channelKitFallback', { id: medicineKitId }),
+          description: i18n.t('notifications.channelKitDesc', { name: String(medicineKitId) }),
           importance: AndroidImportance.HIGH,
           sound: 'default',
           vibration: true,
@@ -526,8 +527,8 @@ class NotificationService {
     const notificationId = `test-notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
     const success = await this.scheduleNotification(notificationId, {
-      title: '🧪 Тестовое уведомление',
-      body: 'Это тестовое уведомление придёт через 5 секунд',
+      title: i18n.t('notifications.testNotification'),
+      body: i18n.t('notifications.testNotificationBody'),
       notificationDate: testDate,
       data: {
         type: 'test',
@@ -585,14 +586,16 @@ class NotificationService {
    * @returns {Promise<void>} Promise
    */
   async sendInstantTestNotification(
-    title: string = '⚡ Мгновенное тестовое уведомление',
-    body: string = 'Это уведомление пришло сразу'
+    title?: string,
+    body?: string
   ): Promise<void> {
     if (!__DEV__) {
       return
     }
+    const titleText = title ?? i18n.t('notifications.instantTestTitle')
+    const bodyText = body ?? i18n.t('notifications.instantTestBody')
 
-    await this.displayNotification(title, body, {
+    await this.displayNotification(titleText, bodyText, {
       type: 'instant-test',
       timestamp: Date.now(),
     })
@@ -666,8 +669,8 @@ class NotificationService {
       await notifee.createTriggerNotification(
         {
           id: notificationId,
-          title: '🛒 Напоминание о покупках',
-          body: 'Не забудьте купить необходимые товары',
+          title: i18n.t('notifications.shoppingReminder'),
+          body: i18n.t('notifications.shoppingReminderBody'),
           data: {
             type: 'shopping-list-reminder',
             screen: 'ShoppingList',

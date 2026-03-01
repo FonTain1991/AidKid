@@ -1,4 +1,4 @@
-
+import { useTranslation } from 'react-i18next'
 import { BottomSheet, BottomSheetRef } from '@/components/BottomSheet'
 import { Button } from '@/components/Button'
 import { SPACING } from '@/constants'
@@ -26,6 +26,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   style,
   textStyle
 }) => {
+  const { t } = useTranslation()
   const bottomSheetRef = useRef<BottomSheetRef>(null)
   const [currentColor, setCurrentColor] = React.useState(value || '#3A944E')
   const { styles } = useColorPickerStyles(value)
@@ -86,7 +87,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
         onDismiss={handleClose}
       >
         <BottomSheetView style={styles.bottomSheetContent}>
-          <Text style={styles.title}>Выберите цвет</Text>
+          <Text style={styles.title}>{t('colorPicker.selectColor')}</Text>
 
           <View>
             <ReanimatedColorPicker
@@ -101,13 +102,13 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
 
           <View style={styles.buttons}>
             <Button
-              title='Отмена'
+              title={t('common.cancel')}
               onPress={handleClose}
               style={[styles.button, styles.cancelButton]}
               textStyle={styles.cancelButtonText}
             />
             <Button
-              title='Выбрать'
+              title={t('common.select')}
               onPress={handleConfirm}
               style={[styles.button, styles.confirmButton]}
             />

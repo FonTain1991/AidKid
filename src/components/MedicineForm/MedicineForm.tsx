@@ -7,6 +7,7 @@ import { useTheme } from '@/providers/theme'
 import { Medicine } from '@/services/models'
 import { useAppStore } from '@/store'
 import { memo, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Alert, Pressable, StyleSheet, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { Button } from '../Button'
@@ -34,6 +35,7 @@ const INITIAL_MEDICINE: Medicine = {
 
 export const MedicineForm = memo(() => {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const { params } = useRoute()
   const { goBack, navigate } = useMyNavigation()
   const { createMedicine, updateMedicine } = useMedicine()
@@ -94,19 +96,19 @@ export const MedicineForm = memo(() => {
   const onSubmit = useEvent(async () => {
     const errorsFields: Record<string, string> = {}
     if (!medicine.name) {
-      errorsFields.name = 'Название обязательно для заполнения'
+      errorsFields.name = t('medicine.nameRequired')
     }
 
     if (!medicine.quantity) {
-      errorsFields.quantity = 'Количество обязательно для заполнения'
+      errorsFields.quantity = t('medicine.quantityRequired')
     }
 
     if (!medicine.medicineKitId) {
-      errorsFields.medicineKitId = 'Аптечка обязательна для заполнения'
+      errorsFields.medicineKitId = t('medicine.kitRequired')
     }
 
     if (new Date(medicine.expirationDate).getTime() <= Date.now()) {
-      errorsFields.expirationDate = 'Срок годности должен быть в будущем'
+      errorsFields.expirationDate = t('medicine.expirationFuture')
     }
 
     if (Object.keys(errorsFields).length) {
@@ -132,16 +134,15 @@ export const MedicineForm = memo(() => {
       }
       goBack()
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Не удалось создать лекарство'
-      // Проверяем, это ошибка лимита или другая ошибка
-      if (errorMessage.includes('лимит') || errorMessage.includes('премиум')) {
+      const errorMessage = error instanceof Error ? error.message : t('medicine.failedToCreate')
+      if (errorMessage.toLowerCase().includes('limit') || errorMessage.toLowerCase().includes('премиум') || errorMessage.toLowerCase().includes('лимит') || errorMessage.toLowerCase().includes('premium')) {
         Alert.alert(
-          'Лимит достигнут',
+          t('medicineKit.limitReached'),
           errorMessage,
           [
-            { text: 'Отмена', style: 'cancel' },
+            { text: t('common.cancel'), style: 'cancel' },
             {
-              text: 'Оформить Premium',
+              text: t('common.subscribe'),
               onPress: () => navigate('subscription'),
             },
           ]
@@ -199,7 +200,7 @@ export const MedicineForm = memo(() => {
         />
         <FormItemWrapper>
           <TextInput
-            label='Название'
+            label={t('medicine.name')}
             onChangeText={onChangeName}
             value={medicine.name}
             error={errors?.name ?? undefined}
@@ -207,7 +208,7 @@ export const MedicineForm = memo(() => {
         </FormItemWrapper>
         <FormItemWrapper>
           <TextInput
-            label='Штрих-код'
+            label={t('medicine.barcode')}
             onChangeText={onChangeBarcode}
             value={medicine.barcode ?? ''}
           />
@@ -215,18 +216,18 @@ export const MedicineForm = memo(() => {
             style={[styles.scanButton]}
             onPress={handleScanBarcode}
           >
-            <Text style={[styles.scanButtonText, { color: colors.link }]}>📷 Сканировать штрих-код</Text>
+            <Text style={[styles.scanButtonText, { color: colors.link }]}>{t('medicine.scanBarcode')}</Text>
           </Pressable>
         </FormItemWrapper>
         <FormItemWrapper>
           <EmptyList
             onPress={() => navigate('medicineKit')}
-            title='Аптечки не найдены.'
+            title={t('medicine.noKitsFound')}
             options={medicineKits}
             error={errors?.medicineKitId ?? undefined}
           >
             <ParentMedicineKitList
-              fieldName='Аптечка'
+              fieldName={t('medicine.kit')}
               value={medicine.medicineKitId}
               onChange={onChangeMedicineKitId}
               error={errors?.medicineKitId ?? undefined}
@@ -236,14 +237,14 @@ export const MedicineForm = memo(() => {
         </FormItemWrapper>
         <FormItemWrapper>
           <Textarea
-            label='Описание'
+            label={t('medicine.description')}
             onChangeText={onChangeDescription}
             value={medicine.description}
           />
         </FormItemWrapper>
         <FormItemWrapper>
           <TextInput
-            label='Производитель'
+            label={t('medicine.manufacturer')}
             onChangeText={onChangeManufacturer}
             value={medicine.manufacturer}
           />
@@ -252,7 +253,7 @@ export const MedicineForm = memo(() => {
           <Row style={{ gap: SPACING.md }}>
             <View style={{ flex: 1 }}>
               <TextInput
-                label='Дозировка'
+                label={t('medicine.dosage')}
                 style={{ flexGrow: 1, flexShrink: 0, flex: 1 }}
                 onChangeText={onChangeDosage}
                 value={medicine.dosage}
@@ -261,7 +262,7 @@ export const MedicineForm = memo(() => {
             </View>
             <View style={{ flex: 0.5 }}>
               <List
-                fieldName='Единица'
+                fieldName={t('medicine.unit')}
                 options={UNITS}
                 onChange={onChangeUnit}
                 value={medicine.unit}
@@ -273,7 +274,7 @@ export const MedicineForm = memo(() => {
           <Row style={{ gap: SPACING.md }}>
             <View style={{ flex: 1 }}>
               <TextInput
-                label='Количество'
+                label={t('medicine.quantity')}
                 value={String(medicine.quantity)}
                 onChangeText={onChangeQuantity}
                 error={errors?.quantity ?? undefined}
@@ -282,7 +283,7 @@ export const MedicineForm = memo(() => {
             </View>
             <View style={{ flex: 0.5 }}>
               <List
-                fieldName='Единица'
+                fieldName={t('medicine.unit')}
                 options={UNITS}
                 onChange={onChangeUnitForQuantity}
                 value={medicine.unitForQuantity}
@@ -292,7 +293,7 @@ export const MedicineForm = memo(() => {
         </FormItemWrapper>
         <FormItemWrapper>
           <DatePicker
-            fieldName='Срок годности'
+            fieldName={t('medicine.expirationDate')}
             value={new Date(+medicine.expirationDate)}
             onChange={onChangeExpirationDate}
             error={errors?.expirationDate}
@@ -300,7 +301,7 @@ export const MedicineForm = memo(() => {
         </FormItemWrapper>
         <FormItemWrapper>
           <Button
-            title={params?.medicineId ? 'Сохранить' : 'Добавить'}
+            title={params?.medicineId ? t('common.save') : t('medicine.add')}
             onPress={onSubmit}
           />
         </FormItemWrapper>

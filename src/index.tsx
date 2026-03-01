@@ -1,3 +1,4 @@
+import './i18n'
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { AppNavigation } from './navigation'

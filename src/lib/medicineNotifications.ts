@@ -1,4 +1,5 @@
 /* eslint-disable no-await-in-loop */
+import i18n from '@/i18n'
 import { Medicine } from '@/services/models'
 import { notificationService } from './notifications'
 
@@ -19,12 +20,12 @@ export async function scheduleMedicineExpiryNotifications(medicine: Medicine,): 
 
   // Расписание уведомлений: за сколько дней до истечения
   const schedules = [
-    { days: 30, emoji: '📅', title: 'Напоминание о сроке годности', critical: false },
-    { days: 14, emoji: '⏰', title: 'Напоминание о сроке годности', critical: false },
-    { days: 7, emoji: '⚠️', title: 'Внимание! Скоро истекает срок годности', critical: false },
-    { days: 3, emoji: '⚠️', title: 'Внимание! Скоро истекает срок годности', critical: false },
-    { days: 2, emoji: '🔴', title: 'Срочно! Истекает срок годности', critical: false },
-    { days: 1, emoji: '🔴', title: 'Срочно! Истекает срок годности завтра', critical: false },
+    { days: 30, emoji: '📅', titleKey: 'notifications.expiryReminder', critical: false },
+    { days: 14, emoji: '⏰', titleKey: 'notifications.expiryReminder', critical: false },
+    { days: 7, emoji: '⚠️', titleKey: 'notifications.expiryWarning', critical: false },
+    { days: 3, emoji: '⚠️', titleKey: 'notifications.expiryWarning', critical: false },
+    { days: 2, emoji: '🔴', titleKey: 'notifications.expiryUrgent', critical: false },
+    { days: 1, emoji: '🔴', titleKey: 'notifications.expiryTomorrow', critical: false },
   ]
 
   // Планируем уведомления до истечения
@@ -36,11 +37,17 @@ export async function scheduleMedicineExpiryNotifications(medicine: Medicine,): 
     // Пропускаем уведомления, дата которых уже прошла
     if (notificationDate > now) {
       const notificationId = `medicine-expiry-${medicine.id}-${schedule.days}d`
-      const daysText = schedule.days === 1 ? 'день' : schedule.days < 5 ? 'дня' : 'дней'
+      const daysText = i18n.t('expiry.days', { count: schedule.days })
+      const dateStr = expiryDate.toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'en-US')
 
       const success = await notificationService.scheduleNotification(notificationId, {
-        title: `${schedule.emoji} ${schedule.title}`,
-        body: `${medicine.name} истекает через ${schedule.days} ${daysText} (${expiryDate.toLocaleDateString('ru-RU')})`,
+        title: `${schedule.emoji} ${i18n.t(schedule.titleKey)}`,
+        body: i18n.t('expiry.expiresIn', {
+          name: medicine.name,
+          count: schedule.days,
+          days: daysText,
+          date: dateStr,
+        }),
         notificationDate,
         data: {
           medicineId: medicine.id,
@@ -71,10 +78,13 @@ export async function scheduleMedicineExpiryNotifications(medicine: Medicine,): 
     // (оставляем только те, что сегодня или в будущем)
     if (notificationDate >= oneDayAgo) {
       const notificationId = `medicine-expired-${medicine.id}-${medicineKitId}-${dayAfter}d`
-      const title = dayAfter === 0 ? '🚨 Срок годности истёк!' : '🚨 Просроченное лекарство!'
+      const title = dayAfter === 0
+        ? `🚨 ${i18n.t('notifications.expiredTitle')}`
+        : `🚨 ${i18n.t('notifications.expiredMedicineTitle')}`
+      const daysText = i18n.t('expiry.days', { count: dayAfter })
       const body = dayAfter === 0
-        ? `${medicine.name} - срок годности истёк сегодня!`
-        : `${medicine.name} просрочено ${dayAfter} ${dayAfter === 1 ? 'день' : dayAfter < 5 ? 'дня' : 'дней'}. Утилизируйте лекарство!`
+        ? i18n.t('expiry.expiredToday', { name: medicine.name })
+        : i18n.t('expiry.expiredDaysAgo', { name: medicine.name, count: dayAfter, days: daysText })
 
       const success = await notificationService.scheduleNotification(notificationId, {
         title,

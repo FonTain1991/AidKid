@@ -5,6 +5,7 @@ import { Separator } from '@/components/Separator'
 import { Text } from '@/components/Text'
 import { HEIGHT, IS_ANDROID, SPACING } from '@/constants'
 import { useEvent } from '@/hooks'
+import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/providers/theme'
 import { BottomSheetFlatList, BottomSheetView } from '@gorhom/bottom-sheet'
 import { memo, useMemo, useRef } from 'react'
@@ -23,6 +24,7 @@ interface ListProps {
 }
 
 export const List = memo(({ value, onChange, options, fieldName, error }: ListProps) => {
+  const { t } = useTranslation()
   const { styles } = useListStyles()
   const { colors } = useTheme()
   const bottomSheetRef = useRef<BottomSheetRef>(null)
@@ -66,7 +68,7 @@ export const List = memo(({ value, onChange, options, fieldName, error }: ListPr
             <ModalSafeAreaView edges={['bottom']} style={{ backgroundColor: colors.background }}>
               <PaddingHorizontal style={styles.fieldName}>
                 <Text style={[styles.fieldNameText, { color: colors.text }]}>{fieldName}</Text>
-                <Text style={[styles.noItemsText, { color: colors.text }]}>Ничего не найдено</Text>
+                <Text style={[styles.noItemsText, { color: colors.text }]}>{t('common.noResults')}</Text>
               </PaddingHorizontal>
             </ModalSafeAreaView>
           </BottomSheetView>

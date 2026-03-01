@@ -1,4 +1,5 @@
 import { SPACING } from '@/constants'
+import { useTranslation } from 'react-i18next'
 import { FONT_SIZE } from '@/constants/font'
 import { useEvent, useMyNavigation } from '@/hooks'
 import { useTheme } from '@/providers/theme'
@@ -13,6 +14,7 @@ import { useAppStore } from '@/store'
 
 export const MedicineKitItem = memo(({ kit }: { kit: MedicineKit }) => {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const { navigate } = useMyNavigation()
   const { medicines } = useAppStore(state => state)
 
@@ -47,7 +49,7 @@ export const MedicineKitItem = memo(({ kit }: { kit: MedicineKit }) => {
           </View>
           <View>
             <Text style={styles.name}>{kit.name}</Text>
-            <Text style={styles.medicinesCount}>Лекарств: {medicinesCount}</Text>
+            <Text style={styles.medicinesCount}>{t('medicineKit.medicinesCount')}: {medicinesCount}</Text>
           </View>
         </Row>
         <Pressable onPress={goToEdit}>

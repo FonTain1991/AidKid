@@ -1,4 +1,5 @@
 import { deleteMedicinePhoto, getMedicinePhotoUri, pickMedicinePhoto } from '@/helpers'
+import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/providers/theme'
 import { memo } from 'react'
 import { Alert, Image, TouchableOpacity, View } from 'react-native'
@@ -12,6 +13,7 @@ interface MedicinePhotoProps {
 
 export const MedicinePhoto: React.FC<MedicinePhotoProps> = memo(({ value, onChange }) => {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const styles = useStyles()
 
   const handlePickPhoto = async () => {
@@ -21,15 +23,15 @@ export const MedicinePhoto: React.FC<MedicinePhotoProps> = memo(({ value, onChan
 
   const handleRemovePhoto = () => {
     Alert.alert(
-      'Удалить фото?',
-      'Вы уверены, что хотите удалить фото лекарства?',
+      t('medicinePhoto.deleteTitle'),
+      t('medicinePhoto.deleteMessage'),
       [
         {
-          text: 'Отмена',
+          text: t('common.cancel'),
           style: 'cancel'
         },
         {
-          text: 'Удалить',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             if (value) {
@@ -55,13 +57,13 @@ export const MedicinePhoto: React.FC<MedicinePhotoProps> = memo(({ value, onChan
               style={[styles.photoButton, { backgroundColor: colors.primary }]}
               onPress={handlePickPhoto}
             >
-              <Text style={styles.photoButtonText}>Изменить фото</Text>
+              <Text style={styles.photoButtonText}>{t('medicinePhoto.changePhoto')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.photoButton, { backgroundColor: colors.error }]}
               onPress={handleRemovePhoto}
             >
-              <Text style={styles.photoButtonText}>Удалить</Text>
+              <Text style={styles.photoButtonText}>{t('common.delete')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -71,9 +73,9 @@ export const MedicinePhoto: React.FC<MedicinePhotoProps> = memo(({ value, onChan
           onPress={handlePickPhoto}
         >
           <Text style={styles.addPhotoIcon}>📷</Text>
-          <Text style={styles.addPhotoText}>Добавить фото</Text>
+          <Text style={styles.addPhotoText}>{t('medicinePhoto.addPhoto')}</Text>
           <Text style={styles.addPhotoHint}>
-            Сфотографируйте упаковку или само лекарство
+            {t('medicinePhoto.addPhotoHint')}
           </Text>
         </TouchableOpacity>
       )}

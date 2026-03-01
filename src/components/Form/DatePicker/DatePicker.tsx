@@ -1,5 +1,7 @@
+import i18n from '@/i18n'
 import dayjs from 'dayjs'
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import DatePickerModal from 'react-native-date-picker'
 import { ListButton } from '../ListButton'
 
@@ -25,7 +27,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   minimumDate,
   error,
 }) => {
+  const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
+  const locale = i18n.language === 'ru' ? 'ru' : 'en'
 
   const handlePress = () => {
     if (!disabled) {
@@ -60,12 +64,12 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         mode={mode}
         onConfirm={handleDateChange}
         onCancel={handleCancel}
-        title={fieldName || 'Выберите дату'}
-        confirmText='Выбрать'
-        cancelText='Отмена'
+        title={fieldName || t('common.chooseDate')}
+        confirmText={t('common.select')}
+        cancelText={t('common.cancel')}
         maximumDate={maximumDate}
         minimumDate={minimumDate}
-        locale='ru'
+        locale={locale}
         theme='light'
         is24hourSource='locale'
       />

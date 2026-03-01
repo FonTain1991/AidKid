@@ -3,13 +3,16 @@ import { Backup } from '@/components/Backup'
 import { Background, SafeAreaView } from '@/components/Layout'
 import { SPACING } from '@/constants'
 import { useNavigationBarColor, useScreenProperties } from '@/hooks'
+import { useTranslation } from 'react-i18next'
 import { ScrollView, StyleSheet } from 'react-native'
 
 export function BackupScreen() {
+  const { t } = useTranslation()
+
   useScreenProperties({
     navigationOptions: {
       headerShown: true,
-      title: 'Резервная копия'
+      title: t('screens.backup')
     }
   })
   useNavigationBarColor()
@@ -23,8 +26,8 @@ export function BackupScreen() {
         >
           <Backup />
           <AboutScreen
-            title='О резервных копиях'
-            text={'💡 Резервные копии включают все ваши аптечки, лекарства, запасы, напоминания, историю приема фотографии.\n\n☁️ Google Drive хранит данные в защищённой папке приложения, недоступной другим приложениям.'}
+            title={t('empty.aboutBackups')}
+            text={t('empty.backupInfo')}
             style={{ marginTop: SPACING.md, paddingHorizontal: 0 }}
           />
         </ScrollView>
