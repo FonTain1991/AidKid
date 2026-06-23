@@ -1,11 +1,11 @@
 import { getFrequencyIcon } from '@/constants'
 import { useMyNavigation, useReminder, useReminderMedicine } from '@/hooks'
-import { notificationService } from '@/lib'
+import { cancelReminderNotifications, notificationService } from '@/lib'
 import { Reminder } from '@/services/models'
 import { useAppStore } from '@/store'
 import { memo, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Alert, TouchableOpacity, View } from 'react-native'
+import { Alert, Pressable, TouchableOpacity, View } from 'react-native'
 import { PaddingHorizontal } from '../Layout'
 import { Text } from '../Text'
 import { useStyles } from './useStyles'
@@ -87,6 +87,10 @@ export const Reminders = memo(() => {
     })
   }, [reminderMedicines, reminders, medicines, notifications])
 
+  const handleEditReminder = (reminderId: number) => {
+    navigate('addReminder', { reminderId })
+  }
+
   const handleDeleteReminder = (reminderId: number) => {
     // Находим напоминание в списке
     const reminder = dataSource.find(r => r.id === reminderId)
@@ -108,18 +112,7 @@ export const Reminders = memo(() => {
           style: 'destructive',
           onPress: async () => {
             try {
-              // Удаляем все уведомления для этого напоминания
-              const allNotifications = await notificationService.getTriggerNotifications()
-              const notificationsToCancel = allNotifications
-                .filter(item => {
-                  const notificationData = item.notification.data as any
-                  // Сравниваем как числа, так как reminderId передается как число
-                  const notificationReminderId = Number(notificationData?.reminderId)
-                  return notificationData?.type === 'reminder' && !isNaN(notificationReminderId) && notificationReminderId === reminderId && item.notification.id
-                })
-                .map(item => item.notification.id!)
-
-              await Promise.all(notificationsToCancel.map(id => notificationService.cancelNotification(id)))
+              await cancelReminderNotifications(reminderId)
 
               // Удаляем все связанные reminderMedicines
               const relatedReminderMedicines = reminderMedicines.filter(rm => rm.reminderId === reminderId && rm.id)
@@ -163,9 +156,10 @@ export const Reminders = memo(() => {
         {dataSource.map((reminder, index) => {
           const times = JSON.parse(reminder?.time ?? '[]')
           return (
-            <View
+            <Pressable
               key={`reminder-${reminder.id}-${index}`}
               style={styles.reminderCard}
+              onPress={() => reminder.id && handleEditReminder(reminder.id)}
             >
               <View style={styles.reminderHeader}>
                 <View style={styles.reminderTitleContainer}>
@@ -181,12 +175,20 @@ export const Reminders = memo(() => {
                     </View>
                   </View>
                 </View>
-                <TouchableOpacity
-                  style={styles.deleteButton}
-                  onPress={() => reminder.id && handleDeleteReminder(reminder.id)}
-                >
-                  <Text style={styles.deleteButtonText}>✕</Text>
-                </TouchableOpacity>
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity
+                    style={styles.editButton}
+                    onPress={() => reminder.id && handleEditReminder(reminder.id)}
+                  >
+                    <Text style={styles.editButtonText}>✏️</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={() => reminder.id && handleDeleteReminder(reminder.id)}
+                  >
+                    <Text style={styles.deleteButtonText}>✕</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
 
               <View style={styles.reminderDetails}>
@@ -233,7 +235,7 @@ export const Reminders = memo(() => {
                   {t('reminders.totalScheduled')} {reminder.totalCount}
                 </Text>
               </View>
-            </View>
+            </Pressable>
           )
         })}
       </PaddingHorizontal>

@@ -3,10 +3,13 @@ import { initReactI18next } from 'react-i18next'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { getLocales } from 'react-native-localize'
 import dayjs from 'dayjs'
+import localeData from 'dayjs/plugin/localeData'
 import 'dayjs/locale/ru'
 import 'dayjs/locale/en'
 import { ru } from './locales/ru'
 import { en } from './locales/en'
+
+dayjs.extend(localeData)
 
 const LANGUAGE_KEY = '@aidkit_language'
 

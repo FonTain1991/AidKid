@@ -33,7 +33,9 @@ export type MainList = {
   quickIntake: undefined
   notificationSettings: undefined
   reminders: undefined
-  addReminder: undefined
+  addReminder: {
+    reminderId?: number
+  } | undefined
   today: undefined
   shoppingList: undefined
   addShoppingItem: undefined

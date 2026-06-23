@@ -31,6 +31,7 @@ class DatabaseService {
       })
 
       await this.createTables()
+      await this.migrateTables()
     } catch (error) {
       console.error('Database initialization failed:', error)
       this.initPromise = null
@@ -100,7 +101,9 @@ class DatabaseService {
         timesPerDay INTEGER DEFAULT 1,
         time TEXT NOT NULL,
         isActive BOOLEAN DEFAULT 1,
+        daysCount INTEGER,
         createdAt TEXT NOT NULL,
+        updatedAt INTEGER,
         description TEXT,
         dosage TEXT,
         FOREIGN KEY (familyMemberId) REFERENCES family_members (id) ON DELETE SET NULL
@@ -145,6 +148,35 @@ class DatabaseService {
         updatedAt INTEGER NOT NULL
       )
     `)
+  }
+
+  private async getTableColumns(table: string): Promise<string[]> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    const [results] = await this.db.executeSql(`PRAGMA table_info(${table})`)
+    const columns: string[] = []
+
+    for (let i = 0; i < results.rows.length; i++) {
+      columns.push(results.rows.item(i).name)
+    }
+
+    return columns
+  }
+
+  private async migrateTables(): Promise<void> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    const reminderColumns = await this.getTableColumns('reminders')
+    if (!reminderColumns.includes('updatedAt')) {
+      await this.db.executeSql('ALTER TABLE reminders ADD COLUMN updatedAt INTEGER')
+    }
+    if (!reminderColumns.includes('daysCount')) {
+      await this.db.executeSql('ALTER TABLE reminders ADD COLUMN daysCount INTEGER')
+    }
   }
 
   getDb() {

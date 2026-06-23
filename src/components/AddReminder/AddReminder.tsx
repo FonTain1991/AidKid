@@ -1,9 +1,9 @@
 
 import { SPACING } from '@/constants'
 import { getValuesForList } from '@/helpers'
-import { useMyNavigation, useReminder, useReminderMedicine } from '@/hooks'
+import { useMyNavigation, useReminder, useReminderMedicine, useRoute } from '@/hooks'
 import { useEvent } from '@/hooks/useEvent'
-import { notificationService } from '@/lib'
+import { cancelReminderNotifications, notificationService } from '@/lib'
 import { Medicine } from '@/services/models'
 import { useAppStore } from '@/store'
 import { memo, useEffect, useMemo, useState } from 'react'
@@ -12,7 +12,7 @@ import { Alert } from 'react-native'
 import { AboutScreen } from '../AboutScreen'
 import { Button } from '../Button'
 import { EmptyList } from '../EmptyList'
-import { FormItemWrapper, List, MultiList, Textarea, TextInput } from '../Form'
+import { FormItemWrapper, List, Textarea, TextInput } from '../Form'
 import { Counter } from '../Form/Counter'
 import { DatePicker } from '../Form/DatePicker'
 import { PaddingHorizontal } from '../Layout'
@@ -36,10 +36,13 @@ export const AddReminder = memo(() => {
   const styles = useStyles()
   const { t } = useTranslation()
   const navigation = useMyNavigation()
-  const { medicines, familyMembers } = useAppStore(state => state)
+  const { params } = useRoute()
+  const reminderId = params?.reminderId
+  const isEditing = !!reminderId
+  const { medicines, familyMembers, reminders, reminderMedicines } = useAppStore(state => state)
 
-  const { createReminder } = useReminder()
-  const { createReminderMedicine } = useReminderMedicine()
+  const { createReminder, updateReminder } = useReminder()
+  const { createReminderMedicine, deleteReminderMedicine } = useReminderMedicine()
 
   const [errors, setErrors] = useState<{ medicine?: string; familyMember?: string; dosage?: string }>({})
   const [_isEnabled, _setIsEnabled] = useState(true)
@@ -70,6 +73,10 @@ export const AddReminder = memo(() => {
 
   // Инициализируем время по умолчанию для разных приемов
   useEffect(() => {
+    if (isEditing) {
+      return
+    }
+
     const defaultTimes: Date[] = []
 
     // Устанавливаем разное время для каждого приема
@@ -83,7 +90,51 @@ export const AddReminder = memo(() => {
     }
 
     setReminderForm(prev => ({ ...prev, reminderTimes: defaultTimes }))
-  }, [])
+  }, [isEditing])
+
+  useEffect(() => {
+    if (!reminderId) {
+      return
+    }
+
+    const reminder = reminders.find(item => item.id === reminderId)
+    if (!reminder) {
+      return
+    }
+
+    const parsedTimes: { hour: number; minute: number }[] = JSON.parse(reminder.time || '[]')
+    const defaultHours = [9, 14, 20, 12, 16, 22, 10, 15, 18, 21]
+    const reminderTimes: Date[] = []
+
+    for (let i = 0; i < 10; i++) {
+      const time = new Date()
+      time.setHours(defaultHours[i] || (9 + (i * 2)), 0, 0, 0)
+      reminderTimes.push(time)
+    }
+
+    parsedTimes.forEach((time, index) => {
+      const date = new Date()
+      date.setHours(time.hour, time.minute, 0, 0)
+      reminderTimes[index] = date
+    })
+
+    const selectedMedicineIds = reminderMedicines
+      .filter(item => item.reminderId === reminderId && item.medicineId != null)
+      .map(item => item.medicineId as number)
+
+    setReminderForm({
+      selectedMedicineIds,
+      selectedFamilyMember: reminder.familyMemberId,
+      reminderTitle: reminder.title,
+      reminderTime: reminderTimes[0] || new Date(),
+      reminderTimes,
+      frequency: reminder.frequency,
+      quantity: reminder.timesPerDay,
+      daysCount: reminder.daysCount ?? 14,
+      description: reminder.description || '',
+      dosage: reminder.dosage || '',
+    })
+  }, [reminderId, reminders, reminderMedicines])
 
   const scheduleReminderNotifications = useEvent(async (options: {
     medicines: Medicine[]
@@ -224,7 +275,7 @@ export const AddReminder = memo(() => {
     }
   })
 
-  const handleCreateReminder = useEvent(async () => {
+  const handleSaveReminder = useEvent(async () => {
     const errorsFields: { medicine?: string; familyMember?: string; dosage?: string } = {}
     if (!reminderForm.selectedMedicineIds.length) {
       errorsFields.medicine = t('addReminder.selectMedicine')
@@ -272,77 +323,130 @@ export const AddReminder = memo(() => {
       : t('addReminder.takeNMedicines', { count: selectedMedicines.length })
     const title = reminderForm.reminderTitle.trim() || defaultTitle
 
+    const frequencyText = reminderForm.frequency === 'once'
+      ? t('addReminder.once')
+      : reminderForm.frequency === 'daily'
+        ? t('addReminder.daily')
+        : t('addReminder.weekly')
+
+    const medicinesWord = selectedMedicines.length === 1 ? t('lowStock.count_one') : t('lowStock.count_many')
+    let message = t('addReminder.remindersCreated', { count: selectedMedicines.length, medicines: medicinesWord })
+    message += `${t('addReminder.medicinesLabel')}: ${medicineNames}\n`
+    message += `${t('addReminder.frequencyLabel')}: ${frequencyText}\n`
+
+    if (reminderForm.frequency === 'once') {
+      const timeStr = reminderForm.reminderTime.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+      message += `${t('addReminder.timeLabel')}: ${timeStr}`
+    } else {
+      const perPeriod = reminderForm.frequency === 'daily' ? t('addReminder.intakesPerDay') : t('addReminder.intakesPerWeek')
+      message += `${perPeriod}: ${reminderForm.quantity}\n`
+      message += `${t('addReminder.daysCount')}: ${reminderForm.daysCount}\n`
+      message += `${t('addReminder.intakeTimesLabel')}:\n`
+      for (let i = 0; i < reminderForm.quantity; i++) {
+        const timeStr = reminderForm.reminderTimes[i].toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+        message += `  ${i + 1}. ${timeStr}\n`
+      }
+    }
+
     try {
-      // Создаем ОДНО напоминание для всех выбранных лекарств
       const timesToUse = reminderForm.frequency === 'once'
         ? [reminderForm.reminderTime]
         : reminderForm.reminderTimes.slice(0, reminderForm.quantity)
 
-      // Формируем строку времени для БД
-      const timeString = JSON.stringify(timesToUse.map(t => ({
-        hour: t.getHours(),
-        minute: t.getMinutes()
+      const timeString = JSON.stringify(timesToUse.map(time => ({
+        hour: time.getHours(),
+        minute: time.getMinutes()
       })))
 
-      const reminder = await createReminder({
-        familyMemberId: reminderForm.selectedFamilyMember,
+      if (isEditing && reminderId) {
+        await cancelReminderNotifications(reminderId)
+
+        const reminder = await updateReminder({
+          id: reminderId,
+          familyMemberId: reminderForm.selectedFamilyMember!,
+          title,
+          frequency: reminderForm.frequency,
+          timesPerDay: reminderForm.quantity,
+          daysCount: reminderForm.frequency === 'once' ? 1 : reminderForm.daysCount,
+          time: timeString,
+          isActive: true,
+          description: reminderForm.description,
+          dosage: reminderForm.dosage
+        })
+
+        if (!reminder) {
+          throw new Error(t('addReminder.failedToUpdate'))
+        }
+
+        const existingLinks = reminderMedicines.filter(item => item.reminderId === reminderId)
+        const existingMedicineIds = existingLinks.map(item => item.medicineId)
+        const newMedicineIds = reminderForm.selectedMedicineIds
+
+        await Promise.all(
+          existingLinks
+            .filter(item => item.medicineId != null && !newMedicineIds.includes(item.medicineId as number) && item.id)
+            .map(item => deleteReminderMedicine(item.id!))
+        )
+
+        await Promise.all(
+          newMedicineIds
+            .filter(medicineId => !existingMedicineIds.includes(medicineId))
+            .map(medicineId => createReminderMedicine({ reminderId, medicineId }))
+        )
+
+        await scheduleReminderNotifications({
+          medicines: selectedMedicines,
+          reminderId,
+          title,
+          times: timesToUse,
+          frequency: reminderForm.frequency,
+          quantity: reminderForm.frequency === 'once' ? 1 : reminderForm.quantity,
+          daysCount: reminderForm.frequency === 'once' ? 1 : reminderForm.daysCount,
+          familyMemberId: reminderForm.selectedFamilyMember ?? undefined
+        })
+
+        Alert.alert(t('addReminder.reminderUpdated'), message, [
+          {
+            text: t('common.ok'),
+            onPress: () => navigation.goBack()
+          }
+        ])
+        return
+      }
+
+      const newReminder = await createReminder({
+        familyMemberId: reminderForm.selectedFamilyMember!,
         title,
         frequency: reminderForm.frequency,
         timesPerDay: reminderForm.quantity,
+        daysCount: reminderForm.frequency === 'once' ? 1 : reminderForm.daysCount,
         time: timeString,
         isActive: true,
         description: reminderForm.description,
         dosage: reminderForm.dosage
       })
 
-      if (!reminder || !reminder.id) {
+      if (!newReminder || !newReminder.id) {
         throw new Error(t('addReminder.failedToCreate'))
       }
 
-      const reminderId = reminder.id
+      const newReminderId = newReminder.id
 
-      // Создаем связи между напоминанием и лекарствами
       await Promise.all(reminderForm.selectedMedicineIds.map(medicineId => createReminderMedicine({
-        reminderId,
+        reminderId: newReminderId,
         medicineId
       })))
 
-      // Запланировать уведомления для всех лекарств напоминания
       await scheduleReminderNotifications({
         medicines: selectedMedicines,
-        reminderId: reminderId,
+        reminderId: newReminderId,
         title,
         times: timesToUse,
         frequency: reminderForm.frequency,
         quantity: reminderForm.frequency === 'once' ? 1 : reminderForm.quantity,
         daysCount: reminderForm.frequency === 'once' ? 1 : reminderForm.daysCount,
-        familyMemberId: reminderForm.selectedFamilyMember?.value
+        familyMemberId: reminderForm.selectedFamilyMember ?? undefined
       })
-
-      const frequencyText = reminderForm.frequency === 'once'
-        ? t('addReminder.once')
-        : reminderForm.frequency === 'daily'
-          ? t('addReminder.daily')
-          : t('addReminder.weekly')
-
-      const medicinesWord = selectedMedicines.length === 1 ? t('lowStock.count_one') : t('lowStock.count_many')
-      let message = t('addReminder.remindersCreated', { count: selectedMedicines.length, medicines: medicinesWord })
-      message += `${t('addReminder.medicinesLabel')}: ${medicineNames}\n`
-      message += `${t('addReminder.frequencyLabel')}: ${frequencyText}\n`
-
-      if (reminderForm.frequency === 'once') {
-        const timeStr = reminderForm.reminderTime.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-        message += `${t('addReminder.timeLabel')}: ${timeStr}`
-      } else {
-        const perPeriod = reminderForm.frequency === 'daily' ? t('addReminder.intakesPerDay') : t('addReminder.intakesPerWeek')
-        message += `${perPeriod}: ${reminderForm.quantity}\n`
-        message += `${t('addReminder.daysCount')}: ${reminderForm.daysCount}\n`
-        message += `${t('addReminder.intakeTimesLabel')}:\n`
-        for (let i = 0; i < reminderForm.quantity; i++) {
-          const timeStr = reminderForm.reminderTimes[i].toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-          message += `  ${i + 1}. ${timeStr}\n`
-        }
-      }
 
       Alert.alert(t('addReminder.reminderCreated'), message, [
         {
@@ -351,17 +455,21 @@ export const AddReminder = memo(() => {
         }
       ])
     } catch (error) {
-      console.error('Failed to create reminders:', error)
+      console.error('Failed to save reminder:', error)
       const errorMessage = error instanceof Error ? error.message : t('addReminder.unknownError')
-      Alert.alert(t('support.error'), `${t('addReminder.failedToCreate')}: ${errorMessage}`)
+      const failedMessage = isEditing ? t('addReminder.failedToUpdate') : t('addReminder.failedToCreate')
+      Alert.alert(t('support.error'), `${failedMessage}: ${errorMessage}`)
     }
   })
 
-  const onMedicineChange = (selectedMedicineIds: number[]) => {
-    setReminderForm(prev => ({ ...prev, selectedMedicineIds: selectedMedicineIds as number[] }))
+  const onMedicineChange = (selectedMedicineId: number | null) => {
+    setReminderForm(prev => ({
+      ...prev,
+      selectedMedicineIds: selectedMedicineId === null ? [] : [selectedMedicineId]
+    }))
     setErrors(prev => ({ ...prev, medicine: undefined }))
   }
-  const onFamilyMemberChange = (selectedFamilyMember: { label: string; value: number } | null) => {
+  const onFamilyMemberChange = (selectedFamilyMember: number | null) => {
     setReminderForm(prev => ({ ...prev, selectedFamilyMember }))
     setErrors(prev => ({ ...prev, familyMember: undefined }))
   }
@@ -378,10 +486,10 @@ export const AddReminder = memo(() => {
             options={medicinesOptions}
             error={errors?.medicine}
           >
-            <MultiList
+            <List
               options={medicinesOptions}
               fieldName={t('addReminder.medicine')}
-              value={reminderForm.selectedMedicineIds}
+              value={reminderForm.selectedMedicineIds[0] ?? null}
               onChange={onMedicineChange}
               error={errors?.medicine}
             />
@@ -486,8 +594,8 @@ export const AddReminder = memo(() => {
           </>
         )}
         <Button
-          title={t('addReminder.createReminder')}
-          onPress={handleCreateReminder}
+          title={isEditing ? t('addReminder.saveReminder') : t('addReminder.createReminder')}
+          onPress={handleSaveReminder}
         />
       </PaddingHorizontal >
       <AboutScreen

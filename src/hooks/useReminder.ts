@@ -53,7 +53,9 @@ export function useReminder() {
       updateReminderStore(reminder)
       return reminder
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to update reminder'))
+      const error = err instanceof Error ? err : new Error('Failed to update reminder')
+      setError(error)
+      throw error
     } finally {
       setIsLoading(false)
     }

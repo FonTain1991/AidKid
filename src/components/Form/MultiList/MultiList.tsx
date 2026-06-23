@@ -46,14 +46,19 @@ export const MultiList = memo(({ value, onChange, options, fieldName, error }: L
     // bottomSheetRef.current?.dismiss()
   })
 
+  const sortedOptions = useMemo(
+    () => [...options].sort((a, b) => (a.label || '').localeCompare(b.label || '', undefined, { sensitivity: 'base' })),
+    [options]
+  )
+
   const curValue = useMemo(() => {
-    return options.filter(item => value?.includes(item.value))
-  }, [value, options])
+    return sortedOptions.filter(item => value?.includes(item.value))
+  }, [value, sortedOptions])
 
 
   const maxHeight = HEIGHT * 0.9
-  const height = (options.length * 56) + (IS_ANDROID ? bottom : 0) + (SPACING.md * 2) + (FONT_SIZE.xl * 1.5) + 21
-  const isScroll = !!options.length && height > maxHeight
+  const height = (sortedOptions.length * 56) + (IS_ANDROID ? bottom : 0) + (SPACING.md * 2) + (FONT_SIZE.xl * 1.5) + 21
+  const isScroll = !!sortedOptions.length && height > maxHeight
 
   return (
     <View>
@@ -65,10 +70,10 @@ export const MultiList = memo(({ value, onChange, options, fieldName, error }: L
       />
       <BottomSheet
         ref={bottomSheetRef}
-        snapPoints={isScroll ? ['90%'] : options.length > 0 ? [height] : undefined}
-        enableDynamicSizing={!isScroll && !options.length}
+        snapPoints={isScroll ? ['90%'] : sortedOptions.length > 0 ? [height] : undefined}
+        enableDynamicSizing={!isScroll && !sortedOptions.length}
       >
-        {!options?.length && (
+        {!sortedOptions?.length && (
           <BottomSheetView>
             <ModalSafeAreaView edges={['bottom']} style={{ backgroundColor: colors.background }}>
               <PaddingHorizontal style={styles.fieldName}>
@@ -78,11 +83,11 @@ export const MultiList = memo(({ value, onChange, options, fieldName, error }: L
             </ModalSafeAreaView>
           </BottomSheetView>
         )}
-        {!!options?.length && (
+        {!!sortedOptions?.length && (
           <ModalSafeAreaView edges={['bottom']} style={{ backgroundColor: colors.background }}>
             <BottomSheetFlatList
               scrollEnabled={isScroll}
-              data={options}
+              data={sortedOptions}
               keyExtractor={(item: { label: string, subtitle?: string, value: string }) => item.value}
               ItemSeparatorComponent={() => <Separator />}
               ListHeaderComponent={(

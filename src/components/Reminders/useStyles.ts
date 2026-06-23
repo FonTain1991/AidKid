@@ -65,6 +65,21 @@ export const useStyles = () => {
       alignItems: 'center',
       backgroundColor: colors.error,
     },
+    editButton: {
+      width: 32,
+      height: 32,
+      borderRadius: RADIUS.lg,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.primary,
+    },
+    actionButtons: {
+      flexDirection: 'row',
+      gap: SPACING.sm,
+    },
+    editButtonText: {
+      fontSize: FONT_SIZE.md,
+    },
     deleteButtonText: {
       color: colors.headerColor,
       fontSize: FONT_SIZE.xl,

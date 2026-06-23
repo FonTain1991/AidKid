@@ -1,7 +1,7 @@
 import { Empty } from '@/components/Empty'
 import { Background, Flex, PaddingHorizontal, SafeAreaView } from '@/components/Layout'
 import { Text } from '@/components/Text'
-import { SPACING, FREE_LIMITS, UNITS } from '@/constants'
+import { SPACING, FREE_LIMITS } from '@/constants'
 import { FONT_SIZE } from '@/constants/font'
 import { useNavigationBarColor, useScreenProperties, useMyNavigation } from '@/hooks'
 import { useTranslation } from 'react-i18next'
@@ -9,6 +9,7 @@ import { databaseService } from '@/services'
 import { useAppStore } from '@/store'
 import { useSubscription } from '@/components/Subscription/hooks/useSubscription'
 import { useTheme } from '@/providers/theme'
+import { getUsageUnitValue } from '@/lib/usageUnit'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View, Pressable } from 'react-native'
 import dayjs from 'dayjs'
@@ -112,8 +113,7 @@ export function HistoryScreen() {
       return {
         ...usage,
         medicineName: medicine?.name,
-        unit: UNITS.find(u => u.value === medicine?.unit)?.shortLabel,
-        unitValue: medicine?.unit,
+        unitValue: getUsageUnitValue(medicine),
         kitName: kit?.name,
         familyMemberName: familyMember?.name,
       }

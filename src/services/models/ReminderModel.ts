@@ -6,6 +6,7 @@ export interface Reminder {
   title: string
   frequency: 'once' | 'daily' | 'weekly'
   timesPerDay: number
+  daysCount: number | null
   time: string
   isActive: boolean
   dosage: string
@@ -20,6 +21,7 @@ export interface CreateReminderData {
   title: string
   frequency: 'once' | 'daily' | 'weekly'
   timesPerDay: number
+  daysCount?: number | null
   time: string
   isActive: boolean
   description?: string
@@ -34,14 +36,15 @@ class ReminderModel extends BaseModel {
 
     const [result] = await this.db.executeSql(`
       INSERT INTO reminders (
-        id, familyMemberId, title, frequency, timesPerDay, time, isActive, description, createdAt, dosage
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        id, familyMemberId, title, frequency, timesPerDay, daysCount, time, isActive, description, createdAt, dosage
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       null,
       data.familyMemberId,
       data.title,
       data.frequency,
       data.timesPerDay,
+      data.daysCount ?? null,
       data.time,
       data.isActive,
       data.description,
@@ -72,6 +75,7 @@ class ReminderModel extends BaseModel {
         title: row.title,
         frequency: row.frequency,
         timesPerDay: row.timesPerDay,
+        daysCount: row.daysCount,
         time: row.time,
         isActive: row.isActive,
         createdAt: row.createdAt,
@@ -104,6 +108,7 @@ class ReminderModel extends BaseModel {
       title: row.title,
       frequency: row.frequency,
       timesPerDay: row.timesPerDay,
+      daysCount: row.daysCount,
       time: row.time,
       isActive: row.isActive,
       createdAt: row.createdAt,
@@ -118,7 +123,7 @@ class ReminderModel extends BaseModel {
       throw new Error('Database not initialized')
     }
 
-    const allowedFields = ['familyMemberId', 'title', 'frequency', 'timesPerDay', 'time', 'isActive', 'description', 'dosage']
+    const allowedFields = ['familyMemberId', 'title', 'frequency', 'timesPerDay', 'daysCount', 'time', 'isActive', 'description', 'dosage']
     const updateFields: string[] = []
     const updateValues: any[] = []
 

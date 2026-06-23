@@ -247,6 +247,7 @@ class BackupService {
 
           // Поддерживаем оба варианта для обратной совместимости
           const timesPerDay = reminder.timesPerDay || reminder.times_per_day || 1
+          const daysCount = reminder.daysCount || reminder.days_count || null
           const familyMemberId = reminder.familyMemberId || reminder.family_member_id
 
           const scheduleParams = {
@@ -256,6 +257,7 @@ class BackupService {
             medicineIds,
             familyMemberId,
             timesPerDay,
+            daysCount,
             hours,
             minutes,
             now,
@@ -338,15 +340,16 @@ class BackupService {
     medicineIds: number[]
     familyMemberId: number | null
     timesPerDay: number
+    daysCount: number | null
     hours: number
     minutes: number
     now: Date
   }): Promise<void> {
-    const { reminder, medicines, medicineNames, medicineIds, familyMemberId, timesPerDay, hours, minutes, now } = params
+    const { reminder, medicines, medicineNames, medicineIds, familyMemberId, timesPerDay, daysCount, hours, minutes, now } = params
     const medicineKitId = medicines[0].medicineKitId || medicines[0].kit_id || medicines[0].medicine_kit_id
     const notifications = []
 
-    for (let day = 0; day < 30; day++) {
+    for (let day = 0; day < (daysCount || 30); day++) {
       for (let intake = 0; intake < timesPerDay; intake++) {
         const notificationTime = new Date()
         notificationTime.setHours(hours, minutes, 0, 0)
@@ -390,15 +393,16 @@ class BackupService {
     medicineIds: number[]
     familyMemberId: number | null
     timesPerDay: number
+    daysCount: number | null
     hours: number
     minutes: number
     now: Date
   }): Promise<void> {
-    const { reminder, medicines, medicineNames, medicineIds, familyMemberId, timesPerDay, hours, minutes, now } = params
+    const { reminder, medicines, medicineNames, medicineIds, familyMemberId, timesPerDay, daysCount, hours, minutes, now } = params
     const medicineKitId = medicines[0].medicineKitId || medicines[0].kit_id || medicines[0].medicine_kit_id
     const notifications = []
 
-    for (let week = 0; week < 12; week++) {
+    for (let week = 0; week < (daysCount ? Math.ceil(daysCount / 7) : 12); week++) {
       for (let intake = 0; intake < timesPerDay; intake++) {
         const notificationTime = new Date()
         notificationTime.setHours(hours, minutes, 0, 0)
@@ -571,18 +575,20 @@ class BackupService {
     for (const reminder of data.reminders) {
       const familyMemberId = reminder.familyMemberId || reminder.family_member_id || null
       const timesPerDay = reminder.timesPerDay || reminder.times_per_day || 1
+      const daysCount = reminder.daysCount || reminder.days_count || null
       const isActive = reminder.isActive !== undefined ? reminder.isActive : (reminder.is_active !== undefined ? reminder.is_active : 1)
       const createdAt = reminder.createdAt || reminder.created_at
 
       await db.executeSql(
-        `INSERT INTO reminders (id, familyMemberId, title, frequency, timesPerDay, time, isActive, createdAt) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO reminders (id, familyMemberId, title, frequency, timesPerDay, daysCount, time, isActive, createdAt) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           reminder.id,
           familyMemberId,
           reminder.title,
           reminder.frequency,
           timesPerDay,
+          daysCount,
           reminder.time,
           isActive ? 1 : 0,
           createdAt,

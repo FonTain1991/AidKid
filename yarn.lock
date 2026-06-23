@@ -1950,22 +1950,22 @@
   dependencies:
     nanoid "^3.3.11"
 
-"@revenuecat/purchases-js-hybrid-mappings@17.12.0":
-  version "17.12.0"
-  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js-hybrid-mappings/-/purchases-js-hybrid-mappings-17.12.0.tgz#ea0a525446e4b9fa301939b2386ecdd855dcccb5"
-  integrity sha512-JFrdvitbE1TQk2mluQ8i7BtJXP3o1h5JNrkLYN5C9nC3coFHGd3ozPDpCJVmVRImOINKaroME6vkO3c8qbVpEw==
+"@revenuecat/purchases-js-hybrid-mappings@17.55.1":
+  version "17.55.1"
+  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js-hybrid-mappings/-/purchases-js-hybrid-mappings-17.55.1.tgz#034f33d6ae476ac7efb08ed98af40ef0b75a26e6"
+  integrity sha512-hXnaWqbedzoAQOGcJUT0WtXBa/NyDUp6X5ntQ0F79FdgdceMGIGIS3QtLVC6CgNRUmZlt1xgBOkq+MX3bsBYSQ==
   dependencies:
-    "@revenuecat/purchases-js" "1.17.0"
+    "@revenuecat/purchases-js" "1.30.0"
 
-"@revenuecat/purchases-js@1.17.0":
-  version "1.17.0"
-  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js/-/purchases-js-1.17.0.tgz#b3ac79d4093b1dae8e01adaabf399709ec41a58c"
-  integrity sha512-FhGO0r5uVaIiWGScfrV3kQ3XHIEQlhq4ynYWLVkd0LX1YyJ+n0lPtJqmEUSCZTCjLOnG+B9A4qXqJFY5bplK7Q==
+"@revenuecat/purchases-js@1.30.0":
+  version "1.30.0"
+  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js/-/purchases-js-1.30.0.tgz#7ea4f5f2376197990ed1f62817b06adae20513ad"
+  integrity sha512-aNlk6lPWrJ1DncPnw0WZh8nZKbd5S++EcsQxlLnv3HX/jOnMO54zr0SKsz3GJyFa6zh04N6b3qHAgWWm51EWpg==
 
-"@revenuecat/purchases-typescript-internal@17.12.0":
-  version "17.12.0"
-  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-typescript-internal/-/purchases-typescript-internal-17.12.0.tgz#ec002e24278107d3e4290d0e9830d191b82c3653"
-  integrity sha512-HrczeTZUTgEpTTHM1XdqNV4JPmYLxPdTpZzRSYLWEdkaTMzNDSpyGR4RwP9SrTV8hS9p5RxNMlm7kbfmkXV7qA==
+"@revenuecat/purchases-typescript-internal@17.55.1":
+  version "17.55.1"
+  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-typescript-internal/-/purchases-typescript-internal-17.55.1.tgz#addd7cb6ae98b13b35973e3656dc8acae5b95da1"
+  integrity sha512-t49IP5hdlLEi+csqH8J8fo+DvCucWBwDnv+bVQca1Ogdry6VnY0HVdH1z743h9F4vKwFGTJ3XK5TUcahlK+U3Q==
 
 "@sideway/address@^4.1.5":
   version "4.1.5"
@@ -6434,6 +6434,11 @@ react-native-gifted-charts@^1.4.64:
   dependencies:
     gifted-charts-core "0.1.66"
 
+react-native-html-to-pdf@^1.3.0:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/react-native-html-to-pdf/-/react-native-html-to-pdf-1.3.0.tgz#591d9120038e2a1717f3a9eb47b16c84928066f7"
+  integrity sha512-UCbQO1k5yeajaJrEF7Wqq8ojdgpxsTbICQvtorXmuO1LkU/a6B3/tZyLes4zXCiq/5nTMTNA/k9m5bYStg5S0Q==
+
 react-native-image-picker@^8.2.1:
   version "8.2.1"
   resolved "https://registry.yarnpkg.com/react-native-image-picker/-/react-native-image-picker-8.2.1.tgz#1ac7826563cbaa5d5298d9f2acc53c69805e5393"
@@ -6477,13 +6482,13 @@ react-native-prompt-android@^1.1.0:
   resolved "https://registry.yarnpkg.com/react-native-prompt-android/-/react-native-prompt-android-1.1.0.tgz#3c5168029075cb9f72549fd5f92403372fb234e9"
   integrity sha512-4JoyEaT2ZnK9IH+tDFpbTiQBgva8UIFGQf4/Uw/tnEVWBERlVlzcs5B82T9BkeEhEqXhp89JaiSBnLWj30lciw==
 
-react-native-purchases@^9.6.1:
-  version "9.6.1"
-  resolved "https://registry.yarnpkg.com/react-native-purchases/-/react-native-purchases-9.6.1.tgz#59c1f31a618ce2044e1933731de7d3f6d514d494"
-  integrity sha512-UQhkQsuwSOCDXXKOB1RDtFCZ1JSmSai10vG6/hP6xldSaZPl07va+xELqXOYaOSRHAWKGtb+zWZuhsiGVhcxVA==
+react-native-purchases@^9.6.12:
+  version "9.15.2"
+  resolved "https://registry.yarnpkg.com/react-native-purchases/-/react-native-purchases-9.15.2.tgz#0c010d55418a0e24138e58fdc5da47522c2de8b5"
+  integrity sha512-cAGChbjDp1os6Xc8Wfg83w2ey/Xm/Uq5znoRlXwSW4a/Q8f2gCXLikBfH0bOC+diAkwapN70PwKkP12iGYptyg==
   dependencies:
-    "@revenuecat/purchases-js-hybrid-mappings" "17.12.0"
-    "@revenuecat/purchases-typescript-internal" "17.12.0"
+    "@revenuecat/purchases-js-hybrid-mappings" "17.55.1"
+    "@revenuecat/purchases-typescript-internal" "17.55.1"
 
 react-native-reanimated-carousel@^4.0.3:
   version "4.0.3"
