@@ -5,13 +5,13 @@ import { filterUsageByPeriod, type StatisticsPeriod } from './statisticsPeriod'
 type ReminderFrequency = 'once' | 'daily' | 'weekly'
 
 interface UsageLike {
-  medicineId: number
+  medicineId: number | string
   usageDate: string
   notes: string | null
 }
 
 interface ReminderLike {
-  id?: number | null
+  id?: number | string | null
   frequency: ReminderFrequency
   time: string
   isActive: boolean
@@ -20,8 +20,8 @@ interface ReminderLike {
 }
 
 interface ReminderMedicineLike {
-  reminderId?: number | null
-  medicineId?: number | null
+  reminderId?: number | string | null
+  medicineId?: number | string | null
 }
 
 interface CalculatePremiumPeriodDynamicsParams {

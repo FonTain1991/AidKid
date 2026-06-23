@@ -4,7 +4,7 @@ import { Background, Flex, PaddingHorizontal, SafeAreaView } from '@/components/
 import { Text } from '@/components/Text'
 import { SPACING } from '@/constants'
 import { FONT_SIZE } from '@/constants/font'
-import { useNavigationBarColor, useScreenProperties } from '@/hooks'
+import { useEvent, useNavigationBarColor, useReminder, useReminderMedicine, useScreenProperties } from '@/hooks'
 import { calculateActivityHeatmap } from '@/lib/activityHeatmap'
 import { calculateFamilyMemberStats } from '@/lib/familyMemberStats'
 import { calculateMedicineConsumption } from '@/lib/medicineConsumption'
@@ -27,6 +27,7 @@ import RNFS from 'react-native-fs'
 import { generatePDF } from 'react-native-html-to-pdf'
 import Share from 'react-native-share'
 import dayjs from 'dayjs'
+import { useFocusEffect } from '@react-navigation/native'
 
 interface MedicineUsage {
   id: number
@@ -67,6 +68,8 @@ export function StatisticsScreen() {
   const { colors } = useTheme()
   const { t } = useTranslation()
   const { isPremium } = useSubscription()
+  const { getAllReminders } = useReminder()
+  const { getAllReminderMedicines } = useReminderMedicine()
   const medicines = useAppStore(state => state.medicines)
   const medicineKits = useAppStore(state => state.medicineKits)
   const familyMembers = useAppStore(state => state.familyMembers)
@@ -82,6 +85,7 @@ export function StatisticsScreen() {
   const [isSharingStatisticsCsv, setIsSharingStatisticsCsv] = useState(false)
   const [isSharingStatisticsPdf, setIsSharingStatisticsPdf] = useState(false)
   const periodChangeFrameRef = useRef<number | null>(null)
+  const hasLoadedStatisticsRef = useRef(false)
   const [stats, setStats] = useState<PeriodStats>({
     today: 0,
     yesterday: 0,
@@ -111,6 +115,11 @@ export function StatisticsScreen() {
       }
 
       await databaseService.init()
+      await Promise.all([
+        getAllReminders(),
+        getAllReminderMedicines(),
+      ])
+
       const db = databaseService.getDb()
       const [results] = await db.executeSql('SELECT * FROM medicine_usage ORDER BY usageDate DESC')
 
@@ -189,17 +198,18 @@ export function StatisticsScreen() {
         total: usages.length,
         averagePerDay,
       })
+      hasLoadedStatisticsRef.current = true
     } catch (error) {
       console.error('Failed to load statistics:', error)
     } finally {
       setIsLoading(false)
       setIsRefreshing(false)
     }
-  }, [])
+  }, [getAllReminders, getAllReminderMedicines])
 
-  useEffect(() => {
-    loadStatistics()
-  }, [loadStatistics])
+  useFocusEffect(useEvent(() => {
+    loadStatistics(hasLoadedStatisticsRef.current)
+  }))
 
   useEffect(() => {
     return () => {
@@ -904,13 +914,13 @@ export function StatisticsScreen() {
                       </View>
                     )}
 
-                  {filteredHistoryForPremium.length === 0 && (
-                    <View style={[styles.emptyPeriodCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                      <Text style={[styles.emptyPeriodText, { color: colors.muted }]}>
-                        {t('statistics.noDataForPeriod')}
-                      </Text>
-                    </View>
-                  )}
+                    {filteredHistoryForPremium.length === 0 && (
+                      <View style={[styles.emptyPeriodCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                        <Text style={[styles.emptyPeriodText, { color: colors.muted }]}>
+                          {t('statistics.noDataForPeriod')}
+                        </Text>
+                      </View>
+                    )}
 
                     <View style={[styles.planAdherenceCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                       <Text style={[styles.planAdherenceTitle, { color: colors.text }]}>

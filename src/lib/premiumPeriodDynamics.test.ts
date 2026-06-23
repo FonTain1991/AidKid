@@ -45,4 +45,30 @@ describe('calculatePremiumPeriodDynamics', () => {
       now: '2026-06-23T12:00:00.000Z',
     })).toBeNull()
   })
+
+  it('counts adherence with runtime string reminder medicine ids', () => {
+    const result = calculatePremiumPeriodDynamics({
+      usages: [
+        { medicineId: 1, usageDate: '2026-06-23T09:05:00.000Z', notes: null },
+      ],
+      reminders: [
+        {
+          id: 1,
+          frequency: 'daily',
+          time: JSON.stringify([{ hour: 9, minute: 0 }]),
+          isActive: true,
+          createdAt: new Date('2026-06-23T08:00:00.000Z').getTime(),
+        },
+      ],
+      reminderMedicines: [{ reminderId: '1', medicineId: '1' } as any],
+      period: 'day',
+      now: '2026-06-23T12:00:00.000Z',
+    })
+
+    expect(result?.current).toEqual({
+      intakes: 1,
+      adherencePercentage: 100,
+      missed: 0,
+    })
+  })
 })

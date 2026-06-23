@@ -4,7 +4,7 @@ import type { StatisticsPeriod } from './statisticsPeriod'
 type ReminderFrequency = 'once' | 'daily' | 'weekly'
 
 interface ReminderLike {
-  id?: number | null
+  id?: number | string | null
   frequency: ReminderFrequency
   time: string
   isActive: boolean
@@ -13,12 +13,12 @@ interface ReminderLike {
 }
 
 interface ReminderMedicineLike {
-  reminderId?: number | null
-  medicineId?: number | null
+  reminderId?: number | string | null
+  medicineId?: number | string | null
 }
 
 interface UsageLike {
-  medicineId: number
+  medicineId: number | string
   usageDate: string
   notes: string | null
 }
@@ -46,18 +46,10 @@ interface ReminderTime {
 interface CountReminderAdherenceParams {
   reminder: ReminderLike
   medicinesByReminderId: Map<number, number[]>
-  scheduledUsageEntries: ScheduledUsageEntry[]
+  usages: UsageLike[]
   currentDate: dayjs.Dayjs
   startDate: dayjs.Dayjs
   endDate: dayjs.Dayjs
-}
-
-type ScheduledUsageIndex = Map<string, Set<number>>
-
-interface ScheduledUsageEntry {
-  date: dayjs.Dayjs
-  time: string
-  medicineIds: Set<number>
 }
 
 export function calculatePlanAdherence(params: CalculatePlanAdherenceParams): PlanAdherence {
@@ -65,8 +57,6 @@ export function calculatePlanAdherence(params: CalculatePlanAdherenceParams): Pl
   const currentDate = dayjs(now)
   const { startDate, endDate } = getPeriodBounds(period, currentDate, reminders)
   const medicinesByReminderId = buildMedicinesByReminderId(reminderMedicines)
-  const scheduledUsageIndex = buildScheduledUsageIndex(usages)
-  const scheduledUsageEntries = buildScheduledUsageEntries(scheduledUsageIndex)
 
   let planned = 0
   let completed = 0
@@ -75,7 +65,7 @@ export function calculatePlanAdherence(params: CalculatePlanAdherenceParams): Pl
     const reminderAdherence = countReminderAdherence({
       reminder,
       medicinesByReminderId,
-      scheduledUsageEntries,
+      usages,
       currentDate,
       startDate,
       endDate,
@@ -94,13 +84,13 @@ export function calculatePlanAdherence(params: CalculatePlanAdherenceParams): Pl
 }
 
 function countReminderAdherence(params: CountReminderAdherenceParams): PlanAdherence {
-  const { reminder, medicinesByReminderId, scheduledUsageEntries, currentDate, startDate, endDate } = params
+  const { reminder, medicinesByReminderId, usages, currentDate, startDate, endDate } = params
 
   if (!reminder.id || !reminder.isActive) {
     return { completed: 0, missed: 0, planned: 0, percentage: 0 }
   }
 
-  const medicineIds = medicinesByReminderId.get(reminder.id) || []
+  const medicineIds = medicinesByReminderId.get(Number(reminder.id)) || []
 
   if (medicineIds.length === 0) {
     return { completed: 0, missed: 0, planned: 0, percentage: 0 }
@@ -110,7 +100,7 @@ function countReminderAdherence(params: CountReminderAdherenceParams): PlanAdher
   const times = parseReminderTimes(reminder.time)
   const reminderEndDate = getReminderEndDate(reminder, reminderCreatedAt)
   const planned = countPlannedScheduledTimes({ reminder, reminderCreatedAt, reminderEndDate, startDate, endDate, times })
-  const completed = countCompletedScheduledTimes({ reminder, reminderCreatedAt, reminderEndDate, scheduledUsageEntries, medicineIds, startDate, endDate, times })
+  const completed = countCompletedScheduledTimes({ reminder, reminderCreatedAt, reminderEndDate, usages, medicineIds, startDate, endDate, times })
 
   return {
     completed,
@@ -124,30 +114,51 @@ function countCompletedScheduledTimes(params: {
   reminder: ReminderLike
   reminderCreatedAt: dayjs.Dayjs
   reminderEndDate: dayjs.Dayjs
-  scheduledUsageEntries: ScheduledUsageEntry[]
+  usages: UsageLike[]
   medicineIds: number[]
   startDate: dayjs.Dayjs
   endDate: dayjs.Dayjs
   times: ReminderTime[]
 }): number {
-  const { reminder, reminderCreatedAt, reminderEndDate, scheduledUsageEntries, medicineIds, startDate, endDate, times } = params
+  const { reminder, reminderCreatedAt, reminderEndDate, usages, medicineIds, startDate, endDate, times } = params
+  const medicineIdSet = new Set(medicineIds.map(Number))
   const scheduledTimes = new Set(times.map(formatReminderTime))
-  let completed = 0
+  const completedMedicineIdsBySlot = new Map<string, Set<number>>()
 
-  for (const entry of scheduledUsageEntries) {
-    const isRelevantEntry = scheduledTimes.has(entry.time) &&
-      !entry.date.isBefore(startDate, 'day') &&
-      !entry.date.isAfter(endDate, 'day') &&
-      !entry.date.isBefore(reminderCreatedAt, 'day') &&
-      !entry.date.isAfter(reminderEndDate, 'day') &&
-      isReminderScheduledForDate(reminder, entry.date)
+  for (const usage of usages) {
+    const usageMedicineId = Number(usage.medicineId)
 
-    if (isRelevantEntry && medicineIds.every(medicineId => entry.medicineIds.has(medicineId))) {
-      completed += 1
+    if (!medicineIdSet.has(usageMedicineId)) {
+      continue
     }
+
+    const usageDate = dayjs(usage.usageDate)
+    if (
+      usageDate.isBefore(startDate, 'day') ||
+      usageDate.isAfter(endDate, 'day') ||
+      usageDate.isBefore(reminderCreatedAt, 'day') ||
+      usageDate.isAfter(reminderEndDate, 'day') ||
+      !isReminderScheduledForDate(reminder, usageDate)
+    ) {
+      continue
+    }
+
+    const scheduledTime = getScheduledTimeFromNotes(usage.notes)
+    const slotTime = scheduledTime && scheduledTimes.has(scheduledTime)
+      ? scheduledTime
+      : findNearestReminderTime(usageDate, times)
+
+    if (!slotTime) {
+      continue
+    }
+
+    const slotKey = getScheduledSlotKey(usageDate, slotTime)
+    const completedMedicineIds = completedMedicineIdsBySlot.get(slotKey) || new Set<number>()
+    completedMedicineIds.add(usageMedicineId)
+    completedMedicineIdsBySlot.set(slotKey, completedMedicineIds)
   }
 
-  return completed
+  return completedMedicineIdsBySlot.size
 }
 
 function countPlannedScheduledTimes(params: {
@@ -182,46 +193,34 @@ function buildMedicinesByReminderId(reminderMedicines: ReminderMedicineLike[]): 
 
   for (const item of reminderMedicines) {
     if (item.reminderId && item.medicineId) {
-      const medicineIds = medicinesByReminderId.get(item.reminderId) || []
-      medicinesByReminderId.set(item.reminderId, [...medicineIds, item.medicineId])
+      const reminderId = Number(item.reminderId)
+      const medicineId = Number(item.medicineId)
+      const medicineIds = medicinesByReminderId.get(reminderId) || []
+      medicinesByReminderId.set(reminderId, [...medicineIds, medicineId])
     }
   }
 
   return medicinesByReminderId
 }
 
-function buildScheduledUsageIndex(usages: UsageLike[]): ScheduledUsageIndex {
-  const scheduledUsageIndex: ScheduledUsageIndex = new Map()
-
-  for (const usage of usages) {
-    const scheduledTime = getScheduledTimeFromNotes(usage.notes)
-
-    if (scheduledTime) {
-      const indexKey = getScheduledUsageIndexKey(dayjs(usage.usageDate), scheduledTime)
-      const medicineIds = scheduledUsageIndex.get(indexKey) || new Set<number>()
-      medicineIds.add(usage.medicineId)
-      scheduledUsageIndex.set(indexKey, medicineIds)
-    }
-  }
-
-  return scheduledUsageIndex
-}
-
-function buildScheduledUsageEntries(scheduledUsageIndex: ScheduledUsageIndex): ScheduledUsageEntry[] {
-  return Array.from(scheduledUsageIndex.entries()).map(([key, medicineIds]) => {
-    const [date, time] = key.split('|')
-
-    return {
-      date: dayjs(date),
-      time,
-      medicineIds,
-    }
-  })
-}
-
 function getScheduledTimeFromNotes(notes: string | null): string | null {
   const match = notes?.match(/(?:Scheduled intake at|Запланированный прием в) (?<time>\d{2}:\d{2})/)
   return match?.groups?.time || null
+}
+
+function findNearestReminderTime(usageDate: dayjs.Dayjs, times: ReminderTime[]): string | null {
+  const nearestTime = times
+    .map(time => ({
+      time,
+      distance: Math.abs(usageDate.diff(usageDate.hour(time.hour).minute(time.minute).second(0).millisecond(0))),
+    }))
+    .sort((a, b) => a.distance - b.distance)[0]?.time
+
+  return nearestTime ? formatReminderTime(nearestTime) : null
+}
+
+function getScheduledSlotKey(date: dayjs.Dayjs, time: string): string {
+  return `${date.format('YYYY-MM-DD')}|${time}`
 }
 
 function getPeriodBounds(period: StatisticsPeriod, now: dayjs.Dayjs, reminders: ReminderLike[]) {
@@ -311,6 +310,3 @@ function isReminderScheduledForDate(reminder: ReminderLike, date: dayjs.Dayjs): 
   return createdAt.isSame(date, 'day')
 }
 
-function getScheduledUsageIndexKey(date: dayjs.Dayjs, time: string): string {
-  return `${date.format('YYYY-MM-DD')}|${time}`
-}
