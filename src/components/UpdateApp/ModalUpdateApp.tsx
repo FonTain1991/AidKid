@@ -12,11 +12,14 @@ export function ModalUpdateApp() {
 
   useEffect(() => {
     VersionCheck.needUpdate()
-      .then((res: any) => {
+      .then((res) => {
         if (res?.isNeeded) {
           bottomSheetRef.current?.present()
         }
-      }).catch()
+      })
+      .catch((error) => {
+        console.warn('Failed to check app update:', error)
+      })
   }, [])
 
   return (

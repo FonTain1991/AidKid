@@ -131,7 +131,10 @@ class DatabaseService {
         usageDate TEXT NOT NULL,
         notes TEXT,
         createdAt INTEGER NOT NULL,
-        FOREIGN KEY (medicineId) REFERENCES medicines (id) ON DELETE CASCADE,
+        medicineName TEXT,
+        kitName TEXT,
+        unitForQuantity TEXT,
+        FOREIGN KEY (medicineId) REFERENCES medicines (id),
         FOREIGN KEY (familyMemberId) REFERENCES family_members (id) ON DELETE SET NULL
       )
     `)
@@ -177,6 +180,61 @@ class DatabaseService {
     if (!reminderColumns.includes('daysCount')) {
       await this.db.executeSql('ALTER TABLE reminders ADD COLUMN daysCount INTEGER')
     }
+
+    await this.migrateMedicineUsageSnapshot()
+  }
+
+  private async migrateMedicineUsageSnapshot(): Promise<void> {
+    if (!this.db) {
+      throw new Error('Database not initialized')
+    }
+
+    const usageColumns = await this.getTableColumns('medicine_usage')
+
+    if (!usageColumns.includes('medicineName')) {
+      await this.db.executeSql('ALTER TABLE medicine_usage ADD COLUMN medicineName TEXT')
+    }
+    if (!usageColumns.includes('kitName')) {
+      await this.db.executeSql('ALTER TABLE medicine_usage ADD COLUMN kitName TEXT')
+    }
+    if (!usageColumns.includes('unitForQuantity')) {
+      await this.db.executeSql('ALTER TABLE medicine_usage ADD COLUMN unitForQuantity TEXT')
+    }
+
+    await this.db.executeSql(`
+      UPDATE medicine_usage
+      SET medicineName = (
+        SELECT name FROM medicines WHERE medicines.id = medicine_usage.medicineId
+      )
+      WHERE medicineName IS NULL AND EXISTS (
+        SELECT 1 FROM medicines WHERE medicines.id = medicine_usage.medicineId
+      )
+    `)
+
+    await this.db.executeSql(`
+      UPDATE medicine_usage
+      SET kitName = (
+        SELECT mk.name
+        FROM medicines m
+        JOIN medicine_kits mk ON mk.id = m.medicineKitId
+        WHERE m.id = medicine_usage.medicineId
+      )
+      WHERE kitName IS NULL AND EXISTS (
+        SELECT 1 FROM medicines WHERE medicines.id = medicine_usage.medicineId
+      )
+    `)
+
+    await this.db.executeSql(`
+      UPDATE medicine_usage
+      SET unitForQuantity = COALESCE(
+        (SELECT unitForQuantity FROM medicines WHERE medicines.id = medicine_usage.medicineId),
+        (SELECT unit FROM medicines WHERE medicines.id = medicine_usage.medicineId),
+        'pcs'
+      )
+      WHERE unitForQuantity IS NULL AND EXISTS (
+        SELECT 1 FROM medicines WHERE medicines.id = medicine_usage.medicineId
+      )
+    `)
   }
 
   getDb() {

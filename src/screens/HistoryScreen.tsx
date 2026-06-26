@@ -22,6 +22,9 @@ interface MedicineUsage {
   usageDate: string
   notes: string | null
   createdAt: number
+  medicineName?: string | null
+  kitName?: string | null
+  unitForQuantity?: string | null
 }
 
 interface UsageWithDetails extends MedicineUsage {
@@ -74,6 +77,9 @@ export function HistoryScreen() {
           usageDate: row.usageDate,
           notes: row.notes,
           createdAt: row.createdAt,
+          medicineName: row.medicineName ?? null,
+          kitName: row.kitName ?? null,
+          unitForQuantity: row.unitForQuantity ?? null,
         })
       }
 
@@ -112,9 +118,9 @@ export function HistoryScreen() {
       const familyMember = usage.familyMemberId ? familyMembers.find(fm => fm.id === usage.familyMemberId) : undefined
       return {
         ...usage,
-        medicineName: medicine?.name,
-        unitValue: getUsageUnitValue(medicine),
-        kitName: kit?.name,
+        medicineName: medicine?.name || usage.medicineName || undefined,
+        unitValue: getUsageUnitValue(medicine) || usage.unitForQuantity || undefined,
+        kitName: kit?.name || usage.kitName || undefined,
         familyMemberName: familyMember?.name,
       }
     })

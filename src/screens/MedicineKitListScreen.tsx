@@ -2,18 +2,19 @@ import { Empty } from '@/components/Empty'
 import { FloatingButton } from '@/components/FloatingButton'
 import { Background, Flex, PaddingHorizontal, SafeAreaView } from '@/components/Layout'
 import { LimitIndicator } from '@/components/LimitIndicator'
+import { KitExportButton } from '@/components/KitExport'
 import { MedicineKitList } from '@/components/MedicineKitList'
 import { MedicineList } from '@/components/MedicineList'
 import { MedicineLowQuantity } from '@/components/MedicineLowQuantity'
 import { ModalUpdateApp } from '@/components/UpdateApp'
 import { SPACING } from '@/constants'
-import { useEvent, useNavigationBarColor, useScreenProperties } from '@/hooks'
+import { useEvent, useNavigationBarColor, useScreenProperties, type UseScreenPropertiesOptions } from '@/hooks'
 import { useTranslation } from 'react-i18next'
 import { getLimitsInfo } from '@/lib'
 import { useTheme } from '@/providers/theme'
 import { useAppStore } from '@/store'
 import { useFocusEffect } from '@react-navigation/native'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
 
 export function MedicineKitListScreen() {
@@ -23,25 +24,29 @@ export function MedicineKitListScreen() {
   const [limitsInfo, setLimitsInfo] = useState<any>(null)
   const { medicineKits, medicines } = useAppStore(state => state)
 
-  useScreenProperties({
-    navigationOptions: {
-      headerShown: true,
-      title: t('screens.medicineKits'),
-      headerSearchBarOptions: {
-        placeholder: t('medicine.searchPlaceholder'),
-        onChangeText: event => {
-          setSearchText(event.nativeEvent.text)
+  const navigationOptions = useMemo<UseScreenPropertiesOptions>(
+    () => ({
+      navigationOptions: {
+        headerShown: true,
+        title: t('screens.medicineKits'),
+        headerSearchBarOptions: {
+          placeholder: t('medicine.searchPlaceholder'),
+          onChangeText: event => {
+            setSearchText(event.nativeEvent.text)
+          },
+          onCancelButtonPress: () => {
+            setSearchText('')
+          },
+          headerIconColor: colors.text,
+          shouldShowHintSearchIcon: false,
         },
-        onCancelButtonPress: () => {
-          setSearchText('')
-        },
-        headerIconColor: colors.text,
-        shouldShowHintSearchIcon: false,
-        autoFocus: true
-      }
-    },
-  })
+        headerRight: () => <KitExportButton rootKitId={null} />,
+      },
+    }),
+    [colors.text, t]
+  )
 
+  useScreenProperties(navigationOptions)
   useNavigationBarColor()
 
   const loadLimitsInfo = useEvent(async () => {
@@ -53,12 +58,10 @@ export function MedicineKitListScreen() {
     }
   })
 
-  // Обновляем лимиты при фокусе экрана
   useFocusEffect(useEvent(() => {
     loadLimitsInfo()
   }))
 
-  // Обновляем лимиты при изменении количества аптечек/лекарств
   useEffect(() => {
     loadLimitsInfo()
   }, [loadLimitsInfo, medicineKits.length, medicines.length])
@@ -74,6 +77,7 @@ export function MedicineKitListScreen() {
           />
         </Background>
         <FloatingButton />
+        <ModalUpdateApp />
       </SafeAreaView>
     )
   }
@@ -128,5 +132,5 @@ const styles = StyleSheet.create({
   contentContainer: {
     gap: SPACING.md,
     paddingVertical: SPACING.md,
-  }
+  },
 })

@@ -1,3 +1,4 @@
+import { sortByName } from '@/helpers'
 import { SPACING } from '@/constants'
 import { useTranslation } from 'react-i18next'
 import { FONT_SIZE } from '@/constants/font'
@@ -21,7 +22,7 @@ export const AddShoppingListForm = memo(() => {
   })
 
   const options = useMemo(() => {
-    return medicines.map(medicine => ({
+    return sortByName(medicines).map(medicine => ({
       label: medicine.name,
       value: medicine.id,
       subTitle: medicineKits.find(kit => kit.id === medicine.medicineKitId)?.name

@@ -1,4 +1,5 @@
 import { useRoute } from '@/hooks'
+import { compareByName, sortByName } from '@/helpers'
 import { Medicine } from '@/services/models'
 import { useAppStore } from '@/store'
 import { memo, useMemo } from 'react'
@@ -30,9 +31,9 @@ export const MedicineList = memo(({ searchText, showKit = false, sort = 'name_as
     const sorted = [...dataSource]
     switch (sort) {
       case 'name_asc':
-        return sorted.sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
+        return sortByName(sorted)
       case 'name_desc':
-        return sorted.sort((a, b) => (b.name || '').localeCompare(a.name || '', undefined, { sensitivity: 'base' }))
+        return [...sorted].sort((a, b) => compareByName(b, a))
       case 'quantity_asc':
         return sorted.sort((a, b) => (a?.quantity || 0) - (b?.quantity || 0))
       case 'quantity_desc':
@@ -46,7 +47,7 @@ export const MedicineList = memo(({ searchText, showKit = false, sort = 'name_as
       case 'expiration_desc':
         return sorted.sort((a, b) => (b?.expirationDate || 0) - (a?.expirationDate || 0))
       default:
-        return sorted.sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
+        return sortByName(sorted)
     }
   }, [dataSource, sort])
 

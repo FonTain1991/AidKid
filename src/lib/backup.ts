@@ -563,11 +563,27 @@ class BackupService {
       const quantityUsed = usage.quantityUsed || usage.quantity_used
       const usageDate = usage.usageDate || usage.usage_date
       const createdAt = usage.createdAt || usage.created_at
+      const medicineName = usage.medicineName || usage.medicine_name || null
+      const kitName = usage.kitName || usage.kit_name || null
+      const unitForQuantity = usage.unitForQuantity || usage.unit_for_quantity || null
 
       await db.executeSql(
-        `INSERT INTO medicine_usage (id, medicineId, familyMemberId, quantityUsed, usageDate, notes, createdAt) 
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [usage.id, medicineId, familyMemberId, quantityUsed, usageDate, usage.notes || null, createdAt]
+        `INSERT INTO medicine_usage (
+          id, medicineId, familyMemberId, quantityUsed, usageDate, notes, createdAt,
+          medicineName, kitName, unitForQuantity
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          usage.id,
+          medicineId,
+          familyMemberId,
+          quantityUsed,
+          usageDate,
+          usage.notes || null,
+          createdAt,
+          medicineName,
+          kitName,
+          unitForQuantity,
+        ]
       )
     }
 

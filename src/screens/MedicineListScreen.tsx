@@ -1,6 +1,7 @@
 import { GoBackMedicineScreen } from '@/components/Buttons'
 import { Empty } from '@/components/Empty'
 import { FloatingButton } from '@/components/FloatingButton'
+import { KitExportButton } from '@/components/KitExport'
 import { Background, Flex, SafeAreaView } from '@/components/Layout'
 import { MedicineKitList } from '@/components/MedicineKitList'
 import { MedicineList, type SortValue } from '@/components/MedicineList'
@@ -10,7 +11,7 @@ import { useBackHandlerMedicineScreen, useMedicineScreenTitle, useNavigationBarC
 import { useAppStore } from '@/store'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ScrollView, StyleSheet } from 'react-native'
+import { ScrollView, StyleSheet, View } from 'react-native'
 
 export function MedicineListScreen() {
   const { t } = useTranslation()
@@ -24,7 +25,12 @@ export function MedicineListScreen() {
       headerShown: true,
       title,
       headerLeft: () => <GoBackMedicineScreen />,
-      headerRight: () => <SortList value={sort} onChange={setSort} />
+      headerRight: () => (
+        <View style={styles.headerRight}>
+          <KitExportButton rootKitId={params?.medicineKitId ?? null} title={title} />
+          <SortList value={sort} onChange={setSort} />
+        </View>
+      )
     }
   })
 
@@ -76,5 +82,10 @@ const styles = StyleSheet.create({
   contentContainer: {
     gap: SPACING.md,
     paddingVertical: SPACING.md,
-  }
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
 })

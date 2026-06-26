@@ -37,6 +37,9 @@ interface MedicineUsage {
   usageDate: string
   notes: string | null
   createdAt: number
+  medicineName?: string | null
+  kitName?: string | null
+  unitForQuantity?: string | null
 }
 
 interface PeriodStats {
@@ -134,6 +137,9 @@ export function StatisticsScreen() {
           usageDate: row.usageDate,
           notes: row.notes,
           createdAt: row.createdAt,
+          medicineName: row.medicineName ?? null,
+          kitName: row.kitName ?? null,
+          unitForQuantity: row.unitForQuantity ?? null,
         })
       }
 
@@ -248,10 +254,10 @@ export function StatisticsScreen() {
 
       return {
         ...usage,
-        medicineName: medicine?.name,
-        kitName: kit?.name,
+        medicineName: medicine?.name || usage.medicineName || undefined,
+        kitName: kit?.name || usage.kitName || undefined,
         familyMemberName: familyMember?.name,
-        unitValue: getUsageUnitValue(medicine),
+        unitValue: getUsageUnitValue(medicine) || usage.unitForQuantity || undefined,
       }
     })
   }, [usageHistory, medicines, medicineKits, familyMembers])
@@ -377,9 +383,10 @@ export function StatisticsScreen() {
     return Object.entries(medicineCounts)
       .map(([medicineId, count]) => {
         const medicine = medicines.find(m => m.id === Number(medicineId))
+        const snapshotUsage = filteredHistoryForPremium.find(u => u.medicineId === Number(medicineId))
         return {
           medicineId: Number(medicineId),
-          medicineName: medicine?.name || t('statistics.unknownMedicine'),
+          medicineName: medicine?.name || snapshotUsage?.medicineName || t('statistics.unknownMedicine'),
           count,
         }
       })

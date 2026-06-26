@@ -1,3 +1,4 @@
+import { sortByName } from '@/helpers'
 import { Medicine } from '@/services/models'
 import { useAppStore } from '@/store'
 import { memo, useMemo } from 'react'
@@ -15,7 +16,7 @@ export const MedicineListForQuickIntake = memo(({ searchText }: MedicineListForQ
   const { medicines, quickIntakeMedicines } = useAppStore(state => state)
 
   const { medicinesFiltered, selectedMedications } = useMemo(() => {
-    return medicines.reduce((prev, cur) => {
+    const result = medicines.reduce((prev, cur) => {
       if (quickIntakeMedicines.find(quickIntakeMedicine => quickIntakeMedicine.medicineId === cur.id)) {
         prev.selectedMedications.push(cur)
       } else {
@@ -23,6 +24,11 @@ export const MedicineListForQuickIntake = memo(({ searchText }: MedicineListForQ
       }
       return prev
     }, { medicinesFiltered: [] as Medicine[], selectedMedications: [] as Medicine[] })
+
+    return {
+      medicinesFiltered: sortByName(result.medicinesFiltered),
+      selectedMedications: sortByName(result.selectedMedications),
+    }
   }, [medicines, quickIntakeMedicines])
 
   const dataSource = useMemo(() => {
